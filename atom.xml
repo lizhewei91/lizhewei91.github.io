@@ -6,7 +6,7 @@
   <link href="http://example.com/atom.xml" rel="self"/>
   
   <link href="http://example.com/"/>
-  <updated>2022-11-24T12:55:52.966Z</updated>
+  <updated>2022-11-24T15:23:03.023Z</updated>
   <id>http://example.com/</id>
   
   <author>
@@ -21,11 +21,13 @@
     <link href="http://example.com/2022/11/24/52/"/>
     <id>http://example.com/2022/11/24/52/</id>
     <published>2022-11-24T12:55:52.000Z</published>
-    <updated>2022-11-24T12:55:52.966Z</updated>
+    <updated>2022-11-24T15:23:03.023Z</updated>
     
     
     
     
+    
+    <category term="kube-apiserver" scheme="http://example.com/tags/kube-apiserver/"/>
     
   </entry>
   

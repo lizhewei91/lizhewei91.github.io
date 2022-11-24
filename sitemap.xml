@@ -19,6 +19,13 @@
   </url>
 
   
+  <url>
+    <loc>http://example.com/tags/kube-apiserver/</loc>
+    <lastmod>2022-11-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
 
   
 </urlset>
