@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title>Hexo</title>
+  <title>lizhewei&#39;Blog</title>
   
   
   <link href="http://example.com/atom.xml" rel="self"/>
@@ -10,7 +10,7 @@
   <id>http://example.com/</id>
   
   <author>
-    <name>John Doe</name>
+    <name>lizhewei</name>
     
   </author>
   
@@ -18,8 +18,8 @@
   
   <entry>
     <title>kube-apiserver-tuning</title>
-    <link href="http://example.com/2022/11/24/kube-apiserver-tuning/"/>
-    <id>http://example.com/2022/11/24/kube-apiserver-tuning/</id>
+    <link href="http://example.com/2022/11/24/52/"/>
+    <id>http://example.com/2022/11/24/52/</id>
     <published>2022-11-24T12:55:52.000Z</published>
     <updated>2022-11-24T12:55:52.966Z</updated>
     
