@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>kube-apiserver-tuning</title>
+    <title>kube-apiserver性能分析</title>
     <url>/2022/11/24/52/</url>
     <content><![CDATA[]]></content>
+      <categories>
+        <category>kube-apiserver</category>
+      </categories>
       <tags>
         <tag>kube-apiserver</tag>
+        <tag>大规模集群</tag>
+        <tag>kubernetes</tag>
       </tags>
   </entry>
 </search>
