@@ -1,4 +1,4 @@
-http://example.com/2022/11/24/52/
+http://example.com/2022/11/25/54/
 http://example.com/categories/index.html
 http://example.com/tags/index.html
 http://example.com/
