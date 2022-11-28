@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://lizhewei91.github.io/2022/11/28/29/</loc>
+    <loc>http://lizhewei91.github.io/2022/11/28/56/</loc>
     
     <lastmod>2022-11-28</lastmod>
     
@@ -11,7 +11,7 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/2022/11/28/56/</loc>
+    <loc>http://lizhewei91.github.io/2022/11/28/29/</loc>
     
     <lastmod>2022-11-28</lastmod>
     
@@ -47,13 +47,6 @@
 
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/hexo/</loc>
-    <lastmod>2022-11-28</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://lizhewei91.github.io/tags/pprof/</loc>
     <lastmod>2022-11-28</lastmod>
     <changefreq>weekly</changefreq>
@@ -74,17 +67,24 @@
     <priority>0.2</priority>
   </url>
   
+  <url>
+    <loc>http://lizhewei91.github.io/tags/hexo/</loc>
+    <lastmod>2022-11-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
 
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/hexo/</loc>
+    <loc>http://lizhewei91.github.io/categories/pprof/</loc>
     <lastmod>2022-11-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/pprof/</loc>
+    <loc>http://lizhewei91.github.io/categories/hexo/</loc>
     <lastmod>2022-11-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>

@@ -1,31 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>hexo+typora图片插入</title>
-    <url>/2022/11/28/29/</url>
-    <content><![CDATA[<ol>
-<li><strong>Typora设置</strong>。点击文件-&gt;偏好设置-&gt;图像，配置插入图片问复制到指定路径，底下三个勾都选，如下图所示。</li>
-</ol>
-<img src="/2022/11/28/29/image-20220611231725568.png" class="" title="img">
-<ol start="2">
-<li><p><strong>Hexo配置</strong>。在根目录下，进入bash命令框，输入<code>npm install hexo-image-link --save</code>安装插件。</p>
-</li>
-<li><p><strong>更改根目录下_config.yml配置</strong>，找到<code>post_asset_folder</code>，改为true。</p>
-</li>
-<li><p>写文章前，在根目录bash命令框中输入<code>hexo new 文章题目</code>，可以自动在post文件夹中生成<code>文章题目.md</code>与<code>文章题目</code>图片存储目录了。</p>
-</li>
-<li><p>这样就<strong>配置成功</strong>了。写文章之前，现在你可以把图片像word编辑一样<strong>拖动</strong>到typora直接预览，该过程不需要输入什么图片插入指令呀存储路径呀啥的，也不需要专门去对图片进行转存；直接网页端预览，图片可以正常显示。</p>
-</li>
-</ol>
-]]></content>
-      <categories>
-        <category>hexo</category>
-      </categories>
-      <tags>
-        <tag>hexo</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>性能剖析大杀器 pprof</title>
     <url>/2022/11/28/56/</url>
     <content><![CDATA[<h1 id="pprof"><a href="#pprof" class="headerlink" title="pprof"></a>pprof</h1><p>在 Go 语言中，PProf 是用于可视化和分析性能分析数据的工具，pprof 以 profile.proto 读取分析样本的集合，并生成报告以可视化并帮助分析数据（支持文本和图形报告）。</p>
@@ -207,7 +182,8 @@
 
 
 <p>peek 栏目，此视图相较于 Top 视图，增加了所属的上下文信息的展示，也就是函数的输出调用者/被调用者。</p>
-<h4 id="Source"><a href="#Source" class="headerlink" title="Source"></a>Source</h4><p><img src="https://cdn.nlark.com/yuque/0/2021/png/2809907/1639562087329-46ed34bf-0b80-4510-bc2c-9dbf5b34a0da.png" alt="img"></p>
+<h4 id="Source"><a href="#Source" class="headerlink" title="Source"></a>Source</h4><img src="/2022/11/28/56/1639562087329-46ed34bf-0b80-4510-bc2c-9dbf5b34a0da.png" class="" title="img">
+
 <p>source 栏目，该视图主要是增加了面向源代码的追踪和分析，可以看到其开销主要消耗在哪里。</p>
 <h4 id="flame-graph"><a href="#flame-graph" class="headerlink" title="flame graph"></a>flame graph</h4><img src="/2022/11/28/56/1639568828478-ad6f5933-8572-4dbd-b73d-f637ba70a610-20221128223022437.png" class="" title="image.png">
 
@@ -270,6 +246,31 @@
         <tag>pprof</tag>
         <tag>性能分析</tag>
         <tag>golang</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>hexo+typora图片插入</title>
+    <url>/2022/11/28/29/</url>
+    <content><![CDATA[<ol>
+<li><strong>Typora设置</strong>。点击文件-&gt;偏好设置-&gt;图像，配置插入图片问复制到指定路径，底下三个勾都选，如下图所示。</li>
+</ol>
+<img src="/2022/11/28/29/image-20220611231725568.png" class="" title="img">
+<ol start="2">
+<li><p><strong>Hexo配置</strong>。在根目录下，进入bash命令框，输入<code>npm install hexo-image-link --save</code>安装插件。</p>
+</li>
+<li><p><strong>更改根目录下_config.yml配置</strong>，找到<code>post_asset_folder</code>，改为true。</p>
+</li>
+<li><p>写文章前，在根目录bash命令框中输入<code>hexo new 文章题目</code>，可以自动在post文件夹中生成<code>文章题目.md</code>与<code>文章题目</code>图片存储目录了。</p>
+</li>
+<li><p>这样就<strong>配置成功</strong>了。写文章之前，现在你可以把图片像word编辑一样<strong>拖动</strong>到typora直接预览，该过程不需要输入什么图片插入指令呀存储路径呀啥的，也不需要专门去对图片进行转存；直接网页端预览，图片可以正常显示。</p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>hexo</category>
+      </categories>
+      <tags>
+        <tag>hexo</tag>
       </tags>
   </entry>
 </search>
