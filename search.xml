@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Hexo博客与Typora编辑器对图片的联合插入</title>
+    <title>hexo+typora图片插入</title>
     <url>/2022/11/28/29/</url>
     <content><![CDATA[<ol>
-<li><p><strong>Typora设置</strong>。点击文件-&gt;偏好设置-&gt;图像，配置插入图片问复制到指定路径，底下三个勾都选，如下图所示。</p>
-</li>
-<li><img src="/2022/11/28/29/image-20220611231725568.png" class="" title="img"></li>
+<li><strong>Typora设置</strong>。点击文件-&gt;偏好设置-&gt;图像，配置插入图片问复制到指定路径，底下三个勾都选，如下图所示。</li>
+</ol>
+<img src="/2022/11/28/29/image-20220611231725568.png" class="" title="img">
+<ol start="2">
 <li><p><strong>Hexo配置</strong>。在根目录下，进入bash命令框，输入<code>npm install hexo-image-link --save</code>安装插件。</p>
 </li>
 <li><p><strong>更改根目录下_config.yml配置</strong>，找到<code>post_asset_folder</code>，改为true。</p>
 </li>
-<li><p>写文章前，**在根目录bash命令框中输入<code>hexo new 文章题目</code>**，可以自动在post文件夹中生成<code>文章题目.md</code>与<code>文章题目</code>图片存储目录了。</p>
+<li><p>写文章前，在根目录bash命令框中输入<code>hexo new 文章题目</code>，可以自动在post文件夹中生成<code>文章题目.md</code>与<code>文章题目</code>图片存储目录了。</p>
 </li>
 <li><p>这样就<strong>配置成功</strong>了。写文章之前，现在你可以把图片像word编辑一样<strong>拖动</strong>到typora直接预览，该过程不需要输入什么图片插入指令呀存储路径呀啥的，也不需要专门去对图片进行转存；直接网页端预览，图片可以正常显示。</p>
 </li>
