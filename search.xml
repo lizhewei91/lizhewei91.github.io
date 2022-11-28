@@ -221,7 +221,9 @@
 <p>比如下面执行测试的同时，也会执行 Mem profiling，并把结果保存在 cpu.prof 文件中：</p>
 <figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">go</span> test -bench . -memprofile=./mem.profile</span><br></pre></td></tr></table></figure>
 
-<p><strong>⚠️ 注意事项：</strong> 获取的 Profiling 数据是动态的，要想获得有效的数据，请保证应用处于较大的负载（比如正在生成中运行的服务，或者通过其他工具模拟访问压力）。否则如果应用处于空闲状态，得到的结果可能没有任何意义。所以，<strong>Profiling 一般和性能测试一起使用</strong></p>
+<blockquote>
+<p>** 注意事项：** 获取的 Profiling 数据是动态的，要想获得有效的数据，请保证应用处于较大的负载（比如正在生成中运行的服务，或者通过其他工具模拟访问压力）。否则如果应用处于空闲状态，得到的结果可能没有任何意义。所以，<strong>Profiling 一般和性能测试一起使用</strong></p>
+</blockquote>
 ]]></content>
       <categories>
         <category>pprof</category>
