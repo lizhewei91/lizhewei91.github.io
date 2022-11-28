@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>lizhewei&#39;Blog</title>
-  
+  <icon>https://www.gravatar.com/avatar/239ff887da8d6962c7547552e4f6946b</icon>
   
   <link href="http://lizhewei91.github.io/atom.xml" rel="self"/>
   
@@ -11,7 +11,7 @@
   
   <author>
     <name>lizhewei</name>
-    
+    <email>tyutlizhewei@163.com</email>
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
