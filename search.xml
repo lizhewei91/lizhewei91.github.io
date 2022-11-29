@@ -1,6 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>浅谈k8s中device-plugins机制</title>
+    <url>/2022/11/29/16/</url>
+    <content><![CDATA[<h1 id="Extended-Resource"><a href="#Extended-Resource" class="headerlink" title="Extended Resource"></a>Extended Resource</h1><p>官方链接：<a href="https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/extended-resource-node/">extended-resource-node</a></p>
+<p><strong>特性状态</strong>： <code>Kubernetes v1.9 [stable]</code></p>
+<p>可以用一句话来概括这个特性：通过向apiserver发送一个 patch node 的请求，为这个node增加一个自定义的资源类型，用于以该资源的配额统计和相应的QoS的配置。</p>
+<h2 id="为节点增加扩展资源"><a href="#为节点增加扩展资源" class="headerlink" title="为节点增加扩展资源"></a>为节点增加扩展资源</h2><p>为在一个节点上发布一种新的扩展资源，需要发送一个 HTTP PATCH 请求到 Kubernetes API server。 例如：假设你的一个节点上带有四个 dongle 资源。 下面是一个 PATCH 请求的示例，该请求为你的节点发布四个 dongle 资源。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">PATCH /api/v1/nodes/&lt;your-node-name&gt;/status HTTP/1.1</span><br><span class="line">Accept: application/json</span><br><span class="line">Content-Type: application/json-patch+json</span><br><span class="line">Host: k8s-master:8080</span><br><span class="line"></span><br><span class="line">[</span><br><span class="line">  &#123;</span><br><span class="line">    &quot;op&quot;: &quot;add&quot;,</span><br><span class="line">    &quot;path&quot;: &quot;/status/capacity/example.com~1dongle&quot;,</span><br><span class="line">    &quot;value&quot;: &quot;4&quot;</span><br><span class="line">  &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意：Kubernetes 不需要了解 dongle 资源的含义和用途。 前面的 PATCH 请求告诉 Kubernetes 你的节点拥有四个你称之为 dongle 的东西。</p>
+</blockquote>
+<p>启动一个代理（proxy），以便你可以很容易地向 Kubernetes API server 发送请求：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl proxy</span><br></pre></td></tr></table></figure>
+
+<p>在另一个命令窗口中，发送 HTTP PATCH 请求。 用你的节点名称替换 <code>&lt;your-node-name&gt;</code>：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl --header &quot;Content-Type: application/json-patch+json&quot; \</span><br><span class="line">  --request PATCH \</span><br><span class="line">  --data &#x27;[&#123;&quot;op&quot;: &quot;add&quot;, &quot;path&quot;: &quot;/status/capacity/example.com~1dongle&quot;, &quot;value&quot;: &quot;4&quot;&#125;]&#x27; \</span><br><span class="line">  http://localhost:8001/api/v1/nodes/&lt;your-node-name&gt;/status</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>说明：</strong> 在前面的请求中，<code>~1</code> 为 patch 路径中 “/” 符号的编码。 JSON-Patch 中的操作路径值被解析为 JSON 指针。</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">kubectl describe node &lt;your-node-name&gt;</span><br></pre></td></tr></table></figure>
+
+<img src="/2022/11/29/16/image-20221129110411083.png" class="" title="image-20221129110411083">
+
+<h2 id="清理扩展资源"><a href="#清理扩展资源" class="headerlink" title="清理扩展资源"></a>清理扩展资源</h2><p>这里是一个从节点移除 dongle 资源发布的 PATCH 请求。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">PATCH /api/v1/nodes/&lt;your-node-name&gt;/status HTTP/1.1</span><br><span class="line">Accept: application/json</span><br><span class="line">Content-Type: application/json-patch+json</span><br><span class="line">Host: k8s-master:8080</span><br><span class="line"></span><br><span class="line">[</span><br><span class="line">  &#123;</span><br><span class="line">    &quot;op&quot;: &quot;remove&quot;,</span><br><span class="line">    &quot;path&quot;: &quot;/status/capacity/example.com~1dongle&quot;,</span><br><span class="line">  &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<p>启动一个代理，以便你可以很容易地向 Kubernetes API 服务器发送请求：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl proxy</span><br></pre></td></tr></table></figure>
+
+<p>在另一个命令窗口中，发送 HTTP PATCH 请求。用你的节点名称替换 <code>&lt;your-node-name&gt;</code>：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl --header &quot;Content-Type: application/json-patch+json&quot; \</span><br><span class="line">--request PATCH \</span><br><span class="line">--data &#x27;[&#123;&quot;op&quot;: &quot;remove&quot;, &quot;path&quot;: &quot;/status/capacity/example.com~1dongle&quot;&#125;]&#x27; \</span><br><span class="line">http://localhost:8001/api/v1/nodes/&lt;your-node-name&gt;/status</span><br></pre></td></tr></table></figure>
+
+<p>验证 dongle 资源的发布已经被移除：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">kubectl describe node &lt;your-node-name&gt; | grep dongle</span><br></pre></td></tr></table></figure>
+
+<p>(你应该看不到任何输出)</p>
+<h1 id="Device-Plugins"><a href="#Device-Plugins" class="headerlink" title="Device Plugins"></a>Device Plugins</h1><p>官方链接：<a href="https://kubernetes.io/zh-cn/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/">device-plugins</a></p>
+<p><strong>特性状态：</strong> <code>Kubernetes v1.10 [beta]</code></p>
+<p>Kubernetes 提供了一个 <a href="https://git.k8s.io/design-proposals-archive/resource-management/device-plugin.md">设备插件框架</a>， 你可以用它来将系统硬件资源发布到 <a href="https://kubernetes.io/docs/reference/generated/kubelet">Kubelet</a>。</p>
+<p>供应商可以实现设备插件，由你手动部署或作为 <a href="https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/daemonset/">DaemonSet</a> 来部署，而不必定制 Kubernetes 本身的代码。目标设备包括 GPU、高性能 NIC、FPGA、 InfiniBand 适配器以及其他类似的、可能需要特定于供应商的初始化和设置的计算资源。</p>
+<h2 id="工作机制"><a href="#工作机制" class="headerlink" title="工作机制"></a>工作机制</h2><p>介绍一下 Device Plugin 的工作机制，整个 Device Plugin 的工作流程可以分成两个部分：</p>
+<ul>
+<li>一个是启动时刻的资源上报；</li>
+<li>另一个是用户使用时刻的调度和运行。</li>
+</ul>
+<img src="/2022/11/29/16/88db4c10-0ad0-11ea-b817-4fc7306c5e8a.png" class="" title="enter image description here">
+
+]]></content>
+      <categories>
+        <category>device-plugins</category>
+      </categories>
+      <tags>
+        <tag>kubernetnes</tag>
+        <tag>device-plugins</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>hexo+typora图片插入</title>
+    <url>/2022/11/28/29/</url>
+    <content><![CDATA[<ol>
+<li><strong>Typora设置</strong>。点击文件-&gt;偏好设置-&gt;图像，配置插入图片问复制到指定路径，底下三个勾都选，如下图所示。</li>
+</ol>
+<img src="/2022/11/28/29/image-20220611231725568.png" class="" title="img">
+<ol start="2">
+<li><p><strong>Hexo配置</strong>。在根目录下，进入bash命令框，输入<code>npm install hexo-image-link --save</code>安装插件。</p>
+</li>
+<li><p><strong>更改根目录下_config.yml配置</strong>，找到<code>post_asset_folder</code>，改为true。</p>
+</li>
+<li><p>写文章前，在根目录bash命令框中输入<code>hexo new 文章题目</code>，可以自动在post文件夹中生成<code>文章题目.md</code>与<code>文章题目</code>图片存储目录了。</p>
+</li>
+<li><p>这样就<strong>配置成功</strong>了。写文章之前，现在你可以把图片像word编辑一样<strong>拖动</strong>到typora直接预览，该过程不需要输入什么图片插入指令呀存储路径呀啥的，也不需要专门去对图片进行转存；直接网页端预览，图片可以正常显示。</p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>hexo</category>
+      </categories>
+      <tags>
+        <tag>hexo</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>性能剖析大杀器 pprof</title>
     <url>/2022/11/28/56/</url>
     <content><![CDATA[<h1 id="pprof"><a href="#pprof" class="headerlink" title="pprof"></a>pprof</h1><p>在 Go 语言中，PProf 是用于可视化和分析性能分析数据的工具，pprof 以 profile.proto 读取分析样本的集合，并生成报告以可视化并帮助分析数据（支持文本和图形报告）。</p>
@@ -246,89 +329,6 @@
         <tag>pprof</tag>
         <tag>性能分析</tag>
         <tag>golang</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>浅谈k8s中device-plugins机制</title>
-    <url>/2022/11/29/16/</url>
-    <content><![CDATA[<h1 id="Extended-Resource"><a href="#Extended-Resource" class="headerlink" title="Extended Resource"></a>Extended Resource</h1><p>官方链接：<a href="https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/extended-resource-node/">extended-resource-node</a></p>
-<p><strong>特性状态</strong>： <code>Kubernetes v1.9 [stable]</code></p>
-<p>可以用一句话来概括这个特性：通过向apiserver发送一个 patch node 的请求，为这个node增加一个自定义的资源类型，用于以该资源的配额统计和相应的QoS的配置。</p>
-<h2 id="为节点增加扩展资源"><a href="#为节点增加扩展资源" class="headerlink" title="为节点增加扩展资源"></a>为节点增加扩展资源</h2><p>为在一个节点上发布一种新的扩展资源，需要发送一个 HTTP PATCH 请求到 Kubernetes API server。 例如：假设你的一个节点上带有四个 dongle 资源。 下面是一个 PATCH 请求的示例，该请求为你的节点发布四个 dongle 资源。</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">PATCH /api/v1/nodes/&lt;your-node-name&gt;/status HTTP/1.1</span><br><span class="line">Accept: application/json</span><br><span class="line">Content-Type: application/json-patch+json</span><br><span class="line">Host: k8s-master:8080</span><br><span class="line"></span><br><span class="line">[</span><br><span class="line">  &#123;</span><br><span class="line">    &quot;op&quot;: &quot;add&quot;,</span><br><span class="line">    &quot;path&quot;: &quot;/status/capacity/example.com~1dongle&quot;,</span><br><span class="line">    &quot;value&quot;: &quot;4&quot;</span><br><span class="line">  &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>注意：Kubernetes 不需要了解 dongle 资源的含义和用途。 前面的 PATCH 请求告诉 Kubernetes 你的节点拥有四个你称之为 dongle 的东西。</p>
-</blockquote>
-<p>启动一个代理（proxy），以便你可以很容易地向 Kubernetes API server 发送请求：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl proxy</span><br></pre></td></tr></table></figure>
-
-<p>在另一个命令窗口中，发送 HTTP PATCH 请求。 用你的节点名称替换 <code>&lt;your-node-name&gt;</code>：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl --header &quot;Content-Type: application/json-patch+json&quot; \</span><br><span class="line">  --request PATCH \</span><br><span class="line">  --data &#x27;[&#123;&quot;op&quot;: &quot;add&quot;, &quot;path&quot;: &quot;/status/capacity/example.com~1dongle&quot;, &quot;value&quot;: &quot;4&quot;&#125;]&#x27; \</span><br><span class="line">  http://localhost:8001/api/v1/nodes/&lt;your-node-name&gt;/status</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><strong>说明：</strong> 在前面的请求中，<code>~1</code> 为 patch 路径中 “/” 符号的编码。 JSON-Patch 中的操作路径值被解析为 JSON 指针。</p>
-</blockquote>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">kubectl describe node &lt;your-node-name&gt;</span><br></pre></td></tr></table></figure>
-
-<img src="/2022/11/29/16/image-20221129110411083.png" class="" title="image-20221129110411083">
-
-<h2 id="清理扩展资源"><a href="#清理扩展资源" class="headerlink" title="清理扩展资源"></a>清理扩展资源</h2><p>这里是一个从节点移除 dongle 资源发布的 PATCH 请求。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">PATCH /api/v1/nodes/&lt;your-node-name&gt;/status HTTP/1.1</span><br><span class="line">Accept: application/json</span><br><span class="line">Content-Type: application/json-patch+json</span><br><span class="line">Host: k8s-master:8080</span><br><span class="line"></span><br><span class="line">[</span><br><span class="line">  &#123;</span><br><span class="line">    &quot;op&quot;: &quot;remove&quot;,</span><br><span class="line">    &quot;path&quot;: &quot;/status/capacity/example.com~1dongle&quot;,</span><br><span class="line">  &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
-
-<p>启动一个代理，以便你可以很容易地向 Kubernetes API 服务器发送请求：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl proxy</span><br></pre></td></tr></table></figure>
-
-<p>在另一个命令窗口中，发送 HTTP PATCH 请求。用你的节点名称替换 <code>&lt;your-node-name&gt;</code>：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl --header &quot;Content-Type: application/json-patch+json&quot; \</span><br><span class="line">--request PATCH \</span><br><span class="line">--data &#x27;[&#123;&quot;op&quot;: &quot;remove&quot;, &quot;path&quot;: &quot;/status/capacity/example.com~1dongle&quot;&#125;]&#x27; \</span><br><span class="line">http://localhost:8001/api/v1/nodes/&lt;your-node-name&gt;/status</span><br></pre></td></tr></table></figure>
-
-<p>验证 dongle 资源的发布已经被移除：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">kubectl describe node &lt;your-node-name&gt; | grep dongle</span><br></pre></td></tr></table></figure>
-
-<p>(你应该看不到任何输出)</p>
-<h1 id="Device-Plugins"><a href="#Device-Plugins" class="headerlink" title="Device Plugins"></a>Device Plugins</h1><p>官方链接：<a href="https://kubernetes.io/zh-cn/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/">device-plugins</a></p>
-<p><strong>特性状态：</strong> <code>Kubernetes v1.10 [beta]</code></p>
-<p>Kubernetes 提供了一个 <a href="https://git.k8s.io/design-proposals-archive/resource-management/device-plugin.md">设备插件框架</a>， 你可以用它来将系统硬件资源发布到 <a href="https://kubernetes.io/docs/reference/generated/kubelet">Kubelet</a>。</p>
-<p>供应商可以实现设备插件，由你手动部署或作为 <a href="https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/daemonset/">DaemonSet</a> 来部署，而不必定制 Kubernetes 本身的代码。目标设备包括 GPU、高性能 NIC、FPGA、 InfiniBand 适配器以及其他类似的、可能需要特定于供应商的初始化和设置的计算资源。</p>
-<h2 id="工作机制"><a href="#工作机制" class="headerlink" title="工作机制"></a>工作机制</h2><p>介绍一下 Device Plugin 的工作机制，整个 Device Plugin 的工作流程可以分成两个部分：</p>
-<ul>
-<li>一个是启动时刻的资源上报；</li>
-<li>另一个是用户使用时刻的调度和运行。</li>
-</ul>
-<img src="/2022/11/29/16/88db4c10-0ad0-11ea-b817-4fc7306c5e8a.png" class="" title="enter image description here">
-
-]]></content>
-      <categories>
-        <category>device-plugins</category>
-      </categories>
-      <tags>
-        <tag>kubernetnes</tag>
-        <tag>device-plugins</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>hexo+typora图片插入</title>
-    <url>/2022/11/28/29/</url>
-    <content><![CDATA[<ol>
-<li><strong>Typora设置</strong>。点击文件-&gt;偏好设置-&gt;图像，配置插入图片问复制到指定路径，底下三个勾都选，如下图所示。</li>
-</ol>
-<img src="/2022/11/28/29/image-20220611231725568.png" class="" title="img">
-<ol start="2">
-<li><p><strong>Hexo配置</strong>。在根目录下，进入bash命令框，输入<code>npm install hexo-image-link --save</code>安装插件。</p>
-</li>
-<li><p><strong>更改根目录下_config.yml配置</strong>，找到<code>post_asset_folder</code>，改为true。</p>
-</li>
-<li><p>写文章前，在根目录bash命令框中输入<code>hexo new 文章题目</code>，可以自动在post文件夹中生成<code>文章题目.md</code>与<code>文章题目</code>图片存储目录了。</p>
-</li>
-<li><p>这样就<strong>配置成功</strong>了。写文章之前，现在你可以把图片像word编辑一样<strong>拖动</strong>到typora直接预览，该过程不需要输入什么图片插入指令呀存储路径呀啥的，也不需要专门去对图片进行转存；直接网页端预览，图片可以正常显示。</p>
-</li>
-</ol>
-]]></content>
-      <categories>
-        <category>hexo</category>
-      </categories>
-      <tags>
-        <tag>hexo</tag>
       </tags>
   </entry>
 </search>
