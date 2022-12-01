@@ -70,6 +70,13 @@
   </url>
   
   <url>
+    <loc>http://lizhewei91.github.io/tags/hexo/</loc>
+    <lastmod>2022-12-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
     <loc>http://lizhewei91.github.io/tags/pprof/</loc>
     <lastmod>2022-12-01</lastmod>
     <changefreq>weekly</changefreq>
@@ -90,13 +97,6 @@
     <priority>0.2</priority>
   </url>
   
-  <url>
-    <loc>http://lizhewei91.github.io/tags/hexo/</loc>
-    <lastmod>2022-12-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
 
   
   <url>
@@ -107,14 +107,14 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/pprof/</loc>
+    <loc>http://lizhewei91.github.io/categories/hexo/</loc>
     <lastmod>2022-12-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/hexo/</loc>
+    <loc>http://lizhewei91.github.io/categories/pprof/</loc>
     <lastmod>2022-12-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
