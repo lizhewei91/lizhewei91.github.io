@@ -59,31 +59,6 @@
       </tags>
   </entry>
   <entry>
-    <title>hexo+typora图片插入</title>
-    <url>/2022/11/28/29/</url>
-    <content><![CDATA[<ol>
-<li><strong>Typora设置</strong>。点击文件-&gt;偏好设置-&gt;图像，配置插入图片问复制到指定路径，底下三个勾都选，如下图所示。</li>
-</ol>
-<img src="/2022/11/28/29/image-20220611231725568.png" class="" title="img">
-<ol start="2">
-<li><p><strong>Hexo配置</strong>。在根目录下，进入bash命令框，输入<code>npm install hexo-image-link --save</code>安装插件。</p>
-</li>
-<li><p><strong>更改根目录下_config.yml配置</strong>，找到<code>post_asset_folder</code>，改为true。</p>
-</li>
-<li><p>写文章前，在根目录bash命令框中输入<code>hexo new 文章题目</code>，可以自动在post文件夹中生成<code>文章题目.md</code>与<code>文章题目</code>图片存储目录了。</p>
-</li>
-<li><p>这样就<strong>配置成功</strong>了。写文章之前，现在你可以把图片像word编辑一样<strong>拖动</strong>到typora直接预览，该过程不需要输入什么图片插入指令呀存储路径呀啥的，也不需要专门去对图片进行转存；直接网页端预览，图片可以正常显示。</p>
-</li>
-</ol>
-]]></content>
-      <categories>
-        <category>hexo</category>
-      </categories>
-      <tags>
-        <tag>hexo</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>性能剖析大杀器 pprof</title>
     <url>/2022/11/28/56/</url>
     <content><![CDATA[<h1 id="pprof"><a href="#pprof" class="headerlink" title="pprof"></a>pprof</h1><p>在 Go 语言中，PProf 是用于可视化和分析性能分析数据的工具，pprof 以 profile.proto 读取分析样本的集合，并生成报告以可视化并帮助分析数据（支持文本和图形报告）。</p>
@@ -125,14 +100,14 @@
 
 <h2 id="一个简单的例子"><a href="#一个简单的例子" class="headerlink" title="一个简单的例子"></a>一个简单的例子</h2><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;log&quot;</span></span><br><span class="line">	<span class="string">&quot;net/http&quot;</span></span><br><span class="line">	_ <span class="string">&quot;net/http/pprof&quot;</span></span><br><span class="line">	<span class="string">&quot;time&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> datas []<span class="type">string</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	str := <span class="string">&quot;hello,world&quot;</span></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">for</span> &#123;</span><br><span class="line">			log.Printf(<span class="string">&quot;len:%d\n&quot;</span>, Add(str))</span><br><span class="line">			time.Sleep(<span class="number">10</span> * time.Millisecond)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	_ = http.ListenAndServe(<span class="string">&quot;0.0.0.0:8080&quot;</span>, <span class="literal">nil</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Add</span><span class="params">(str <span class="type">string</span>)</span></span> <span class="type">int</span> &#123;</span><br><span class="line">	datas = <span class="built_in">append</span>(datas, str)</span><br><span class="line">	<span class="keyword">return</span> <span class="built_in">len</span>(datas)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>接下来我们运行这个程序，访问 <code>http://127.0.0.1:6060/debug/pprof/</code> 地址，检查是否正常响应。</p>
+<p>接下来我们运行这个程序，访问 <code>http://127.0.0.1:8080/debug/pprof/</code> 地址，检查是否正常响应。</p>
 <h3 id="通过浏览器访问"><a href="#通过浏览器访问" class="headerlink" title="通过浏览器访问"></a>通过浏览器访问</h3><p>第一种方式，我们可以直接通过浏览器，进行查看，那么在第一步我们可以先查看总览页面，也就是访问 <code>http://127.0.0.1:8080/debug/pprof/</code>，如下：    </p>
 <figure class="highlight go"><table><tr><td class="code"><pre><span class="line">/debug/pprof/</span><br><span class="line"></span><br><span class="line">Types of profiles available:</span><br><span class="line">Count	Profile</span><br><span class="line"><span class="number">3</span>	allocs</span><br><span class="line"><span class="number">0</span>	block</span><br><span class="line"><span class="number">0</span>	cmdline</span><br><span class="line"><span class="number">5</span>	goroutine</span><br><span class="line"><span class="number">3</span>	heap</span><br><span class="line"><span class="number">0</span>	mutex</span><br><span class="line"><span class="number">0</span>	profile</span><br><span class="line"><span class="number">8</span>	threadcreate</span><br><span class="line"><span class="number">0</span>	trace</span><br><span class="line">full goroutine stack dump</span><br></pre></td></tr></table></figure>
 
 <ul>
 <li><strong>allocs</strong>：查看过去所有内存分配的样本，访问路径为<code>$HOST/debug/pprof/allocs</code>。</li>
 <li><strong>block</strong>：查看导致阻塞同步的堆栈跟踪，访问路径为<code>$HOST/debug/pprof/block</code>。</li>
-<li><strong>cmdline</strong>：当前程序的命令行的完整调用路径。</li>
+<li><strong>cmdline</strong>：当前程序的命令行的完整调用路径，访问路径为<code>$HOST/debug/pprof/cmdline</code>。</li>
 <li><strong>goroutine</strong>：查看当前所有运行的 goroutines 堆栈跟踪，访问路径为<code>$HOST/debug/pprof/goroutine</code>。</li>
 <li><strong>heap</strong>：查看活动对象的内存分配情况， 访问路径为<code>$HOST/debug/pprof/heap</code>。</li>
 <li><strong>mutex</strong>：查看导致互斥锁的竞争持有者的堆栈跟踪，访问路径为<code>$HOST/debug/pprof/mutex</code>。</li>
@@ -304,7 +279,7 @@
 <figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">go</span>-wrk -n <span class="number">50000</span> http:<span class="comment">//127.0.0.1:8080/book/list</span></span><br></pre></td></tr></table></figure>
 
 <p>在上面压测进行的同时，打开另一个终端执行:</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">$ <span class="keyword">go</span> tool pprof http:<span class="comment">//localhost:8080/debug/pprof/profile\?seconds\=60</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">$ <span class="keyword">go</span> tool pprof http:<span class="comment">//localhost:8080/debug/pprof/profile?seconds=60</span></span><br></pre></td></tr></table></figure>
 
 <h1 id="pprof与性能测试结合"><a href="#pprof与性能测试结合" class="headerlink" title="pprof与性能测试结合"></a>pprof与性能测试结合</h1><p><code>go test</code> 命令有两个参数和 pprof 相关，它们分别指定生成的 CPU 和 Memory profiling 保存的文件：</p>
 <ul>
@@ -329,6 +304,31 @@
         <tag>pprof</tag>
         <tag>性能分析</tag>
         <tag>golang</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>hexo+typora图片插入</title>
+    <url>/2022/11/28/29/</url>
+    <content><![CDATA[<ol>
+<li><strong>Typora设置</strong>。点击文件-&gt;偏好设置-&gt;图像，配置插入图片问复制到指定路径，底下三个勾都选，如下图所示。</li>
+</ol>
+<img src="/2022/11/28/29/image-20220611231725568.png" class="" title="img">
+<ol start="2">
+<li><p><strong>Hexo配置</strong>。在根目录下，进入bash命令框，输入<code>npm install hexo-image-link --save</code>安装插件。</p>
+</li>
+<li><p><strong>更改根目录下_config.yml配置</strong>，找到<code>post_asset_folder</code>，改为true。</p>
+</li>
+<li><p>写文章前，在根目录bash命令框中输入<code>hexo new 文章题目</code>，可以自动在post文件夹中生成<code>文章题目.md</code>与<code>文章题目</code>图片存储目录了。</p>
+</li>
+<li><p>这样就<strong>配置成功</strong>了。写文章之前，现在你可以把图片像word编辑一样<strong>拖动</strong>到typora直接预览，该过程不需要输入什么图片插入指令呀存储路径呀啥的，也不需要专门去对图片进行转存；直接网页端预览，图片可以正常显示。</p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>hexo</category>
+      </categories>
+      <tags>
+        <tag>hexo</tag>
       </tags>
   </entry>
 </search>
