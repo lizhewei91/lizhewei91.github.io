@@ -1,3 +1,4 @@
+http://lizhewei91.github.io/2023/01/06/46/
 http://lizhewei91.github.io/2022/11/29/16/
 http://lizhewei91.github.io/2022/12/09/44/
 http://lizhewei91.github.io/2022/11/28/56/
@@ -14,7 +15,11 @@ http://lizhewei91.github.io/tags/golang/
 http://lizhewei91.github.io/tags/kubelet/
 http://lizhewei91.github.io/tags/kubernetes/
 http://lizhewei91.github.io/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/
+http://lizhewei91.github.io/tags/device-plugin/
+http://lizhewei91.github.io/tags/nvidia/
+http://lizhewei91.github.io/tags/gpu/
 http://lizhewei91.github.io/categories/device-plugins/
 http://lizhewei91.github.io/categories/hexo/
 http://lizhewei91.github.io/categories/pprof/
 http://lizhewei91.github.io/categories/kubelet/
+http://lizhewei91.github.io/categories/device-plugin/
