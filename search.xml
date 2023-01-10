@@ -474,6 +474,7 @@
 <figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	device_plugin.InitiateDevicePlugin()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>main函数调用 InitiateDevicePlugin 函数，直接看 InitiateDevicePlugin</p>
+<p><u><em>Kubevirt-gpu-device-plugin/pkg/device_plugin/device_plugin.go#73</em></u></p>
 <figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">InitiateDevicePlugin</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">//Identifies GPUs and represents it in appropriate structures</span></span><br><span class="line">	createIommuDeviceMap()</span><br><span class="line">	<span class="comment">//Identifies vGPUs and represents it in appropriate structures</span></span><br><span class="line">	createVgpuIDMap()</span><br><span class="line">	<span class="comment">//Creates and starts device plugin</span></span><br><span class="line">	createDevicePlugins()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>InitiateDevicePlugin 函数主要做三件事：</p>
