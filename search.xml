@@ -471,10 +471,10 @@
     <content><![CDATA[<p>NVIDIA K8s Device Plugin为Kubevirt虚拟机分配gpu和vgpu，该篇文章基于NVIDIA/kubevirt-gpu-device-plugin:v1.2.1，<a href="https://github.com/NVIDIA/kubevirt-gpu-device-plugin/tree/v1.2.1">https://github.com/NVIDIA/kubevirt-gpu-device-plugin/tree/v1.2.1</a></p>
 <h1 id="kubevirt-gpu-device-plugin启动"><a href="#kubevirt-gpu-device-plugin启动" class="headerlink" title="kubevirt-gpu-device-plugin启动"></a>kubevirt-gpu-device-plugin启动</h1><p>还是一样的套路，一切从main.go开始</p>
 <p><u><em>Kubevirt-gpu-device-plugin/cmd/main.go#33</em></u></p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">func main() &#123;</span><br><span class="line">	device_plugin.InitiateDevicePlugin()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	device_plugin.InitiateDevicePlugin()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>main函数调用 InitiateDevicePlugin 函数，直接看 InitiateDevicePlugin</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">func InitiateDevicePlugin() &#123;</span><br><span class="line">	//Identifies GPUs and represents it in appropriate structures</span><br><span class="line">	createIommuDeviceMap()</span><br><span class="line">	//Identifies vGPUs and represents it in appropriate structures</span><br><span class="line">	createVgpuIDMap()</span><br><span class="line">	//Creates and starts device plugin</span><br><span class="line">	createDevicePlugins()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">InitiateDevicePlugin</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">//Identifies GPUs and represents it in appropriate structures</span></span><br><span class="line">	createIommuDeviceMap()</span><br><span class="line">	<span class="comment">//Identifies vGPUs and represents it in appropriate structures</span></span><br><span class="line">	createVgpuIDMap()</span><br><span class="line">	<span class="comment">//Creates and starts device plugin</span></span><br><span class="line">	createDevicePlugins()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>InitiateDevicePlugin 函数主要做三件事：</p>
 <ol>
@@ -493,7 +493,7 @@
       <tags>
         <tag>device-plugins</tag>
         <tag>gpu</tag>
-        <tag>kubevirt-gpu-device-plugins</tag>
+        <tag>kubevirt-gpu-device-plugin</tag>
       </tags>
   </entry>
 </search>

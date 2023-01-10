@@ -18,7 +18,7 @@ http://lizhewei91.github.io/tags/kubernetes/
 http://lizhewei91.github.io/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/
 http://lizhewei91.github.io/tags/nvidia/
 http://lizhewei91.github.io/tags/gpu/
-http://lizhewei91.github.io/tags/kubevirt-gpu-device-plugins/
+http://lizhewei91.github.io/tags/kubevirt-gpu-device-plugin/
 http://lizhewei91.github.io/categories/device-plugins/
 http://lizhewei91.github.io/categories/hexo/
 http://lizhewei91.github.io/categories/pprof/
