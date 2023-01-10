@@ -454,8 +454,7 @@
 <li>Allocate中会遍历ContainerRequests，将DeviceIDs封装到ContainerAllocateResponse的<code>Envs:NVIDIA_VISIBLE_DEVICES</code>中，格式为：”<code>$&#123;ID_1&#125;,$&#123;ID_2&#125;,...</code>”</li>
 <li>除此之外，并没有封装Mounts, Devices, Annotations。</li>
 </ul>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>NVIDIA/k8s-device-plugin的代码中，依赖于nvidia-docker代码库，存在很多golang调用C库的地方，还需要大家自行到</p>
-<p><a href="https://docs.nvidia.com/deploy/nvml-api">nvml api文档</a> 中查看相关C函数声明。这篇博客介绍NVIDIA/k8s-device-plugin的代码实现流程，下一篇博客我觉得还有必要对kubelet device plugin manger进行代码分析，如此才能完整的理解整个交互细节。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>NVIDIA/k8s-device-plugin的代码中，依赖于nvidia-docker代码库，存在很多golang调用C库的地方，还需要大家自行到 <a href="https://docs.nvidia.com/deploy/nvml-api">nvml api文档</a> 中查看相关C函数声明。这篇博客介绍NVIDIA/k8s-device-plugin的代码实现流程，下一篇博客我觉得还有必要对kubelet device plugin manger进行代码分析，如此才能完整的理解整个交互细节。</p>
 ]]></content>
       <categories>
         <category>device-plugins</category>
