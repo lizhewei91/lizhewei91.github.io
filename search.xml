@@ -415,6 +415,17 @@
 <li>只监控<code>EventTypeXidCriticalError</code>事件，一旦监控到某个device的这个Event，就认为该device unhealthy。关于<code>EventTypeXidCriticalError</code>的说明，请参考NVIDIA的<a href="https://docs.nvidia.com/deploy/nvml-api/group__nvmlEventType.html">nvml api文档</a>。</li>
 <li>可以通过设置NVIDIA device plugin Pod内的环境变量<code>DP_DISABLE_HEALTHCHECKS</code>为”all”来取消healthcheck。不设置或者设置为其他值都会启动healthcheck，默认部署时不设置。</li>
 </ul>
+<h2 id="stopPlugins"><a href="#stopPlugins" class="headerlink" title="stopPlugins"></a>stopPlugins</h2><p>stopPlugins的代码如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">func (plugin *NvidiaDevicePlugin) Stop() error &#123;</span><br><span class="line">	if plugin == nil || plugin.server == nil &#123;</span><br><span class="line">		return nil</span><br><span class="line">	&#125;</span><br><span class="line">	log.Printf(&quot;Stopping to serve &#x27;%s&#x27; on %s&quot;, plugin.rm.Resource(), plugin.socket)</span><br><span class="line">	plugin.server.Stop()</span><br><span class="line">	if err := os.Remove(plugin.socket); err != nil &amp;&amp; !os.IsNotExist(err) &#123;</span><br><span class="line">		return err</span><br><span class="line">	&#125;</span><br><span class="line">	plugin.cleanup()</span><br><span class="line">	return nil</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/01/06/46/stop-plugins.png" class="" title="stop-plugins">
+
+<p>stopPlugins主要做三件事：</p>
+<ol>
+<li>停止 device-plugin 的 grpc server</li>
+<li>移除 plugin socket 文件 （/var/lib/kubelet/device-plugins/nvidia-gpu.sock）</li>
+<li>清空 nvidiaDevicePlugin 相关字段。（plugin.server=nil; plugin.health=nil; plugin.stop=nil）</li>
+</ol>
 ]]></content>
       <categories>
         <category>device-plugins</category>
