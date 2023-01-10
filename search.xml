@@ -417,10 +417,10 @@
 </ul>
 ]]></content>
       <categories>
-        <category>device-plugin</category>
+        <category>device-plugins</category>
       </categories>
       <tags>
-        <tag>device-plugin</tag>
+        <tag>device-plugins</tag>
         <tag>nvidia</tag>
         <tag>gpu</tag>
       </tags>
