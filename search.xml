@@ -348,29 +348,6 @@
       </tags>
   </entry>
   <entry>
-    <title>kubelet源码分析</title>
-    <url>/2022/12/09/44/</url>
-    <content><![CDATA[<h2 id="kubelet-主要功能"><a href="#kubelet-主要功能" class="headerlink" title="kubelet 主要功能"></a>kubelet 主要功能</h2><p>在kubernetes集群中，每个Node节点都会启动kubelet进程，用来处理Master节点下发到本节点的任务，管理Pod和其中的容器。</p>
-<h2 id="pod管理"><a href="#pod管理" class="headerlink" title="pod管理"></a>pod管理</h2><p>Kubelet 以 PodSpec 的方式工作。PodSpec 是描述一个 Pod 的 YAML 或 JSON 对象。 kubelet 采用一组通过各种机制提供的 PodSpecs（主要通过 apiserver），并确保这些 PodSpecs 中描述的 Pod 正常健康运行。</p>
-<p>官方提供了3种方式来获取容器信息：</p>
-<ul>
-<li>apiserver：通过 API Server 监听 etcd 目录获取数据；</li>
-<li>File：启动参数 –config 指定的配置目录下的文件；</li>
-<li>通过 url 从网络上某个地址来获取信息</li>
-</ul>
-<p>拿apiserver来说，如果Kubelet 监听到etcd中有新的绑定到本节点的 Pod，则按照 Pod 清单的要求创建该 Pod；如果发现本地的 Pod 被修改，则 Kubelet 会做出相应的修改。</p>
-<img src="/2022/12/09/44/kubelet.png" class="" title="kubelet">
-]]></content>
-      <categories>
-        <category>kubelet</category>
-      </categories>
-      <tags>
-        <tag>kubelet</tag>
-        <tag>kubernetes</tag>
-        <tag>源码分析</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>NVIDIA/k8s-device-plugin源码分析</title>
     <url>/2023/01/06/46/</url>
     <content><![CDATA[<h1 id="device-plugin启动"><a href="#device-plugin启动" class="headerlink" title="device-plugin启动"></a>device-plugin启动</h1><p>该篇文章基于NVIDIA/k8s-device-plugin: v0.13.0，<a href="https://github.com/NVIDIA/k8s-device-plugin/tree/v0.13.0">https://github.com/NVIDIA/k8s-device-plugin/tree/v0.13.0</a></p>
@@ -525,6 +502,27 @@
         <tag>device-plugins</tag>
         <tag>gpu</tag>
         <tag>kubevirt-gpu-device-plugin</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>kubelet源码分析</title>
+    <url>/2023/01/11/14/</url>
+    <content><![CDATA[<h2 id="kubelet-主要功能"><a href="#kubelet-主要功能" class="headerlink" title="kubelet 主要功能"></a>kubelet 主要功能</h2><p>在kubernetes集群中，每个Node节点都会启动kubelet进程，用来处理Master节点下发到本节点的任务，管理Pod和其中的容器。</p>
+<h2 id="pod管理"><a href="#pod管理" class="headerlink" title="pod管理"></a>pod管理</h2><p>Kubelet 以 PodSpec 的方式工作。PodSpec 是描述一个 Pod 的 YAML 或 JSON 对象。 kubelet 采用一组通过各种机制提供的 PodSpecs（主要通过 apiserver），并确保这些 PodSpecs 中描述的 Pod 正常健康运行。</p>
+<p>官方提供了3种方式来获取容器信息：</p>
+<ul>
+<li>apiserver：通过 API Server 监听 etcd 目录获取数据；</li>
+<li>File：启动参数 –config 指定的配置目录下的文件；</li>
+<li>通过 url 从网络上某个地址来获取信息</li>
+</ul>
+<p>拿apiserver来说，如果Kubelet 监听到etcd中有新的绑定到本节点的 Pod，则按照 Pod 清单的要求创建该 Pod；如果发现本地的 Pod 被修改，则 Kubelet 会做出相应的修改。</p>
+<img src="/2023/01/11/14/kubelet.png" class="" title="kubelet">
+]]></content>
+      <categories>
+        <category>kubelet</category>
+      </categories>
+      <tags>
+        <tag>kubelet</tag>
       </tags>
   </entry>
 </search>
