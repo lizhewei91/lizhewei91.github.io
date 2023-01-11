@@ -515,6 +515,8 @@
 <li>启动一个协程对设备进行healthCheck，并监听device-plguin自身socket文件</li>
 </ol>
 <h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>kubevirt-gpu-device-plugin使用前提，是用户使用 vfio-pci 将设备透传至 vm 内，然后，通过读取 vm 内的 pci 设备文件，获取设备的相关信息。iommu,vfio-pci等相关的内容，后续有时间会再补充。</p>
+<h1 id="参考资源"><a href="#参考资源" class="headerlink" title="参考资源"></a>参考资源</h1><p><a href="https://rtoax.blog.csdn.net/article/details/110843839#t11">https://rtoax.blog.csdn.net/article/details/110843839#t11</a></p>
+<p><a href="https://cloud.tencent.com/developer/article/1816469">https://cloud.tencent.com/developer/article/1816469</a></p>
 ]]></content>
       <categories>
         <category>device-plugins</category>
