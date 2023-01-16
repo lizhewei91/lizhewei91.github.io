@@ -538,19 +538,28 @@
 
 <p>下面是核心字段 的说明：</p>
 <ul>
-<li><p><code>checkpointdir</code>：kubelet对外暴露的socket文件，/var/lib/kubelet/device-plugins/kubelet.sock</p>
+<li><p><strong>checkpointdir：</strong>kubelet对外暴露的socket文件，/var/lib/kubelet/device-plugins/kubelet.sock</p>
 </li>
-<li><p><code>endpoints</code>：map对象，key 为 Resource Name，value 为 endpoint 接口( 包括 getPreferredAllocation、allocate、preStartContainer、setStopTime、isStopped、stopGracePeriodExpired )，每个 endpoint 接口对应一个已注册的 device plugin，负责与 device plugin 的 gRPC 通信及缓存 device plugin 反馈的 device states。</p>
+<li><p><strong>endpoints：</strong>map对象，key 为 Resource Name，value 为 endpoint 接口( 包括 getPreferredAllocation、allocate、preStartContainer、setStopTime、isStopped、stopGracePeriodExpired )，每个 endpoint 接口对应一个已注册的 device plugin，负责与 device plugin 的 gRPC 通信及缓存 device plugin 反馈的 device states。</p>
 </li>
-<li><p><code>server</code>：暴漏一个 gRPC 服务。</p>
+<li><p><strong>server：</strong>暴漏一个 gRPC 服务。</p>
 </li>
-<li><p><code>activePods</code>：用来获取该节点上所有 active pods，即 non-Terminated 状态的 Pods。在 kubelet 的initializeRuntimeDependentModules 时会注册 activePods Func 为如下函数</p>
+<li><p><strong>activePods：</strong>用来获取该节点上所有 active pods，即 non-Terminated 状态的 Pods。在 kubelet 的initializeRuntimeDependentModules 时会注册 activePods Func 为如下函数</p>
 </li>
 </ul>
 <figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kl *Kubelet)</span></span> GetActivePods() []*v1.Pod &#123;</span><br><span class="line">	allPods := kl.podManager.GetPods()</span><br><span class="line">	activePods := kl.filterOutInactivePods(allPods)</span><br><span class="line">	<span class="keyword">return</span> activePods</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li></li>
+<li><p><strong>allDevices：</strong>保存当前注册到设备管理器的所有设备</p>
+</li>
+<li><p> <strong>healthyDevices:</strong> map对象，key为 Resource Name，value为对应的健康的 device IDs。 </p>
+</li>
+<li><p> **unhealthyDevices: **map对象，key为 Resource Name，value为对应的不健康的 device IDs。</p>
+</li>
+<li><p><strong>allocatedDevices:</strong>  map对象，key为Resource Name，value为已经分配出去的device IDs。</p>
+</li>
+<li><p><strong>podDevices：</strong>记录每一个pod中每个容器的设备分配情况</p>
+</li>
 </ul>
 ]]></content>
       <categories>
