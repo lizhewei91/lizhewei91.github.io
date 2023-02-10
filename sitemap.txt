@@ -1,5 +1,6 @@
-http://lizhewei91.github.io/2023/01/16/19/
+http://lizhewei91.github.io/2023/02/10/25/
 http://lizhewei91.github.io/2023/01/11/14/
+http://lizhewei91.github.io/2023/01/16/19/
 http://lizhewei91.github.io/2023/01/10/32/
 http://lizhewei91.github.io/2023/01/06/46/
 http://lizhewei91.github.io/2022/11/29/16/
@@ -19,7 +20,10 @@ http://lizhewei91.github.io/tags/nvidia/
 http://lizhewei91.github.io/tags/gpu/
 http://lizhewei91.github.io/tags/kubevirt-gpu-device-plugin/
 http://lizhewei91.github.io/tags/device-manager/
+http://lizhewei91.github.io/tags/kubectl-plugins/
+http://lizhewei91.github.io/tags/krew/
 http://lizhewei91.github.io/categories/device-plugins/
 http://lizhewei91.github.io/categories/hexo/
 http://lizhewei91.github.io/categories/pprof/
 http://lizhewei91.github.io/categories/kubelet/
+http://lizhewei91.github.io/categories/krew/
