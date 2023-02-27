@@ -897,29 +897,29 @@
 
 <h2 id="开启docker子命令manifest功能："><a href="#开启docker子命令manifest功能：" class="headerlink" title="开启docker子命令manifest功能："></a>开启docker子命令manifest功能：</h2><p>manifest是做为docker客户端的子命令存在，不过这个子命令目前处在实验性中一般没有开启。我们需要手动开始这个子命令的功能。开启过程如下：</p>
 <h3 id="编辑config-json"><a href="#编辑config-json" class="headerlink" title="编辑config.json"></a>编辑config.json</h3><p>docker 的默认配置文件config.json是在$HOME目录下的.docker目录下。编辑config.json文件，若目录和文件不存在手动创建。</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">$vim ~/.docker/config.json</span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;experimental&quot;</span>: <span class="string">&quot;enabled&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ vim ~/.docker/config.json</span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;experimental&quot;</span>: <span class="string">&quot;enabled&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h3 id="编辑daemon-json"><a href="#编辑daemon-json" class="headerlink" title="编辑daemon.json"></a>编辑daemon.json</h3><p>编辑daemon.json，若目录和文件不存在手动创建</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">$vim /etc/docker/daemon.json</span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;experimental&quot;</span>: <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ vim /etc/docker/daemon.json</span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;experimental&quot;</span>: <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h3 id="重启docker"><a href="#重启docker" class="headerlink" title="重启docker"></a>重启docker</h3><figure class="highlight go"><table><tr><td class="code"><pre><span class="line">$systemctl daemon-reload</span><br><span class="line">$systemctl restart docker</span><br><span class="line">$docker manifest --help    #----查看manifest帮助信息</span><br></pre></td></tr></table></figure>
+<h3 id="重启docker"><a href="#重启docker" class="headerlink" title="重启docker"></a>重启docker</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ systemctl daemon-reload</span><br><span class="line">$ systemctl restart docker</span><br><span class="line">$ docker manifest --<span class="built_in">help</span>    <span class="comment">#----查看manifest帮助信息</span></span><br></pre></td></tr></table></figure>
 
 <p>开启docker的实验性功能后docker pull可以拉取指定平台镜像如下：</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">$docker pull --platform arm64  镜像 --platform：该参数是用于拉取指定平台的镜像，也是实验性功能，在上面步骤中开启后就会出现。通 过该参数可以手动指定需要的CPU平台镜像，而不用自动去识别。</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker pull --platform arm64  镜像 --platform：该参数是用于拉取指定平台的镜像，也是实验性功能，在上面步骤中开启后就会出现。通 过该参数可以手动指定需要的CPU平台镜像，而不用自动去识别。</span><br></pre></td></tr></table></figure>
 
 <h2 id="使用manifest创建多CPU架构的镜像："><a href="#使用manifest创建多CPU架构的镜像：" class="headerlink" title="使用manifest创建多CPU架构的镜像："></a>使用manifest创建多CPU架构的镜像：</h2><p>查看一个镜像的manifest文件信息</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$docker manifest inspect nginx</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest inspect nginx</span><br></pre></td></tr></table></figure>
 
 <p>查看一个镜像的manifest文件的详细信息，包括cpu平台架构等信息</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$docker manifest inspect --verbose nginx</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest inspect --verbose nginx</span><br></pre></td></tr></table></figure>
 
-<h3 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h3><p>这里准备好了两个不同CPU架构的镜像如下：<br>这里的镜像是自己在docker hub上创建的仓库<br>xxx/public_docker:nginx-arm64<br>xxx/public_docker:nginx-x86<br>必须将上面两个镜像推到docker hub上面</p>
+<h3 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h3><p>这里准备好了两个不同CPU架构的镜像如下：<br>这里的镜像是自己在docker hub上创建的仓库<br>xxx/public_docker:nginx-arm64<br>xxx/public_docker:nginx-x86<br><strong>必须将上面两个镜像推到docker hub上面</strong></p>
 <h3 id="创建一个manifest-list列表："><a href="#创建一个manifest-list列表：" class="headerlink" title="创建一个manifest list列表："></a>创建一个manifest list列表：</h3><p>创建一个自定义命名的镜像名的manifest list，然后用该列表关联仓库里面的两个不同架构的镜像</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">$ docker manifest create xxx/public_docker:nginx-v1 xxx/public_docker:nginx-arm64 xxx/public_docker:nginx-x86</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest create xxx/public_docker:nginx-v1 xxx/public_docker:nginx-arm64 xxx/public_docker:nginx-x86</span><br></pre></td></tr></table></figure>
 
-<h3 id="将创建好的manifest-list-推到仓库中："><a href="#将创建好的manifest-list-推到仓库中：" class="headerlink" title="将创建好的manifest list 推到仓库中："></a>将创建好的manifest list 推到仓库中：</h3><figure class="highlight go"><table><tr><td class="code"><pre><span class="line">$ docker manifest push xxx/public_docker:nginx-v1</span><br></pre></td></tr></table></figure>
+<h3 id="将创建好的manifest-list-推到仓库中："><a href="#将创建好的manifest-list-推到仓库中：" class="headerlink" title="将创建好的manifest list 推到仓库中："></a>将创建好的manifest list 推到仓库中：</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest push xxx/public_docker:nginx-v1</span><br></pre></td></tr></table></figure>
 
-<h3 id="查看仓库中创建好的manifest-list："><a href="#查看仓库中创建好的manifest-list：" class="headerlink" title="查看仓库中创建好的manifest list："></a>查看仓库中创建好的manifest list：</h3><figure class="highlight go"><table><tr><td class="code"><pre><span class="line">$ docker manifest inspect xxx/public_docker:nginx-v1</span><br></pre></td></tr></table></figure>
+<h3 id="查看仓库中创建好的manifest-list："><a href="#查看仓库中创建好的manifest-list：" class="headerlink" title="查看仓库中创建好的manifest list："></a>查看仓库中创建好的manifest list：</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest inspect xxx/public_docker:nginx-v1</span><br></pre></td></tr></table></figure>
 
 ]]></content>
       <categories>
