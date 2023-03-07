@@ -517,11 +517,7 @@
 <li><p><strong>10248（健康检查端口）</strong>：通过访问该端口可以判断 kubelet 是否正常工作, 通过 kubelet 的启动参数 <code>--healthz-port</code> 和 <code>--healthz-bind-address</code> 来指定监听的地址和端口。</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ curl http://127.0.0.1:10248/healthz </span><br><span class="line">ok</span><br></pre></td></tr></table></figure></li>
 <li><p><strong>4194（cAdvisor 监听）</strong>：kublet 通过该端口可以获取到该节点的环境信息以及 node 上运行的容器状态等内容，访问 <a href="http://localhost:4194/">http://localhost:4194</a> 可以看到 cAdvisor 的管理界面,通过 kubelet 的启动参数 <code>--cadvisor-port</code> 可以指定启动的端口。</p>
-</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ curl  http://127.0.0.1:4194/metrics</span><br></pre></td></tr></table></figure>
-
-<ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ curl  http://127.0.0.1:4194/metrics</span><br></pre></td></tr></table></figure></li>
 <li><p><strong>10255 （readonly API</strong>）：提供了 pod 和 node 的信息，接口以只读形式暴露出去，访问该端口不需要认证和鉴权。</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">//  获取 pod 的接口，与 apiserver 的 </span><br><span class="line">// http://127.0.0.1:8080/api/v1/pods?fieldSelector=spec.nodeName=  接口类似</span><br><span class="line">$ curl  http://127.0.0.1:10255/pods</span><br><span class="line"></span><br><span class="line">// 节点信息接口,提供磁盘、网络、CPU、内存等信息</span><br><span class="line">$ curl http://127.0.0.1:10255/spec/</span><br></pre></td></tr></table></figure></li>
 </ul>
