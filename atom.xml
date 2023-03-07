@@ -6,7 +6,7 @@
   <link href="http://lizhewei91.github.io/atom.xml" rel="self"/>
   
   <link href="http://lizhewei91.github.io/"/>
-  <updated>2023-03-02T02:54:06.259Z</updated>
+  <updated>2023-03-07T11:41:50.759Z</updated>
   <id>http://lizhewei91.github.io/</id>
   
   <author>
@@ -15,6 +15,25 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>kubelet volume manager源码分析</title>
+    <link href="http://lizhewei91.github.io/2023/03/07/15/"/>
+    <id>http://lizhewei91.github.io/2023/03/07/15/</id>
+    <published>2023-03-07T08:39:15.000Z</published>
+    <updated>2023-03-07T11:41:50.759Z</updated>
+    
+    
+    
+    
+    <category term="kubelet" scheme="http://lizhewei91.github.io/categories/kubelet/"/>
+    
+    
+    <category term="kubelet" scheme="http://lizhewei91.github.io/tags/kubelet/"/>
+    
+    <category term="volume-manager" scheme="http://lizhewei91.github.io/tags/volume-manager/"/>
+    
+  </entry>
   
   <entry>
     <title>如何构建多CPU架构容器镜像</title>
@@ -44,23 +63,6 @@
     <category term="buildx" scheme="http://lizhewei91.github.io/tags/buildx/"/>
     
     <category term="manifest" scheme="http://lizhewei91.github.io/tags/manifest/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>理解 CNI 和 CNI 插件</title>
-    <link href="http://lizhewei91.github.io/2023/02/15/10/"/>
-    <id>http://lizhewei91.github.io/2023/02/15/10/</id>
-    <published>2023-02-15T09:51:10.000Z</published>
-    <updated>2023-02-17T02:36:22.460Z</updated>
-    
-    
-    
-    
-    <category term="cni" scheme="http://lizhewei91.github.io/categories/cni/"/>
-    
-    
-    <category term="cni" scheme="http://lizhewei91.github.io/tags/cni/"/>
     
   </entry>
   

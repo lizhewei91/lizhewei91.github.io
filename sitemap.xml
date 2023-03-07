@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://lizhewei91.github.io/2023/03/07/15/</loc>
+    
+    <lastmod>2023-03-07</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>http://lizhewei91.github.io/2023/01/11/14/</loc>
     
     <lastmod>2023-03-07</lastmod>
@@ -14,15 +23,6 @@
     <loc>http://lizhewei91.github.io/2023/02/27/09/</loc>
     
     <lastmod>2023-03-02</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/2023/02/15/10/</loc>
-    
-    <lastmod>2023-02-17</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -240,13 +240,6 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/cni/</loc>
-    <lastmod>2023-03-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://lizhewei91.github.io/tags/buildx/</loc>
     <lastmod>2023-03-07</lastmod>
     <changefreq>weekly</changefreq>
@@ -255,6 +248,13 @@
   
   <url>
     <loc>http://lizhewei91.github.io/tags/manifest/</loc>
+    <lastmod>2023-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/volume-manager/</loc>
     <lastmod>2023-03-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -299,13 +299,6 @@
   
   <url>
     <loc>http://lizhewei91.github.io/categories/reloader/</loc>
-    <lastmod>2023-03-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/categories/cni/</loc>
     <lastmod>2023-03-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>

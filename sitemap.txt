@@ -1,6 +1,6 @@
+http://lizhewei91.github.io/2023/03/07/15/
 http://lizhewei91.github.io/2023/01/11/14/
 http://lizhewei91.github.io/2023/02/27/09/
-http://lizhewei91.github.io/2023/02/15/10/
 http://lizhewei91.github.io/2023/02/10/44/
 http://lizhewei91.github.io/2023/02/10/25/
 http://lizhewei91.github.io/2023/01/16/19/
@@ -28,14 +28,13 @@ http://lizhewei91.github.io/tags/krew/
 http://lizhewei91.github.io/tags/reloader/
 http://lizhewei91.github.io/tags/configMap/
 http://lizhewei91.github.io/tags/secret/
-http://lizhewei91.github.io/tags/cni/
 http://lizhewei91.github.io/tags/buildx/
 http://lizhewei91.github.io/tags/manifest/
+http://lizhewei91.github.io/tags/volume-manager/
 http://lizhewei91.github.io/categories/device-plugins/
 http://lizhewei91.github.io/categories/hexo/
 http://lizhewei91.github.io/categories/pprof/
 http://lizhewei91.github.io/categories/kubelet/
 http://lizhewei91.github.io/categories/krew/
 http://lizhewei91.github.io/categories/reloader/
-http://lizhewei91.github.io/categories/cni/
 http://lizhewei91.github.io/categories/buildx/
