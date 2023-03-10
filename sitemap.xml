@@ -2,9 +2,9 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://lizhewei91.github.io/2023/03/07/15/</loc>
+    <loc>http://lizhewei91.github.io/2023/03/09/08/</loc>
     
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -12,6 +12,15 @@
   
   <url>
     <loc>http://lizhewei91.github.io/2023/01/11/14/</loc>
+    
+    <lastmod>2023-03-08</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/2023/03/07/15/</loc>
     
     <lastmod>2023-03-07</lastmod>
     
@@ -121,7 +130,7 @@
 
   <url>
     <loc>http://lizhewei91.github.io/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -129,133 +138,140 @@
   
   <url>
     <loc>http://lizhewei91.github.io/tags/kubernetnes/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/device-plugins/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/hexo/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/pprof/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/golang/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/kubelet/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/nvidia/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/gpu/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/kubevirt-gpu-device-plugin/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/device-manager/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/kubectl-plugins/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/krew/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/reloader/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/configMap/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/secret/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/buildx/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/manifest/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/volume-manager/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/cri/</loc>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
@@ -264,49 +280,49 @@
   
   <url>
     <loc>http://lizhewei91.github.io/categories/device-plugins/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/categories/hexo/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/categories/pprof/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/categories/kubelet/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/categories/krew/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/categories/reloader/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/categories/buildx/</loc>
-    <lastmod>2023-03-07</lastmod>
+    <lastmod>2023-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>

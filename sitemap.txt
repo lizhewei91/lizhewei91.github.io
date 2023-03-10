@@ -1,5 +1,6 @@
-http://lizhewei91.github.io/2023/03/07/15/
+http://lizhewei91.github.io/2023/03/09/08/
 http://lizhewei91.github.io/2023/01/11/14/
+http://lizhewei91.github.io/2023/03/07/15/
 http://lizhewei91.github.io/2023/02/27/09/
 http://lizhewei91.github.io/2023/02/10/44/
 http://lizhewei91.github.io/2023/02/10/25/
@@ -31,6 +32,7 @@ http://lizhewei91.github.io/tags/secret/
 http://lizhewei91.github.io/tags/buildx/
 http://lizhewei91.github.io/tags/manifest/
 http://lizhewei91.github.io/tags/volume-manager/
+http://lizhewei91.github.io/tags/cri/
 http://lizhewei91.github.io/categories/device-plugins/
 http://lizhewei91.github.io/categories/hexo/
 http://lizhewei91.github.io/categories/pprof/
