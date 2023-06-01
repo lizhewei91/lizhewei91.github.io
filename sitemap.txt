@@ -1,5 +1,5 @@
-http://lizhewei91.github.io/2023/03/09/08/
 http://lizhewei91.github.io/2023/06/01/47/
+http://lizhewei91.github.io/2023/03/09/08/
 http://lizhewei91.github.io/2023/02/10/25/
 http://lizhewei91.github.io/2023/02/27/09/
 http://lizhewei91.github.io/2023/03/10/19/
@@ -42,4 +42,4 @@ http://lizhewei91.github.io/categories/kubelet/
 http://lizhewei91.github.io/categories/reloader/
 http://lizhewei91.github.io/categories/%E9%95%9C%E5%83%8F/
 http://lizhewei91.github.io/categories/kubectl-%E6%8F%92%E4%BB%B6/
-http://lizhewei91.github.io/categories/informer/
+http://lizhewei91.github.io/categories/client-go/

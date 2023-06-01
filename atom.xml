@@ -6,7 +6,7 @@
   <link href="http://lizhewei91.github.io/atom.xml" rel="self"/>
   
   <link href="http://lizhewei91.github.io/"/>
-  <updated>2023-06-01T09:14:41.942Z</updated>
+  <updated>2023-06-01T13:45:26.226Z</updated>
   <id>http://lizhewei91.github.io/</id>
   
   <author>
@@ -21,12 +21,12 @@
     <link href="http://lizhewei91.github.io/2023/06/01/47/"/>
     <id>http://lizhewei91.github.io/2023/06/01/47/</id>
     <published>2023-06-01T09:13:47.000Z</published>
-    <updated>2023-06-01T09:14:41.942Z</updated>
+    <updated>2023-06-01T13:45:26.226Z</updated>
     
     
     
     
-    <category term="informer" scheme="http://lizhewei91.github.io/categories/informer/"/>
+    <category term="client-go" scheme="http://lizhewei91.github.io/categories/client-go/"/>
     
     
     <category term="client-go" scheme="http://lizhewei91.github.io/tags/client-go/"/>
