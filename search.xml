@@ -856,7 +856,7 @@
       </tags>
   </entry>
   <entry>
-    <title>kubelet 创建pod源码分析</title>
+    <title>kubelet 创建 pod 源码分析</title>
     <url>/2023/03/09/08/</url>
     <content><![CDATA[<p>本来基于 kubernetnes : v1.25.4</p>
 <p>之前那篇文章对 kubelet 的工作原理做了简单的介绍，接下来，我们对 pod 创建的流程中，kubelet 创建 pod 进行一个详细的分析。</p>
@@ -939,7 +939,7 @@
       </categories>
       <tags>
         <tag>kubelet</tag>
-        <tag>cri</tag>
+        <tag>创建pod流程</tag>
       </tags>
   </entry>
   <entry>
@@ -984,6 +984,18 @@
       <tags>
         <tag>kubelet</tag>
         <tag>node 节点资源分配</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>client-go中informer机制</title>
+    <url>/2023/06/01/47/</url>
+    <content><![CDATA[]]></content>
+      <categories>
+        <category>informer</category>
+      </categories>
+      <tags>
+        <tag>client-go</tag>
+        <tag>informer</tag>
       </tags>
   </entry>
 </search>
