@@ -75,31 +75,6 @@
       </tags>
   </entry>
   <entry>
-    <title>hexo+typora图片插入</title>
-    <url>/2022/11/28/29/</url>
-    <content><![CDATA[<ol>
-<li><strong>Typora设置</strong>。点击文件-&gt;偏好设置-&gt;图像，配置插入图片问复制到指定路径，底下三个勾都选，如下图所示。</li>
-</ol>
-<img src="/2022/11/28/29/image-20220611231725568.png" class="" title="img">
-<ol start="2">
-<li><p><strong>Hexo配置</strong>。在根目录下，进入bash命令框，输入<code>npm install hexo-image-link --save</code>安装插件。</p>
-</li>
-<li><p><strong>更改根目录下_config.yml配置</strong>，找到<code>post_asset_folder</code>，改为true。</p>
-</li>
-<li><p>写文章前，在根目录bash命令框中输入<code>hexo new 文章题目</code>，可以自动在post文件夹中生成<code>文章题目.md</code>与<code>文章题目</code>图片存储目录了。</p>
-</li>
-<li><p>这样就<strong>配置成功</strong>了。写文章之前，现在你可以把图片像word编辑一样<strong>拖动</strong>到typora直接预览，该过程不需要输入什么图片插入指令呀存储路径呀啥的，也不需要专门去对图片进行转存；直接网页端预览，图片可以正常显示。</p>
-</li>
-</ol>
-]]></content>
-      <categories>
-        <category>hexo</category>
-      </categories>
-      <tags>
-        <tag>hexo</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>性能剖析大杀器 pprof</title>
     <url>/2022/11/28/56/</url>
     <content><![CDATA[<h1 id="pprof"><a href="#pprof" class="headerlink" title="pprof"></a>pprof</h1><p>在 Go 语言中，PProf 是用于可视化和分析性能分析数据的工具，pprof 以 profile.proto 读取分析样本的集合，并生成报告以可视化并帮助分析数据（支持文本和图形报告）。</p>
@@ -881,18 +856,6 @@
       </tags>
   </entry>
   <entry>
-    <title>kubelet volume manager源码分析</title>
-    <url>/2023/03/07/15/</url>
-    <content><![CDATA[]]></content>
-      <categories>
-        <category>kubelet</category>
-      </categories>
-      <tags>
-        <tag>kubelet</tag>
-        <tag>volume-manager</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>kubelet 创建pod源码分析</title>
     <url>/2023/03/09/08/</url>
     <content><![CDATA[<p>本来基于 kubernetnes : v1.25.4</p>
@@ -980,18 +943,6 @@
       </tags>
   </entry>
   <entry>
-    <title>kubeadm 搭建k8s集群-v1.26.3</title>
-    <url>/2023/03/22/10/</url>
-    <content><![CDATA[]]></content>
-      <categories>
-        <category>deploy-k8s</category>
-      </categories>
-      <tags>
-        <tag>kubeadm</tag>
-        <tag>deploy-k8s</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>kubelet 资源配置</title>
     <url>/2023/03/10/19/</url>
     <content><![CDATA[<img src="/2023/03/10/19/640.png" class="" title="图片">
@@ -1032,7 +983,7 @@
       </categories>
       <tags>
         <tag>kubelet</tag>
-        <tag>allocatable</tag>
+        <tag>node 节点资源分配</tag>
       </tags>
   </entry>
 </search>
