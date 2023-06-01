@@ -1,9 +1,9 @@
+http://lizhewei91.github.io/2023/02/27/09/
 http://lizhewei91.github.io/2023/03/10/19/
 http://lizhewei91.github.io/2023/03/09/08/
 http://lizhewei91.github.io/2023/01/16/19/
 http://lizhewei91.github.io/2023/02/10/25/
 http://lizhewei91.github.io/2023/02/10/44/
-http://lizhewei91.github.io/2023/02/27/09/
 http://lizhewei91.github.io/2023/01/10/32/
 http://lizhewei91.github.io/2023/01/06/46/
 http://lizhewei91.github.io/2023/01/11/14/
@@ -38,4 +38,4 @@ http://lizhewei91.github.io/categories/pprof/
 http://lizhewei91.github.io/categories/kubelet/
 http://lizhewei91.github.io/categories/krew/
 http://lizhewei91.github.io/categories/reloader/
-http://lizhewei91.github.io/categories/buildx/
+http://lizhewei91.github.io/categories/%E9%95%9C%E5%83%8F/
