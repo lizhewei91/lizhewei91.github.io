@@ -6,7 +6,7 @@
   <link href="http://lizhewei91.github.io/atom.xml" rel="self"/>
   
   <link href="http://lizhewei91.github.io/"/>
-  <updated>2023-06-01T13:45:26.226Z</updated>
+  <updated>2023-06-01T13:46:18.905Z</updated>
   <id>http://lizhewei91.github.io/</id>
   
   <author>
@@ -17,11 +17,11 @@
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
-    <title>client-go中informer机制</title>
+    <title>client-go 中 informer 机制</title>
     <link href="http://lizhewei91.github.io/2023/06/01/47/"/>
     <id>http://lizhewei91.github.io/2023/06/01/47/</id>
     <published>2023-06-01T09:13:47.000Z</published>
-    <updated>2023-06-01T13:45:26.226Z</updated>
+    <updated>2023-06-01T13:46:18.905Z</updated>
     
     
     
