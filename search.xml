@@ -1068,6 +1068,14 @@
 <img src="/2023/07/25/55/image-20230725153335739.png" class="" title="image-20230725153335739">
 
 <img src="/2023/07/25/55/image-20230725153347337.png" class="" title="image-20230725153347337">
+
+<h1 id="中间件注意事项"><a href="#中间件注意事项" class="headerlink" title="中间件注意事项"></a>中间件注意事项</h1><h2 id="gin默认中间件"><a href="#gin默认中间件" class="headerlink" title="gin默认中间件"></a>gin默认中间件</h2><p><code>gin.Default()</code>默认使用了<code>Logger</code>和<code>Recovery</code>中间件，其中：</p>
+<ul>
+<li><code>Logger</code>中间件将日志写入<code>gin.DefaultWriter</code>，即使配置了<code>GIN_MODE=release</code>。</li>
+<li><code>Recovery</code>中间件会recover任何<code>panic</code>。如果有panic的话，会写入500响应码。</li>
+</ul>
+<p>如果不想使用上面两个默认的中间件，可以使用<code>gin.New()</code>新建一个没有任何默认中间件的路由。</p>
+<h2 id="gin中间件中使用goroutine"><a href="#gin中间件中使用goroutine" class="headerlink" title="gin中间件中使用goroutine"></a>gin中间件中使用goroutine</h2><p>当在中间件或<code>handler</code>中启动新的<code>goroutine</code>时，<strong>不能使用</strong>原始的上下文（c *gin.Context），必须使用其只读副本（<code>c.Copy()</code>）。</p>
 ]]></content>
       <categories>
         <category>中间件</category>

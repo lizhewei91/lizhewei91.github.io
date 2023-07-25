@@ -36,7 +36,7 @@
 <meta property="og:image" content="http://lizhewei91.github.io/2023/07/25/55/image-20230725153335739.png">
 <meta property="og:image" content="http://lizhewei91.github.io/2023/07/25/55/image-20230725153347337.png">
 <meta property="article:published_time" content="2023-07-25T03:08:55.000Z">
-<meta property="article:modified_time" content="2023-07-25T09:02:56.687Z">
+<meta property="article:modified_time" content="2023-07-25T10:49:06.118Z">
 <meta property="article:author" content="lizhewei">
 <meta property="article:tag" content="gin">
 <meta property="article:tag" content="中间件">
@@ -226,7 +226,7 @@
   <div class="slimContent">
     <nav id="toc" class="article-toc">
       <h3 class="toc-title">文章目录</h3>
-      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Gin-%E9%BB%98%E8%AE%A4%E4%B8%AD%E9%97%B4%E4%BB%B6"><span class="toc-number">1.</span> <span class="toc-text">Gin 默认中间件</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E4%B8%AD%E9%97%B4%E4%BB%B6"><span class="toc-number">2.</span> <span class="toc-text">自定义中间件</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B3%A8%E5%86%8C%E4%B8%AD%E9%97%B4%E4%BB%B6"><span class="toc-number">3.</span> <span class="toc-text">注册中间件</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%A8%E5%B1%80%E8%B7%AF%E7%94%B1%E6%B3%A8%E5%86%8C"><span class="toc-number">3.1.</span> <span class="toc-text">全局路由注册</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%95%E4%B8%AA%E8%B7%AF%E7%94%B1%E6%B3%A8%E5%86%8C"><span class="toc-number">3.2.</span> <span class="toc-text">单个路由注册</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E8%B7%AF%E7%94%B1%E7%BB%84%E6%B3%A8%E5%86%8C"><span class="toc-number">3.3.</span> <span class="toc-text">为路由组注册</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%B5%8C%E5%A5%97"><span class="toc-number">4.</span> <span class="toc-text">中间件嵌套</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Next"><span class="toc-number">4.1.</span> <span class="toc-text">Next()</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Abort"><span class="toc-number">4.2.</span> <span class="toc-text">Abort()</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Return"><span class="toc-number">4.3.</span> <span class="toc-text">Return</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%8F%96%E5%80%BC"><span class="toc-number">5.</span> <span class="toc-text">中间件取值</span></a></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Gin-%E9%BB%98%E8%AE%A4%E4%B8%AD%E9%97%B4%E4%BB%B6"><span class="toc-number">1.</span> <span class="toc-text">Gin 默认中间件</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E4%B8%AD%E9%97%B4%E4%BB%B6"><span class="toc-number">2.</span> <span class="toc-text">自定义中间件</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B3%A8%E5%86%8C%E4%B8%AD%E9%97%B4%E4%BB%B6"><span class="toc-number">3.</span> <span class="toc-text">注册中间件</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%A8%E5%B1%80%E8%B7%AF%E7%94%B1%E6%B3%A8%E5%86%8C"><span class="toc-number">3.1.</span> <span class="toc-text">全局路由注册</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%95%E4%B8%AA%E8%B7%AF%E7%94%B1%E6%B3%A8%E5%86%8C"><span class="toc-number">3.2.</span> <span class="toc-text">单个路由注册</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E8%B7%AF%E7%94%B1%E7%BB%84%E6%B3%A8%E5%86%8C"><span class="toc-number">3.3.</span> <span class="toc-text">为路由组注册</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%B5%8C%E5%A5%97"><span class="toc-number">4.</span> <span class="toc-text">中间件嵌套</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Next"><span class="toc-number">4.1.</span> <span class="toc-text">Next()</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Abort"><span class="toc-number">4.2.</span> <span class="toc-text">Abort()</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Return"><span class="toc-number">4.3.</span> <span class="toc-text">Return</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%8F%96%E5%80%BC"><span class="toc-number">5.</span> <span class="toc-text">中间件取值</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%AD%E9%97%B4%E4%BB%B6%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="toc-number">6.</span> <span class="toc-text">中间件注意事项</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#gin%E9%BB%98%E8%AE%A4%E4%B8%AD%E9%97%B4%E4%BB%B6"><span class="toc-number">6.1.</span> <span class="toc-text">gin默认中间件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#gin%E4%B8%AD%E9%97%B4%E4%BB%B6%E4%B8%AD%E4%BD%BF%E7%94%A8goroutine"><span class="toc-number">6.2.</span> <span class="toc-text">gin中间件中使用goroutine</span></a></li></ol></li></ol>
     </nav>
   </div>
 </aside>
@@ -270,10 +270,10 @@
         <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2023/07/25/55/#comments" class="article-comment-link">评论</a></span>
         
 	
-		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 1.8k(字)</span>
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 1.9k(字)</span>
 	
 	
-		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 7(分)</span>
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 8(分)</span>
 	
 
       </div>
@@ -359,6 +359,14 @@
 <img src="/2023/07/25/55/image-20230725153335739.png" class="" title="image-20230725153335739">
 
 <img src="/2023/07/25/55/image-20230725153347337.png" class="" title="image-20230725153347337">
+
+<h1 id="中间件注意事项"><a href="#中间件注意事项" class="headerlink" title="中间件注意事项"></a>中间件注意事项</h1><h2 id="gin默认中间件"><a href="#gin默认中间件" class="headerlink" title="gin默认中间件"></a>gin默认中间件</h2><p><code>gin.Default()</code>默认使用了<code>Logger</code>和<code>Recovery</code>中间件，其中：</p>
+<ul>
+<li><code>Logger</code>中间件将日志写入<code>gin.DefaultWriter</code>，即使配置了<code>GIN_MODE=release</code>。</li>
+<li><code>Recovery</code>中间件会recover任何<code>panic</code>。如果有panic的话，会写入500响应码。</li>
+</ul>
+<p>如果不想使用上面两个默认的中间件，可以使用<code>gin.New()</code>新建一个没有任何默认中间件的路由。</p>
+<h2 id="gin中间件中使用goroutine"><a href="#gin中间件中使用goroutine" class="headerlink" title="gin中间件中使用goroutine"></a>gin中间件中使用goroutine</h2><p>当在中间件或<code>handler</code>中启动新的<code>goroutine</code>时，<strong>不能使用</strong>原始的上下文（c *gin.Context），必须使用其只读副本（<code>c.Copy()</code>）。</p>
 
       
     </div>
