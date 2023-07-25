@@ -45,5 +45,5 @@ http://lizhewei91.github.io/categories/kubelet/
 http://lizhewei91.github.io/categories/reloader/
 http://lizhewei91.github.io/categories/%E9%95%9C%E5%83%8F/
 http://lizhewei91.github.io/categories/kubectl-%E6%8F%92%E4%BB%B6/
-http://lizhewei91.github.io/categories/%E4%B8%AD%E9%97%B4%E4%BB%B6/
 http://lizhewei91.github.io/categories/operator/
+http://lizhewei91.github.io/categories/gin/
