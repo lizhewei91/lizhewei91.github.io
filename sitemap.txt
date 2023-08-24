@@ -1,5 +1,7 @@
-http://lizhewei91.github.io/2023/07/25/55/
 http://lizhewei91.github.io/2023/07/21/00/
+http://lizhewei91.github.io/2023/08/23/38/
+http://lizhewei91.github.io/2023/07/25/13/
+http://lizhewei91.github.io/2023/07/25/55/
 http://lizhewei91.github.io/2023/07/17/39/
 http://lizhewei91.github.io/2023/03/09/08/
 http://lizhewei91.github.io/2023/02/10/25/
@@ -39,6 +41,8 @@ http://lizhewei91.github.io/tags/%E5%88%9B%E5%BB%BApod%E6%B5%81%E7%A8%8B/
 http://lizhewei91.github.io/tags/gin/
 http://lizhewei91.github.io/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/
 http://lizhewei91.github.io/tags/operator/
+http://lizhewei91.github.io/tags/jwt/
+http://lizhewei91.github.io/tags/code-generator/
 http://lizhewei91.github.io/categories/device-plugins/
 http://lizhewei91.github.io/categories/pprof/
 http://lizhewei91.github.io/categories/kubelet/
@@ -47,3 +51,4 @@ http://lizhewei91.github.io/categories/%E9%95%9C%E5%83%8F/
 http://lizhewei91.github.io/categories/kubectl-%E6%8F%92%E4%BB%B6/
 http://lizhewei91.github.io/categories/operator/
 http://lizhewei91.github.io/categories/gin/
+http://lizhewei91.github.io/categories/code-generator/

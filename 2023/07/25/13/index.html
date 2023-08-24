@@ -17,25 +17,22 @@
   <meta http-equiv="window-target" content="_top" />
   
   
-  <title>kubelet 资源配置 | lizhewei&#39;s Blog</title>
-  <meta name="description" content="Kubernetes 的节点可以按照 Capacity 调度。默认情况下 pod 能够使用节点全部可用容量。 这是个问题，因为节点自己通常运行了不少驱动 OS 和 Kubernetes 的系统守护进程。 除非为这些系统守护进程留出资源，否则它们将与 Pod 争夺资源并导致节点资源短缺问题。 kubelet 公开了一个名为 ‘Node Allocatable’ 的特性，有助于为系统守护进程预留计">
+  <title>Gin实战-使用JWT认证 | lizhewei&#39;s Blog</title>
+  <meta name="description" content="什么是 JWT?JWT全称JSON Web Token是一种跨域认证解决方案，属于一个开放的标准，它规定了一种Token 实现方式，目前多用于前后端分离项目和 OAuth2.0 业务场景下。 为什么需要JWT？在之前的一些web项目中，我们通常使用的是Cookie-Session模式实现用户认证。相关流程大致如下：  用户在浏览器端填写用户名和密码，并发送给服务端 服务端对用户名和密码校验通过后会">
 <meta property="og:type" content="article">
-<meta property="og:title" content="kubelet 资源配置">
-<meta property="og:url" content="http://lizhewei91.github.io/2023/03/10/19/index.html">
+<meta property="og:title" content="Gin实战-使用JWT认证">
+<meta property="og:url" content="http://lizhewei91.github.io/2023/07/25/13/index.html">
 <meta property="og:site_name" content="lizhewei&#39;Blog">
-<meta property="og:description" content="Kubernetes 的节点可以按照 Capacity 调度。默认情况下 pod 能够使用节点全部可用容量。 这是个问题，因为节点自己通常运行了不少驱动 OS 和 Kubernetes 的系统守护进程。 除非为这些系统守护进程留出资源，否则它们将与 Pod 争夺资源并导致节点资源短缺问题。 kubelet 公开了一个名为 ‘Node Allocatable’ 的特性，有助于为系统守护进程预留计">
+<meta property="og:description" content="什么是 JWT?JWT全称JSON Web Token是一种跨域认证解决方案，属于一个开放的标准，它规定了一种Token 实现方式，目前多用于前后端分离项目和 OAuth2.0 业务场景下。 为什么需要JWT？在之前的一些web项目中，我们通常使用的是Cookie-Session模式实现用户认证。相关流程大致如下：  用户在浏览器端填写用户名和密码，并发送给服务端 服务端对用户名和密码校验通过后会">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://lizhewei91.github.io/2023/03/10/19/640.png">
-<meta property="og:image" content="http://lizhewei91.github.io/2023/03/10/19/640-20230310155640575.png">
-<meta property="article:published_time" content="2023-03-10T07:03:19.000Z">
-<meta property="article:modified_time" content="2023-06-01T09:04:07.404Z">
+<meta property="article:published_time" content="2023-07-25T11:18:13.000Z">
+<meta property="article:modified_time" content="2023-07-25T11:24:08.082Z">
 <meta property="article:author" content="lizhewei">
-<meta property="article:tag" content="kubelet">
-<meta property="article:tag" content="node 节点资源分配">
+<meta property="article:tag" content="gin">
+<meta property="article:tag" content="jwt">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://lizhewei91.github.io/2023/03/10/19/640.png">
   <!-- Canonical links -->
-  <link rel="canonical" href="http://lizhewei91.github.io/2023/03/10/19/index.html">
+  <link rel="canonical" href="http://lizhewei91.github.io/2023/07/25/13/index.html">
   
     <link rel="alternate" href="/atom.xml" title="lizhewei&#39;Blog" type="application/atom+xml">
   
@@ -218,21 +215,21 @@
   <div class="slimContent">
     <nav id="toc" class="article-toc">
       <h3 class="toc-title">文章目录</h3>
-      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%8A%82%E7%82%B9%E5%8F%AF%E5%88%86%E9%85%8D%E8%B5%84%E6%BA%90"><span class="toc-number">1.</span> <span class="toc-text">节点可分配资源</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E8%B5%84%E6%BA%90%E9%A2%84%E7%95%99"><span class="toc-number">2.</span> <span class="toc-text">配置资源预留</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE-cgroup-%E9%A9%B1%E5%8A%A8"><span class="toc-number">2.1.</span> <span class="toc-text">配置 cgroup 驱动</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Kube-%E9%A2%84%E7%95%99%E5%80%BC"><span class="toc-number">2.2.</span> <span class="toc-text">Kube 预留值</span></a></li></ol></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-JWT"><span class="toc-number">1.</span> <span class="toc-text">什么是 JWT?</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81JWT%EF%BC%9F"><span class="toc-number">2.</span> <span class="toc-text">为什么需要JWT？</span></a></li></ol>
     </nav>
   </div>
 </aside>
 
 <main class="main" role="main">
   <div class="content">
-  <article id="post-kubelet-resource-allocation" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+  <article id="post-Gin实战-使用JWT认证" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
     
     <div class="article-header">
       
         
   
     <h1 class="article-title" itemprop="name">
-      kubelet 资源配置
+      Gin实战-使用JWT认证
     </h1>
   
 
@@ -240,70 +237,51 @@
       <div class="article-meta">
         <span class="article-date">
     <i class="icon icon-calendar-check"></i>
-	<a href="/2023/03/10/19/" class="article-date">
-	  <time datetime="2023-03-10T07:03:19.000Z" itemprop="datePublished">2023-03-10</time>
+	<a href="/2023/07/25/13/" class="article-date">
+	  <time datetime="2023-07-25T11:18:13.000Z" itemprop="datePublished">2023-07-25</time>
 	</a>
 </span>
         
   <span class="article-category">
     <i class="icon icon-folder"></i>
-    <a class="article-category-link" href="/categories/kubelet/">kubelet</a>
+    <a class="article-category-link" href="/categories/gin/">gin</a>
   </span>
 
         
   <span class="article-tag">
     <i class="icon icon-tags"></i>
-	<a class="article-tag-link-link" href="/tags/kubelet/" rel="tag">kubelet</a>, <a class="article-tag-link-link" href="/tags/node-%E8%8A%82%E7%82%B9%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D/" rel="tag">node 节点资源分配</a>
+	<a class="article-tag-link-link" href="/tags/gin/" rel="tag">gin</a>, <a class="article-tag-link-link" href="/tags/jwt/" rel="tag">jwt</a>
   </span>
 
 
         
 
-        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2023/03/10/19/#comments" class="article-comment-link">评论</a></span>
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2023/07/25/13/#comments" class="article-comment-link">评论</a></span>
         
 	
-		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 766(字)</span>
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 482(字)</span>
 	
 	
-		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 2(分)</span>
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 1(分)</span>
 	
 
       </div>
     </div>
     <div class="article-entry marked-body" itemprop="articleBody">
       
-        <img src="/2023/03/10/19/640.png" class="" title="图片">
-
-<p>Kubernetes 的节点可以按照 <code>Capacity</code> 调度。默认情况下 pod 能够使用节点全部可用容量。 这是个问题，因为节点自己通常运行了不少驱动 OS 和 Kubernetes 的系统守护进程。 除非为这些系统守护进程留出资源，否则它们将与 Pod 争夺资源并导致节点资源短缺问题。</p>
-<p><code>kubelet</code> 公开了一个名为 ‘Node Allocatable’ 的特性，有助于为系统守护进程预留计算资源。 Kubernetes 推荐集群管理员按照每个节点上的工作负载密度配置 ‘Node Allocatable’。</p>
-<h2 id="节点可分配资源"><a href="#节点可分配资源" class="headerlink" title="节点可分配资源"></a>节点可分配资源</h2><p>Kubernetes 节点上的 ‘Allocatable’ 被定义为 Pod 可用计算资源量。 调度器不会超额申请 ‘Allocatable’。 目前支持 **‘CPU’、’memory’ 和 ‘ephemeral-storage’ ** 这几个参数。</p>
-<p>我们可以通过 <code>kubectl describe node</code> 命令查看节点可分配资源的数据：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ kubectl describe node node-2</span><br><span class="line">...</span><br><span class="line">Capacity:</span><br><span class="line">  cpu:                40</span><br><span class="line">  ephemeral-storage:  276590640Ki</span><br><span class="line">  hugepages-1Gi:      0</span><br><span class="line">  hugepages-2Mi:      0</span><br><span class="line">  memory:             131273628Ki</span><br><span class="line">  pods:               255</span><br><span class="line">Allocatable:</span><br><span class="line">  cpu:                38976m</span><br><span class="line">  ephemeral-storage:  254905933402</span><br><span class="line">  hugepages-1Gi:      0</span><br><span class="line">  hugepages-2Mi:      0</span><br><span class="line">  memory:             131171228Ki</span><br><span class="line">  pods:               255</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-
-<p>可以看到其中有 <code>Capacity</code> 与 <code>Allocatable</code> 两项内容，其中的 <code>Allocatable</code> 就是节点可被分配的资源，我们这里没有配置资源预留，所以默认情况下 <code>Capacity</code> 与 <code>Allocatable</code> 的值基本上是一致的。下图显示了可分配资源和资源预留之间的关系：</p>
-<img src="/2023/03/10/19/640-20230310155640575.png" class="" title="图片">
-
-<ul>
-<li>目前支持 cpu, memory, <code>ephemeral-storage</code> 三种资源预留。</li>
-<li>Node Capacity 是节点的所有硬件资源，<code>kube-reserved</code> 是给 kube 组件预留的资源，<code>system-reserved</code> 是给系统进程预留的资源，<code>eviction-threshold</code> 是 kubelet 驱逐的阈值设定，<code>allocatable</code> 才是真正调度器调度 Pod 时的参考值（保证节点上所有 Pods 的 request 资源不超过 Allocatable）。</li>
-</ul>
-<p>节点可分配资源的计算方式为：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">Node Allocatable Resource = Node Capacity - Kube-reserved - system-reserved - eviction-threshold</span><br></pre></td></tr></table></figure>
-
-<h2 id="配置资源预留"><a href="#配置资源预留" class="headerlink" title="配置资源预留"></a><strong>配置资源预留</strong></h2><h3 id="配置-cgroup-驱动"><a href="#配置-cgroup-驱动" class="headerlink" title="配置 cgroup 驱动"></a>配置 cgroup 驱动</h3><p><code>kubelet</code> 支持在主机上使用 cgroup 驱动操作 cgroup 层次结构。 该驱动通过 <code>--cgroup-driver</code> 标志进行配置。</p>
-<p>支持的参数值如下：</p>
-<ul>
-<li><code>cgroupfs</code> 是默认的驱动，在主机上直接操作 cgroup 文件系统以对 cgroup 沙箱进行管理。</li>
-<li><code>systemd</code> 是可选的驱动，使用 init 系统支持的资源的瞬时切片管理 cgroup 沙箱。</li>
-</ul>
-<p>取决于相关容器运行时的配置，操作员可能需要选择一个特定的 cgroup 驱动来保证系统正常运行。</p>
-<p>如果操作员使用 <code>containerd</code> 运行时提供的 <code>systemd</code> cgroup 驱动时， 必须配置 <code>kubelet</code> 使用 <code>systemd</code> cgroup 驱动</p>
-<h3 id="Kube-预留值"><a href="#Kube-预留值" class="headerlink" title="Kube 预留值"></a><strong>Kube 预留值</strong></h3><ul>
-<li><strong>Kubelet 标志</strong>：<code>--kube-reserved=[cpu=100m][,][memory=100Mi][,][ephemeral-storage=1Gi][,][pid=1000]</code></li>
-<li><strong>Kubelet 标志</strong>：<code>--kube-reserved-cgroup=</code></li>
-</ul>
-<p><code>kube-reserved</code> 用来给诸如 <code>kubelet</code>、容器运行时、节点问题监测器等 Kubernetes 系统守护进程记述其资源预留值。 该配置并非用来给以 Pod 形式运行的系统守护进程预留资源。<code>kube-reserved</code> 通常是节点上 <code>Pod 密度</code> 的函数。</p>
-<p>除了 <code>cpu</code>、<code>内存</code> 和 <code>ephemeral-storage</code> 之外，<code>pid</code> 可用来指定为 Kubernetes 系统守护进程预留指定数量的进程 ID。</p>
+        <h1 id="什么是-JWT"><a href="#什么是-JWT" class="headerlink" title="什么是 JWT?"></a>什么是 JWT?</h1><p>JWT全称JSON Web Token是一种跨域认证解决方案，属于一个开放的标准，它规定了一种Token 实现方式，目前多用于前后端分离项目和 OAuth2.0 业务场景下。</p>
+<h1 id="为什么需要JWT？"><a href="#为什么需要JWT？" class="headerlink" title="为什么需要JWT？"></a>为什么需要JWT？</h1><p>在之前的一些web项目中，我们通常使用的是<code>Cookie-Session</code>模式实现用户认证。相关流程大致如下：</p>
+<ol>
+<li>用户在浏览器端填写用户名和密码，并发送给服务端</li>
+<li>服务端对用户名和密码校验通过后会生成一份保存当前用户相关信息的session数据和一个与之对应的标识（通常称为session_id）</li>
+<li>服务端返回响应时将上一步的session_id写入用户浏览器的Cookie</li>
+<li>后续用户来自该浏览器的每次请求都会自动携带包含session_id的Cookie</li>
+<li>服务端通过请求中的session_id就能找到之前保存的该用户那份session数据，从而获取该用户的相关信息。</li>
+</ol>
+<p>这种方案依赖于客户端（浏览器）保存 Cookie，并且需要在服务端存储用户的session数据。</p>
+<p>在移动互联网时代，我们的用户可能使用浏览器也可能使用APP来访问我们的服务，我们的web应用可能是前后端分开部署在不同的端口，有时候我们还需要支持第三方登录，这下<code>Cookie-Session</code>的模式就有些力不从心了。</p>
+<p>JWT就是一种基于Token的轻量级认证模式，服务端认证通过后，会生成一个JSON对象，经过签名后得到一个Token（令牌）再发回给用户，用户后续请求只需要带上这个Token，服务端解密之后就能获取该用户的相关信息了。</p>
+<p>想要了解JWT的原理，推荐大家阅读：<a target="_blank" rel="noopener" href="https://www.ruanyifeng.com/blog/2018/07/json_web_token-tutorial.html">阮一峰的JWT入门教程</a></p>
 
       
     </div>
@@ -313,7 +291,7 @@
     
     <li class="post-copyright-link hidden-xs">
       <strong>本文链接：</strong>
-      <a href="http://lizhewei91.github.io/2023/03/10/19/" title="kubelet 资源配置" target="_blank" rel="external">http://lizhewei91.github.io/2023/03/10/19/</a>
+      <a href="http://lizhewei91.github.io/2023/07/25/13/" title="Gin实战-使用JWT认证" target="_blank" rel="external">http://lizhewei91.github.io/2023/07/25/13/</a>
     </li>
     
     <li class="post-copyright-license">
@@ -360,12 +338,12 @@
   <ul class="pager pull-left">
     
     <li class="prev">
-      <a href="/2023/07/17/39/" title="kube-scheduler"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+      <a href="/2023/08/23/38/" title="使用 code-generator 生成 crd 的 clientset、informer、listers"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
     </li>
     
     
     <li class="next">
-      <a href="/2023/03/09/08/" title="kubelet 创建 pod 源码分析"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+      <a href="/2023/07/25/55/" title="Gin实战-中间件开发"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
     </li>
     
     
