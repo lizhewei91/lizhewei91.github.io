@@ -26,7 +26,7 @@
 <meta property="og:description" content="什么是 operator ？operator 是一种 kubernetes 的扩展形式，利用自定义资源对象（Custom Resource）来管理应用和组件，允许用户以 Kubernetes 的声明式 API 风格来管理应用及服务。  Operator &#x3D; CRD + Controller + Webhook  目前，构架 Operator 框架主要有两个工具 Kubebuilder 和 oper">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2023-07-21T07:28:00.000Z">
-<meta property="article:modified_time" content="2023-08-24T10:51:31.225Z">
+<meta property="article:modified_time" content="2023-08-24T10:54:50.243Z">
 <meta property="article:author" content="lizhewei">
 <meta property="article:tag" content="operator">
 <meta name="twitter:card" content="summary">
@@ -210,6 +210,15 @@
 
   
   
+  <aside class="sidebar sidebar-toc collapse   in  " id="collapseToc" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    <nav id="toc" class="article-toc">
+      <h3 class="toc-title">文章目录</h3>
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-operator-%EF%BC%9F"><span class="toc-number">1.</span> <span class="toc-text">什么是 operator ？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#code-generator"><span class="toc-number">2.</span> <span class="toc-text">code-generator</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE%E8%AE%BE%E8%AE%A1"><span class="toc-number">3.</span> <span class="toc-text">项目设计</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96%E9%A1%B9%E7%9B%AE"><span class="toc-number">4.</span> <span class="toc-text">初始化项目</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E9%A1%B9%E7%9B%AE%EF%BC%88crd-controller%EF%BC%89"><span class="toc-number">4.1.</span> <span class="toc-text">创建一个项目（crd-controller）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-code-generator"><span class="toc-number">4.2.</span> <span class="toc-text">使用 code-generator</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0%E4%BE%9D%E8%B5%96%E7%89%88%E6%9C%AC"><span class="toc-number">4.2.1.</span> <span class="toc-text">更新依赖版本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-code-generator"><span class="toc-number">4.2.2.</span> <span class="toc-text">安装 code-generator</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A2%9E%E5%8A%A0-code-generator-tag"><span class="toc-number">4.2.3.</span> <span class="toc-text">增加 code-generator tag</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%A7%E8%A1%8C-update-codegen-sh"><span class="toc-number">4.2.4.</span> <span class="toc-text">执行 update-codegen.sh</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%80%E5%8F%91-controller"><span class="toc-number">4.3.</span> <span class="toc-text">开发 controller</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#main%E5%87%BD%E6%95%B0"><span class="toc-number">4.4.</span> <span class="toc-text">main函数</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">5.</span> <span class="toc-text">参考资料</span></a></li></ol>
+    </nav>
+  </div>
+</aside>
+
 <main class="main" role="main">
   <div class="content">
   <article id="post-从零到1开发一个operator" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
@@ -457,6 +466,14 @@
       <a href="/2023/07/17/39/" title="kube-scheduler"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
     </li>
     
+    
+    <li class="toggle-toc">
+      <a class="toggle-btn " data-toggle="collapse" href="#collapseToc" aria-expanded="false" title="文章目录" role="button">    <span>[&nbsp;</span><span>文章目录</span>
+        <i class="text-collapsed icon icon-anchor"></i>
+        <i class="text-in icon icon-close"></i>
+        <span>]</span>
+      </a>
+    </li>
     
   </ul>
   
