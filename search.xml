@@ -1097,7 +1097,7 @@
 <blockquote>
 <p>Operator = CRD + Controller + Webhook</p>
 </blockquote>
-<p>目前，构架 Operator 框架主要有两个工具 Kubebuilder 和 operator SDK，本文主要讲述如何不使用脚手架，从零到1开发一个自己的 Operator 应用。</p>
+<p>目前，构架 Operator 框架主要有两个工具 Kubebuilder 和 operator SDK，<strong>本文主要讲述如何不使用脚手架，从零到1开发一个自己的 Operator 应用</strong>。</p>
 <p>先放一张 controller与informer交互的经典图</p>
 <img src="/2023/07/21/00/client-go-controller-interaction.jpeg" class="" title="client-go-controller-interaction">
 
@@ -1238,6 +1238,7 @@
       </categories>
       <tags>
         <tag>operator</tag>
+        <tag>code-generator</tag>
       </tags>
   </entry>
   <entry>
@@ -1263,19 +1264,6 @@
       <tags>
         <tag>gin</tag>
         <tag>jwt</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>使用 code-generator 生成 crd 的 clientset、informer、listers</title>
-    <url>/2023/08/23/38/</url>
-    <content><![CDATA[<h1 id="code-generator"><a href="#code-generator" class="headerlink" title="code-generator"></a>code-generator</h1><p><code>k8s.io/client-go</code> 提供了对 k8s 原生资源的 informer 和 clientset 等等，但对于自定义资源的操作则相对低效，需要使用 rest api 和 dynamic client 来操作，并自己实现反序列化等功能。</p>
-<p>code-generator 提供了以下工具用于为 k8s 中的资源生成相关代码，可以更加方便的操作自定义资源：</p>
-]]></content>
-      <categories>
-        <category>code-generator</category>
-      </categories>
-      <tags>
-        <tag>code-generator</tag>
       </tags>
   </entry>
 </search>
