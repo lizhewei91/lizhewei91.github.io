@@ -1304,7 +1304,7 @@
       </tags>
   </entry>
   <entry>
-    <title>使用kubebuilder开发一个operator应用</title>
+    <title>使用 kubebuilder 开发一个 operator 应用</title>
     <url>/2023/09/01/10/</url>
     <content><![CDATA[<h1 id="Kubebuilder-介绍"><a href="#Kubebuilder-介绍" class="headerlink" title="Kubebuilder 介绍"></a>Kubebuilder 介绍</h1><p><a href="https://github.com/kubernetes-sigs/kubebuilder">Kubebuilder</a> 是一个使用 CRDs 构建 K8s API 的 SDK，主要是：</p>
 <ul>
@@ -1344,7 +1344,7 @@
 <li>kind: 此 CRD 的类型，使用大驼峰单数形式；</li>
 <li>namespaced: 此 CRD 是k8s集群级别资源，还是 namespace隔离的</li>
 </ul>
-<h3 id="创建webhook（可选）"><a href="#创建webhook（可选）" class="headerlink" title="创建webhook（可选）"></a>创建webhook（可选）</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">// 创建UnitedSet的 MutatingAdmissionWebhook 和 ValidatingAdmissionWebhook</span><br><span class="line">kubebuilder create webhook --group extensions --version v1 --kind UnitedDeployment --defaulting --programmatic-validation</span><br></pre></td></tr></table></figure>
+<h3 id="创建-webhook（可选）"><a href="#创建-webhook（可选）" class="headerlink" title="创建 webhook（可选）"></a>创建 webhook（可选）</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">// 创建UnitedSet的 MutatingAdmissionWebhook 和 ValidatingAdmissionWebhook</span><br><span class="line">kubebuilder create webhook --group extensions --version v1 --kind UnitedDeployment --defaulting --programmatic-validation</span><br></pre></td></tr></table></figure>
 
 <p><strong>参数解读</strong>：</p>
 <ul>
@@ -1372,7 +1372,7 @@
 <p>需要将初始化的k8s库更新到要使用的版本，如：</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">K8S_VERSION=v0.28.0</span><br><span class="line">go get k8s.io/api@<span class="variable">$K8S_VERSION</span></span><br><span class="line">go get k8s.io/client-go@<span class="variable">$K8S_VERSION</span></span><br><span class="line">go get k8s.io/apimachinery@<span class="variable">$K8S_VERSION</span></span><br></pre></td></tr></table></figure>
 
-<h4 id="安装code-generator"><a href="#安装code-generator" class="headerlink" title="安装code-generator"></a>安装code-generator</h4><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">K8S_VERSION=v0.28.0</span><br><span class="line">go get k8s.io/code-generator@<span class="variable">$K8S_VERSION</span></span><br><span class="line">go mod vendor</span><br></pre></td></tr></table></figure>
+<h4 id="安装-code-generator"><a href="#安装-code-generator" class="headerlink" title="安装 code-generator"></a>安装 code-generator</h4><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">K8S_VERSION=v0.28.0</span><br><span class="line">go get k8s.io/code-generator@<span class="variable">$K8S_VERSION</span></span><br><span class="line">go mod vendor</span><br></pre></td></tr></table></figure>
 
 <blockquote>
 <p><strong>注意：</strong></p>
@@ -1381,7 +1381,7 @@
 <li>需要将依赖复制到 vendor 中</li>
 </ul>
 </blockquote>
-<h4 id="创建-amp-amp-修改所需文件"><a href="#创建-amp-amp-修改所需文件" class="headerlink" title="创建&amp;&amp;修改所需文件"></a>创建&amp;&amp;修改所需文件</h4><p>需要在api目录下创建code-generator所需的文件，并添加相关注释。</p>
+<h4 id="创建-amp-amp-修改所需文件"><a href="#创建-amp-amp-修改所需文件" class="headerlink" title="创建 &amp;&amp; 修改所需文件"></a>创建 &amp;&amp; 修改所需文件</h4><p>需要在api目录下创建code-generator所需的文件，并添加相关注释。</p>
 <ul>
 <li><p>新增 <code>api/v1/doc.go</code></p>
 <p><strong>注意：</strong>修改groupName，package与api的version保持一致。</p>
@@ -1403,7 +1403,7 @@
 </ul>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/usr/bin/env bash</span></span><br><span class="line"></span><br><span class="line">set -o errexit</span><br><span class="line">set -o nounset</span><br><span class="line">set -o pipefail</span><br><span class="line"></span><br><span class="line">SCRIPT_ROOT=$(dirname &quot;$&#123;BASH_SOURCE[0]&#125;&quot;)/..</span><br><span class="line">CODEGEN_PKG=$&#123;CODEGEN_PKG:-$(cd &quot;$&#123;SCRIPT_ROOT&#125;&quot;; ls -d -1 ./vendor/k8s.io/code-generator 2&gt;/dev/null || echo ../code-generator)&#125;</span><br><span class="line"></span><br><span class="line">source &quot;$&#123;CODEGEN_PKG&#125;/kube_codegen.sh&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">generate the code with:</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">--output-base    because this script should also be able to run inside the vendor <span class="built_in">dir</span> of</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">                 k8s.io/kubernetes. The output-base is needed <span class="keyword">for</span> the generators to output into the vendor <span class="built_in">dir</span></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">                 instead of the <span class="variable">$GOPATH</span> directly. For normal projects this can be dropped.</span></span><br><span class="line"></span><br><span class="line">kube::codegen::gen_helpers \</span><br><span class="line">    --input-pkg-root kubebuilder-project/apis \</span><br><span class="line">    --output-base &quot;$(dirname &quot;$&#123;BASH_SOURCE[0]&#125;&quot;)/../..&quot; \</span><br><span class="line">    --boilerplate &quot;$&#123;SCRIPT_ROOT&#125;/hack/custom-boilerplate.go.txt&quot;</span><br><span class="line"></span><br><span class="line">kube::codegen::gen_client \</span><br><span class="line">    --with-watch \</span><br><span class="line">    --input-pkg-root kubebuilder-project/apis \</span><br><span class="line">    --output-pkg-root kubebuilder-project/pkg/generated \</span><br><span class="line">    --output-base &quot;$(dirname &quot;$&#123;BASH_SOURCE[0]&#125;&quot;)/../..&quot; \</span><br><span class="line">    --boilerplate &quot;$&#123;SCRIPT_ROOT&#125;/hack/custom-boilerplate.go.txt&quot;</span><br></pre></td></tr></table></figure>
 
-<p>hack目录下，新建 verify-codegen.sh </p>
+<p>hack 目录下，新建 verify-codegen.sh </p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/usr/bin/env bash</span></span><br><span class="line"></span><br><span class="line">set -o errexit</span><br><span class="line">set -o nounset</span><br><span class="line">set -o pipefail</span><br><span class="line"></span><br><span class="line">SCRIPT_ROOT=&quot;$(cd &quot;$(dirname &quot;$&#123;BASH_SOURCE[0]&#125;&quot;)/..&quot; &amp;&amp; pwd -P)&quot;</span><br><span class="line">DIFFROOT=&quot;$&#123;SCRIPT_ROOT&#125;/pkg&quot;</span><br><span class="line">TMP_DIFFROOT=&quot;$(mktemp -d -t &quot;$(basename &quot;$0&quot;).XXXXXX&quot;)/pkg&quot;</span><br><span class="line"></span><br><span class="line">cleanup() &#123;</span><br><span class="line">  rm -rf &quot;$&#123;TMP_DIFFROOT&#125;&quot;</span><br><span class="line">&#125;</span><br><span class="line">trap &quot;cleanup&quot; EXIT SIGINT</span><br><span class="line"></span><br><span class="line">cleanup</span><br><span class="line"></span><br><span class="line">mkdir -p &quot;$&#123;TMP_DIFFROOT&#125;&quot;</span><br><span class="line">cp -a &quot;$&#123;DIFFROOT&#125;&quot;/* &quot;$&#123;TMP_DIFFROOT&#125;&quot;</span><br><span class="line"></span><br><span class="line">&quot;$&#123;SCRIPT_ROOT&#125;/hack/update-codegen.sh&quot;</span><br><span class="line">echo &quot;diffing $&#123;DIFFROOT&#125; against freshly generated codegen&quot;</span><br><span class="line">ret=0</span><br><span class="line">diff -Naupr &quot;$&#123;DIFFROOT&#125;&quot; &quot;$&#123;TMP_DIFFROOT&#125;&quot; || ret=$?</span><br><span class="line">if [[ $ret -eq 0 ]]; then</span><br><span class="line">  echo &quot;$&#123;DIFFROOT&#125; up to date.&quot;</span><br><span class="line">else</span><br><span class="line">  echo &quot;$&#123;DIFFROOT&#125; is out of date. Please run hack/update-codegen.sh&quot;</span><br><span class="line">  exit 1</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
 
 <p>hack目录脚本文件，可以参考，<a href="https://github.com/kubernetes/sample-controller/tree/v0.28.0/hack">sample-controller/hack</a> 项目</p>
