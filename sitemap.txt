@@ -57,5 +57,4 @@ http://lizhewei91.github.io/categories/kubectl-%E6%8F%92%E4%BB%B6/
 http://lizhewei91.github.io/categories/operator/
 http://lizhewei91.github.io/categories/gin/
 http://lizhewei91.github.io/categories/k8s-swagger-ui/
-http://lizhewei91.github.io/categories/kubebuilder/
 http://lizhewei91.github.io/categories/webhook/

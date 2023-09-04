@@ -463,13 +463,6 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/kubebuilder/</loc>
-    <lastmod>2023-09-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://lizhewei91.github.io/categories/webhook/</loc>
     <lastmod>2023-09-04</lastmod>
     <changefreq>weekly</changefreq>
