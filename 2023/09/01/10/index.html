@@ -26,7 +26,7 @@
 <meta property="og:description" content="Kubebuilder 介绍Kubebuilder 是一个使用 CRDs 构建 K8s API 的 SDK，主要是：  提供脚手架工具初始化 CRDs 工程，自动生成 boilerplate 代码和配置； 提供代码库封装底层的 K8s go-client；  方便用户从零开始开发 CRDs，Controllers 和 Admission Webhooks 来扩展 K8s。 本文主要基于 kubeb">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2023-09-01T06:55:10.000Z">
-<meta property="article:modified_time" content="2023-09-04T09:51:19.556Z">
+<meta property="article:modified_time" content="2023-09-05T06:07:56.018Z">
 <meta property="article:author" content="lizhewei">
 <meta property="article:tag" content="operator">
 <meta property="article:tag" content="code-generator">
@@ -201,7 +201,7 @@
   <div class="widget">
     <h3 class="widget-title">归档</h3>
     <div class="widget-body">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/09/">九月 2023</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/08/">八月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">三月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a><span class="archive-list-count">2</span></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/09/">九月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/08/">八月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">三月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a><span class="archive-list-count">2</span></li></ul>
     </div>
   </div>
 
@@ -216,7 +216,7 @@
   <div class="slimContent">
     <nav id="toc" class="article-toc">
       <h3 class="toc-title">文章目录</h3>
-      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Kubebuilder-%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">Kubebuilder 介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="toc-number">1.1.</span> <span class="toc-text">准备工作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE%E7%A4%BA%E4%BE%8B"><span class="toc-number">1.2.</span> <span class="toc-text">项目示例</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96%E9%A1%B9%E7%9B%AE"><span class="toc-number">1.2.1.</span> <span class="toc-text">初始化项目</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA-API-%E5%92%8C-Controller"><span class="toc-number">1.2.2.</span> <span class="toc-text">创建 API 和 Controller</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA-webhook%EF%BC%88%E5%8F%AF%E9%80%89%EF%BC%89"><span class="toc-number">1.2.3.</span> <span class="toc-text">创建 webhook（可选）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89-CRD-%E5%AD%97%E6%AE%B5"><span class="toc-number">1.2.4.</span> <span class="toc-text">定义 CRD 字段</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-code-generator"><span class="toc-number">1.2.5.</span> <span class="toc-text">使用 code-generator</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0%E4%BE%9D%E8%B5%96%E7%89%88%E6%9C%AC"><span class="toc-number">1.2.5.1.</span> <span class="toc-text">更新依赖版本</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-code-generator"><span class="toc-number">1.2.5.2.</span> <span class="toc-text">安装 code-generator</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA-amp-amp-%E4%BF%AE%E6%94%B9%E6%89%80%E9%9C%80%E6%96%87%E4%BB%B6"><span class="toc-number">1.2.5.3.</span> <span class="toc-text">创建 &amp;&amp; 修改所需文件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%87%86%E5%A4%87-hack-%E8%84%9A%E6%9C%AC"><span class="toc-number">1.2.5.4.</span> <span class="toc-text">准备 hack 脚本</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%94%9F%E6%88%90%E4%BB%A3%E7%A0%81"><span class="toc-number">1.2.5.5.</span> <span class="toc-text">生成代码</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE%E8%B0%83%E8%AF%95"><span class="toc-number">1.2.6.</span> <span class="toc-text">项目调试</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">2.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">3.</span> <span class="toc-text">参考资料</span></a></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Kubebuilder-%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">Kubebuilder 介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="toc-number">1.1.</span> <span class="toc-text">准备工作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE%E7%A4%BA%E4%BE%8B"><span class="toc-number">1.2.</span> <span class="toc-text">项目示例</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96%E9%A1%B9%E7%9B%AE"><span class="toc-number">1.2.1.</span> <span class="toc-text">初始化项目</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA-API-%E5%92%8C-Controller"><span class="toc-number">1.2.2.</span> <span class="toc-text">创建 API 和 Controller</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA-webhook%EF%BC%88%E5%8F%AF%E9%80%89%EF%BC%89"><span class="toc-number">1.2.3.</span> <span class="toc-text">创建 webhook（可选）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89-CRD-%E5%AD%97%E6%AE%B5"><span class="toc-number">1.2.4.</span> <span class="toc-text">定义 CRD 字段</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-code-generator"><span class="toc-number">1.2.5.</span> <span class="toc-text">使用 code-generator</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0%E4%BE%9D%E8%B5%96%E7%89%88%E6%9C%AC"><span class="toc-number">1.2.5.1.</span> <span class="toc-text">更新依赖版本</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-code-generator"><span class="toc-number">1.2.5.2.</span> <span class="toc-text">安装 code-generator</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA-amp-amp-%E4%BF%AE%E6%94%B9%E6%89%80%E9%9C%80%E6%96%87%E4%BB%B6"><span class="toc-number">1.2.5.3.</span> <span class="toc-text">创建 &amp;&amp; 修改所需文件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%87%86%E5%A4%87-hack-%E8%84%9A%E6%9C%AC"><span class="toc-number">1.2.5.4.</span> <span class="toc-text">准备 hack 脚本</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%94%9F%E6%88%90%E4%BB%A3%E7%A0%81"><span class="toc-number">1.2.5.5.</span> <span class="toc-text">生成代码</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E8%B0%83%E8%AF%95%E8%BF%90%E8%A1%8C"><span class="toc-number">1.2.6.</span> <span class="toc-text">本地调试运行</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#CRD%E5%AE%89%E8%A3%85"><span class="toc-number">1.2.6.1.</span> <span class="toc-text">CRD安装</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">2.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">3.</span> <span class="toc-text">参考资料</span></a></li></ol>
     </nav>
   </div>
 </aside>
@@ -260,10 +260,10 @@
         <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2023/09/01/10/#comments" class="article-comment-link">评论</a></span>
         
 	
-		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 1.7k(字)</span>
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 1.9k(字)</span>
 	
 	
-		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 8(分)</span>
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 9(分)</span>
 	
 
       </div>
@@ -379,7 +379,32 @@
 <figure class="highlight text"><table><tr><td class="code"><pre><span class="line">[root@localhost kubebuilder-project]# tree -L 4</span><br><span class="line">.</span><br><span class="line">|-- apis</span><br><span class="line">|   `-- extensions</span><br><span class="line">|       `-- v1</span><br><span class="line">|           |-- doc.go</span><br><span class="line">|           |-- groupversion_info.go</span><br><span class="line">|           |-- register.go</span><br><span class="line">|           |-- types.go</span><br><span class="line">|           |-- uniteddeployment_webhook.go</span><br><span class="line">|           |-- webhook_suite_test.go</span><br><span class="line">|           `-- zz_generated.deepcopy.go</span><br><span class="line">`-- pkg</span><br><span class="line">    `-- generated</span><br><span class="line">        |-- clientset</span><br><span class="line">        |   `-- versioned</span><br><span class="line">        |-- informers</span><br><span class="line">        |   `-- externalversions</span><br><span class="line">        `-- listers</span><br><span class="line">            `-- extensions</span><br></pre></td></tr></table></figure>
 
 <p>这里有一个坑，需要把 <code>apis/extensions/v1</code>目录下，<code>unitddeployment_type.go  </code>修改为 <code>type.go</code>,否则执行命令后，无法生成代码。</p>
-<h3 id="项目调试"><a href="#项目调试" class="headerlink" title="项目调试"></a>项目调试</h3><p>// todo</p>
+<h3 id="本地调试运行"><a href="#本地调试运行" class="headerlink" title="本地调试运行"></a>本地调试运行</h3><h4 id="CRD安装"><a href="#CRD安装" class="headerlink" title="CRD安装"></a>CRD安装</h4><p>第一种方式：</p>
+<p>在本地机器执行，make install，在 <code>config/crd/bases</code> 目录生成 crd.yaml，拷贝至 k8s 集群机器，执行</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl create -f extensions.chinaunicom.cn_uniteddeployments.yaml</span></span><br></pre></td></tr></table></figure>
+
+<p>第二种方式:<br>将代码拷贝至k8s集群机器</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">make install    // 先生成 config/crd/bases 文件，里面包含 crd 的YAML文件，然后kubectl apply</span></span><br></pre></td></tr></table></figure>
+
+<p>然后我们就可以看到创建的 CRD 了</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get crd |grep united</span></span><br><span class="line">uniteddeployments.extensions.chinaunicom.cn           2023-09-05T02:15:40Z</span><br></pre></td></tr></table></figure>
+
+<p>创建一个 uniteddeployment 资源</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> kubebuilder-project/config/samples</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl apply -f extensions_v1_uniteddeployment.yaml</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get uniteddeployments.extensions.chinaunicom.cn</span></span><br><span class="line">NAME                      AGE</span><br><span class="line">uniteddeployment-sample   103s</span><br></pre></td></tr></table></figure>
+
+<p>看一眼 yaml 文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+
+
+
 <h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>至此，通过使用 kubebuilder 与 code-generator 一个完整的 operator 开发框架就搭建好了，剩下的工作就主要是写 controller 与webhook 的业务逻辑。 </p>
 <h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
 <li><p>kuberbuilder: <a target="_blank" rel="noopener" href="https://github.com/kubernetes-sigs/kubebuilder/tree/v3.11.1">https://github.com/kubernetes-sigs/kubebuilder/tree/v3.11.1</a></p>
@@ -443,6 +468,10 @@
   <div class="bar-inner">
   
   <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2023/09/07/32/" title="nexus使用总结"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
     
     
     <li class="next">

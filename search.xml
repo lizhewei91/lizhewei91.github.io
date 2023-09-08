@@ -1097,6 +1097,23 @@
 <blockquote>
 <p>Operator = CRD + Controller + Webhook</p>
 </blockquote>
+<h2 id="常见的-operator-工作模式"><a href="#常见的-operator-工作模式" class="headerlink" title="常见的 operator 工作模式"></a><strong>常见的 operator 工作模式</strong></h2><img src="/2023/07/21/00/v2-6230f52f3d85039ca62f72c42314dab9_1440w-20230908141337037.webp" class="" title="img">
+
+
+
+<p>工作流程：</p>
+<ol>
+<li><p>用户创建一个自定义资源 (CRD)；</p>
+</li>
+<li><p>apiserver 根据自己注册的一个 pass 列表，把该 CRD 的请求转发给 webhook；</p>
+</li>
+<li><p>webhook 一般会完成该 CRD 的缺省值设定和参数检验。webhook 处理完之后，相应的 CR 会被写入数据库，返回给用户；</p>
+</li>
+<li><p>与此同时，controller 会在后台监测该自定义资源，按照业务逻辑，处理与该自定义资源相关联的特殊操作；</p>
+</li>
+<li><p>上述处理一般会引起集群内的状态变化，controller 会监测这些关联的变化，把这些变化记录到 CRD 的状态中。</p>
+</li>
+</ol>
 <p>目前，构架 Operator 框架主要有两个工具 Kubebuilder 和 operator SDK，<strong>本文主要讲述如何不使用脚手架，从零到1开发一个自己的 Operator 应用</strong>。</p>
 <p>先放一张 controller与informer交互的经典图</p>
 <img src="/2023/07/21/00/client-go-controller-interaction.jpeg" class="" title="client-go-controller-interaction">
@@ -1415,7 +1432,32 @@
 <figure class="highlight text"><table><tr><td class="code"><pre><span class="line">[root@localhost kubebuilder-project]# tree -L 4</span><br><span class="line">.</span><br><span class="line">|-- apis</span><br><span class="line">|   `-- extensions</span><br><span class="line">|       `-- v1</span><br><span class="line">|           |-- doc.go</span><br><span class="line">|           |-- groupversion_info.go</span><br><span class="line">|           |-- register.go</span><br><span class="line">|           |-- types.go</span><br><span class="line">|           |-- uniteddeployment_webhook.go</span><br><span class="line">|           |-- webhook_suite_test.go</span><br><span class="line">|           `-- zz_generated.deepcopy.go</span><br><span class="line">`-- pkg</span><br><span class="line">    `-- generated</span><br><span class="line">        |-- clientset</span><br><span class="line">        |   `-- versioned</span><br><span class="line">        |-- informers</span><br><span class="line">        |   `-- externalversions</span><br><span class="line">        `-- listers</span><br><span class="line">            `-- extensions</span><br></pre></td></tr></table></figure>
 
 <p>这里有一个坑，需要把 <code>apis/extensions/v1</code>目录下，<code>unitddeployment_type.go  </code>修改为 <code>type.go</code>,否则执行命令后，无法生成代码。</p>
-<h3 id="项目调试"><a href="#项目调试" class="headerlink" title="项目调试"></a>项目调试</h3><p>// todo</p>
+<h3 id="本地调试运行"><a href="#本地调试运行" class="headerlink" title="本地调试运行"></a>本地调试运行</h3><h4 id="CRD安装"><a href="#CRD安装" class="headerlink" title="CRD安装"></a>CRD安装</h4><p>第一种方式：</p>
+<p>在本地机器执行，make install，在 <code>config/crd/bases</code> 目录生成 crd.yaml，拷贝至 k8s 集群机器，执行</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl create -f extensions.chinaunicom.cn_uniteddeployments.yaml</span></span><br></pre></td></tr></table></figure>
+
+<p>第二种方式:<br>将代码拷贝至k8s集群机器</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">make install    // 先生成 config/crd/bases 文件，里面包含 crd 的YAML文件，然后kubectl apply</span></span><br></pre></td></tr></table></figure>
+
+<p>然后我们就可以看到创建的 CRD 了</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get crd |grep united</span></span><br><span class="line">uniteddeployments.extensions.chinaunicom.cn           2023-09-05T02:15:40Z</span><br></pre></td></tr></table></figure>
+
+<p>创建一个 uniteddeployment 资源</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> kubebuilder-project/config/samples</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl apply -f extensions_v1_uniteddeployment.yaml</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get uniteddeployments.extensions.chinaunicom.cn</span></span><br><span class="line">NAME                      AGE</span><br><span class="line">uniteddeployment-sample   103s</span><br></pre></td></tr></table></figure>
+
+<p>看一眼 yaml 文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+
+
+
 <h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>至此，通过使用 kubebuilder 与 code-generator 一个完整的 operator 开发框架就搭建好了，剩下的工作就主要是写 controller 与webhook 的业务逻辑。 </p>
 <h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
 <li><p>kuberbuilder: <a href="https://github.com/kubernetes-sigs/kubebuilder/tree/v3.11.1">https://github.com/kubernetes-sigs/kubebuilder/tree/v3.11.1</a></p>
@@ -1470,5 +1512,10 @@
       <tags>
         <tag>webhook</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>nexus使用总结</title>
+    <url>/2023/09/07/32/</url>
+    <content><![CDATA[]]></content>
   </entry>
 </search>
