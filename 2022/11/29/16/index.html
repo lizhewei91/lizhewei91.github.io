@@ -17,21 +17,22 @@
   <meta http-equiv="window-target" content="_top" />
   
   
-  <title>浅谈k8s中device-plugins机制 | lizhewei&#39;s Blog</title>
+  <title>浅谈 k8s 中 device-plugins 机制 | lizhewei&#39;s Blog</title>
   <meta name="description" content="Extended Resource官方链接：extended-resource-node 特性状态： Kubernetes v1.9 [stable] 可以用一句话来概括这个特性：通过向apiserver发送一个 patch node 的请求，为这个node增加一个自定义的资源类型，用于以该资源的配额统计和相应的QoS的配置。 为节点增加扩展资源为在一个节点上发布一种新的扩展资源，需要发送一个 H">
 <meta property="og:type" content="article">
-<meta property="og:title" content="浅谈k8s中device-plugins机制">
+<meta property="og:title" content="浅谈 k8s 中 device-plugins 机制">
 <meta property="og:url" content="http://lizhewei91.github.io/2022/11/29/16/index.html">
 <meta property="og:site_name" content="lizhewei&#39;Blog">
 <meta property="og:description" content="Extended Resource官方链接：extended-resource-node 特性状态： Kubernetes v1.9 [stable] 可以用一句话来概括这个特性：通过向apiserver发送一个 patch node 的请求，为这个node增加一个自定义的资源类型，用于以该资源的配额统计和相应的QoS的配置。 为节点增加扩展资源为在一个节点上发布一种新的扩展资源，需要发送一个 H">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://lizhewei91.github.io/2022/11/29/16/image-20221129110411083.png">
 <meta property="og:image" content="http://lizhewei91.github.io/2022/11/29/16/device-plugin-overview.png">
+<meta property="og:image" content="http://lizhewei91.github.io/2022/11/29/16/image-20231017113359021.png">
 <meta property="article:published_time" content="2022-11-29T02:53:16.000Z">
-<meta property="article:modified_time" content="2023-06-01T09:01:18.416Z">
+<meta property="article:modified_time" content="2023-10-17T06:26:40.815Z">
 <meta property="article:author" content="lizhewei">
-<meta property="article:tag" content="kubernetnes">
 <meta property="article:tag" content="device-plugins">
+<meta property="article:tag" content="gpu">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://lizhewei91.github.io/2022/11/29/16/image-20221129110411083.png">
   <!-- Canonical links -->
@@ -183,7 +184,7 @@
   <div class="widget">
     <h3 class="widget-title">分类</h3>
     <div class="widget-body">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/device-plugins/">device-plugins</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/gin/">gin</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/k8s-swagger-ui/">k8s-swagger-ui</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/kubectl-%E6%8F%92%E4%BB%B6/">kubectl 插件</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/kubelet/">kubelet</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/operator/">operator</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/pprof/">pprof</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/reloader/">reloader</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/webhook/">webhook</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%95%9C%E5%83%8F/">镜像</a><span class="category-list-count">1</span></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/device-plugins/">device-plugins</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/gin/">gin</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/k8s-swagger-ui/">k8s-swagger-ui</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/kubeadm/">kubeadm</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/kubectl-%E6%8F%92%E4%BB%B6/">kubectl 插件</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/kubelet/">kubelet</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/nexus/">nexus</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/operator/">operator</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/pprof/">pprof</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/reloader/">reloader</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/webhook/">webhook</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%95%9C%E5%83%8F/">镜像</a><span class="category-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -193,7 +194,7 @@
   <div class="widget">
     <h3 class="widget-title">标签</h3>
     <div class="widget-body">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/buildx/" rel="tag">buildx</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/code-generator/" rel="tag">code-generator</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/configMap/" rel="tag">configMap</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/device-manager/" rel="tag">device-manager</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/device-plugins/" rel="tag">device-plugins</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gin/" rel="tag">gin</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/golang/" rel="tag">golang</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gpu/" rel="tag">gpu</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jwt/" rel="tag">jwt</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s-swagger-ui/" rel="tag">k8s-swagger-ui</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/krew/" rel="tag">krew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubebuilder/" rel="tag">kubebuilder</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubectl-plugins/" rel="tag">kubectl-plugins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubelet/" rel="tag">kubelet</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubernetnes/" rel="tag">kubernetnes</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubevirt-gpu-device-plugin/" rel="tag">kubevirt-gpu-device-plugin</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/manifest/" rel="tag">manifest</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/node-%E8%8A%82%E7%82%B9%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D/" rel="tag">node 节点资源分配</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nvidia/" rel="tag">nvidia</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/operator/" rel="tag">operator</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pprof/" rel="tag">pprof</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/reloader/" rel="tag">reloader</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/secret/" rel="tag">secret</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webhook/" rel="tag">webhook</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%9B%E5%BB%BApod%E6%B5%81%E7%A8%8B/" rel="tag">创建pod流程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/" rel="tag">性能分析</a><span class="tag-list-count">1</span></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/buildx/" rel="tag">buildx</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/code-generator/" rel="tag">code-generator</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/configMap/" rel="tag">configMap</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/device-manager/" rel="tag">device-manager</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/device-plugins/" rel="tag">device-plugins</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker-repositories/" rel="tag">docker-repositories</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gin/" rel="tag">gin</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/golang/" rel="tag">golang</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gpu/" rel="tag">gpu</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jwt/" rel="tag">jwt</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s-swagger-ui/" rel="tag">k8s-swagger-ui</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/krew/" rel="tag">krew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubeadm/" rel="tag">kubeadm</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubebuilder/" rel="tag">kubebuilder</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubectl-plugins/" rel="tag">kubectl-plugins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubelet/" rel="tag">kubelet</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubevirt-gpu-device-plugin/" rel="tag">kubevirt-gpu-device-plugin</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/manifest/" rel="tag">manifest</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/node-%E8%8A%82%E7%82%B9%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D/" rel="tag">node 节点资源分配</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nvidia/" rel="tag">nvidia</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/operator/" rel="tag">operator</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pprof/" rel="tag">pprof</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/reloader/" rel="tag">reloader</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/secret/" rel="tag">secret</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webhook/" rel="tag">webhook</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%9B%E5%BB%BApod%E6%B5%81%E7%A8%8B/" rel="tag">创建pod流程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/" rel="tag">性能分析</a><span class="tag-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -203,7 +204,7 @@
   <div class="widget">
     <h3 class="widget-title">归档</h3>
     <div class="widget-body">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/09/">九月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/08/">八月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">三月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a><span class="archive-list-count">2</span></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/09/">九月 2023</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/08/">八月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">三月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a><span class="archive-list-count">2</span></li></ul>
     </div>
   </div>
 
@@ -218,7 +219,7 @@
   <div class="slimContent">
     <nav id="toc" class="article-toc">
       <h3 class="toc-title">文章目录</h3>
-      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Extended-Resource"><span class="toc-number">1.</span> <span class="toc-text">Extended Resource</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E8%8A%82%E7%82%B9%E5%A2%9E%E5%8A%A0%E6%89%A9%E5%B1%95%E8%B5%84%E6%BA%90"><span class="toc-number">1.1.</span> <span class="toc-text">为节点增加扩展资源</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B8%85%E7%90%86%E6%89%A9%E5%B1%95%E8%B5%84%E6%BA%90"><span class="toc-number">1.2.</span> <span class="toc-text">清理扩展资源</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Device-Plugins"><span class="toc-number">2.</span> <span class="toc-text">Device Plugins</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E5%A4%87%E6%8F%92%E4%BB%B6%E6%A1%86%E6%9E%B6"><span class="toc-number">2.1.</span> <span class="toc-text">设备插件框架</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%84%E7%90%86-kubelet-%E9%87%8D%E5%90%AF"><span class="toc-number">2.1.1.</span> <span class="toc-text">处理 kubelet 重启</span></a></li></ol></li></ol></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Extended-Resource"><span class="toc-number">1.</span> <span class="toc-text">Extended Resource</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E8%8A%82%E7%82%B9%E5%A2%9E%E5%8A%A0%E6%89%A9%E5%B1%95%E8%B5%84%E6%BA%90"><span class="toc-number">1.1.</span> <span class="toc-text">为节点增加扩展资源</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B8%85%E7%90%86%E6%89%A9%E5%B1%95%E8%B5%84%E6%BA%90"><span class="toc-number">1.2.</span> <span class="toc-text">清理扩展资源</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Device-Plugins"><span class="toc-number">2.</span> <span class="toc-text">Device Plugins</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="toc-number">2.1.</span> <span class="toc-text">工作原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E6%B5%81%E7%A8%8B"><span class="toc-number">2.2.</span> <span class="toc-text">主要流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%84%E7%90%86-kubelet-%E9%87%8D%E5%90%AF"><span class="toc-number">2.3.</span> <span class="toc-text">处理 kubelet 重启</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Pod%E7%94%B3%E8%AF%B7%E5%BC%82%E6%9E%84%E8%B5%84%E6%BA%90"><span class="toc-number">2.4.</span> <span class="toc-text">Pod申请异构资源</span></a></li></ol></li></ol>
     </nav>
   </div>
 </aside>
@@ -232,7 +233,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      浅谈k8s中device-plugins机制
+      浅谈 k8s 中 device-plugins 机制
     </h1>
   
 
@@ -253,7 +254,7 @@
         
   <span class="article-tag">
     <i class="icon icon-tags"></i>
-	<a class="article-tag-link-link" href="/tags/device-plugins/" rel="tag">device-plugins</a>, <a class="article-tag-link-link" href="/tags/kubernetnes/" rel="tag">kubernetnes</a>
+	<a class="article-tag-link-link" href="/tags/device-plugins/" rel="tag">device-plugins</a>, <a class="article-tag-link-link" href="/tags/gpu/" rel="tag">gpu</a>
   </span>
 
 
@@ -262,10 +263,10 @@
         <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2022/11/29/16/#comments" class="article-comment-link">评论</a></span>
         
 	
-		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 1.5k(字)</span>
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 1.7k(字)</span>
 	
 	
-		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 6(分)</span>
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 7(分)</span>
 	
 
       </div>
@@ -315,25 +316,44 @@
 <p><strong>特性状态：</strong> <code>Kubernetes v1.26 [stable]</code></p>
 <p>Kubernetes 提供了一个 <a target="_blank" rel="noopener" href="https://git.k8s.io/design-proposals-archive/resource-management/device-plugin.md">设备插件框架</a>， 你可以用它来将系统硬件资源发布到 <a target="_blank" rel="noopener" href="https://kubernetes.io/docs/reference/generated/kubelet">Kubelet</a>。</p>
 <p>供应商可以实现设备插件，由你手动部署或作为 <a target="_blank" rel="noopener" href="https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/daemonset/">DaemonSet</a> 来部署，而不必定制 Kubernetes 本身的代码。目标设备包括 GPU、高性能 NIC、FPGA、 InfiniBand 适配器以及其他类似的、可能需要特定于供应商的初始化和设置的计算资源。</p>
-<h2 id="设备插件框架"><a href="#设备插件框架" class="headerlink" title="设备插件框架"></a>设备插件框架</h2><img src="/2022/11/29/16/device-plugin-overview.png" class="" title="Process">
+<h2 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h2><p>Device Plugin 实际上是一个 gPRC 接口，需要实现 <code>ListAndWatch()</code> 和 <code>Allocate()</code> 等方法，并监听 gRPC Server 的 Unix Socket 在 <code>/var/lib/kubelet/device-plugins/</code> 目录中，如 <code>/var/lib/kubelet/device-plugins/nvidiaGPU.sock</code>，并向 kubelet 注册自身  gRPC 服务。</p>
+<h2 id="主要流程"><a href="#主要流程" class="headerlink" title="主要流程"></a>主要流程</h2><img src="/2022/11/29/16/device-plugin-overview.png" class="" title="Process">
 
 <p>设备插件的常规工作流程包括以下几个步骤：</p>
-<ul>
-<li>初始化。在这个阶段，设备插件将执行供应商特定的初始化和设置， 以确保设备处于就绪状态。</li>
-<li>插件使用主机路径 <code>/var/lib/kubelet/device-plugins/</code> 下的 Unix 套接字启动一个 gRPC 服务，如：<code>/var/lib/kubelet/device-plugins/nvidia-gpu.sock</code>，该服务实现以下接口：</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service DevicePlugin &#123;</span><br><span class="line">    // GetDevicePluginOptions 返回与设备管理器沟通的选项。</span><br><span class="line">    rpc GetDevicePluginOptions(Empty) returns (DevicePluginOptions) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    // ListAndWatch 返回 Device 列表构成的数据流。</span><br><span class="line">    // 当 Device 状态发生变化或者 Device 消失时，ListAndWatch</span><br><span class="line">    // 会返回新的列表。</span><br><span class="line">    rpc ListAndWatch(Empty) returns (stream ListAndWatchResponse) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    // Allocate 在容器创建期间调用，这样设备插件可以运行一些特定于设备的操作，</span><br><span class="line">    // 并告诉 kubelet 如何令 Device 可在容器中访问的所需执行的具体步骤</span><br><span class="line">    rpc Allocate(AllocateRequest) returns (AllocateResponse) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    // GetPreferredAllocation 从一组可用的设备中返回一些优选的设备用来分配，</span><br><span class="line">    // 所返回的优选分配结果不一定会是设备管理器的最终分配方案。</span><br><span class="line">    // 此接口的设计仅是为了让设备管理器能够在可能的情况下做出更有意义的决定。</span><br><span class="line">    rpc GetPreferredAllocation(PreferredAllocationRequest) returns (PreferredAllocationResponse) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    // PreStartContainer 在设备插件注册阶段根据需要被调用，调用发生在容器启动之前。</span><br><span class="line">    // 在将设备提供给容器使用之前，设备插件可以运行一些诸如重置设备之类的特定于</span><br><span class="line">    // 具体设备的操作，</span><br><span class="line">    rpc PreStartContainer(PreStartContainerRequest) returns (PreStartContainerResponse) &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol>
+<li>初始化。在这个阶段，设备插件将执行特定于供应商的初始化和设置，以确保设备处于就绪状态。</li>
+<li>Device Plugin 实际上是一个 gPRC 接口，需要实现 <code>ListAndWatch()</code> 和 <code>Allocate()</code> 等方法，并监听 gRPC Server 的 Unix Socket 在 <code>/var/lib/kubelet/device-plugins/</code> 目录中，如 <code>/var/lib/kubelet/device-plugins/nvidiaGPU.sock</code>。</li>
+</ol>
+<p>设备插件服务需要实现下面服务端的接口：</p>
+<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line">service DevicePlugin &#123;</span><br><span class="line"> </span><br><span class="line">    rpc GetDevicePluginOptions(Empty) returns (DevicePluginOptions) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ListAndWatch 返回 Device 列表构成的数据流。</span></span><br><span class="line">    <span class="comment">// 当 Device 状态发生变化或者 Device 消失时，ListAndWatch 会返回新的列表。</span></span><br><span class="line">    rpc ListAndWatch(Empty) returns (stream ListAndWatchResponse) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Allocate 在容器创建期间调用，这样设备插件可以运行一些特定于设备的操作，</span></span><br><span class="line">    <span class="comment">// 并告诉 kubelet 如何令 Device 可在容器中访问的所需执行的具体步骤</span></span><br><span class="line">    rpc Allocate(AllocateRequest) returns (AllocateResponse) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    rpc GetPreferredAllocation(PreferredAllocationRequest) returns (PreferredAllocationResponse) &#123;&#125;</span><br><span class="line">  </span><br><span class="line">    rpc PreStartContainer(PreStartContainerRequest) returns (PreStartContainerResponse) &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<ul>
-<li><p>插件通过 Unix socket 在主机路径 <code>/var/lib/kubelet/device-plugins/kubelet.sock</code> 处向 kubelet 注册自身。</p>
-</li>
-<li><p>成功注册自身后，设备插件将以服务模式运行，在此期间，它将持续监控设备运行状况， 并在设备状态发生任何变化时向 kubelet 报告。它还负责响应 <code>Allocate</code> gRPC 请求。 在 <code>Allocate</code> 期间，设备插件可能还会做一些设备特定的准备；例如 GPU 清理或 QRNG 初始化。 如果操作成功，则设备插件将返回 <code>AllocateResponse</code>，其中包含用于访问被分配的设备容器运行时的配置。 kubelet 将此信息传递到容器运行时。</p>
-</li>
-</ul>
-<h3 id="处理-kubelet-重启"><a href="#处理-kubelet-重启" class="headerlink" title="处理 kubelet 重启"></a>处理 kubelet 重启</h3><ul>
+<ol start="3">
+<li>插件通过 Unix socket 在主机路径 <code>/var/lib/kubelet/device-plugins/kubelet.sock</code> 处向 kubelet 注册自身。</li>
+</ol>
+<p><code>kubelet</code> 提供了一个 <code>Registration</code> 的 gRPC 服务：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service Registration &#123;</span><br><span class="line">	rpc Register(RegisterRequest) returns (Empty) &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>设备插件可以通过此 gRPC 服务在 kubelet 进行注册。在注册期间，设备插件需要发送下面几样内容：</p>
+<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> RegisterRequest <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">// 设备插件版本</span></span><br><span class="line">	Version <span class="type">string</span> <span class="string">`protobuf:&quot;bytes,1,opt,name=version,proto3&quot; json:&quot;version,omitempty&quot;`</span></span><br><span class="line">  <span class="comment">// 设备插件的 Unix 套接字</span></span><br><span class="line">	Endpoint <span class="type">string</span> <span class="string">`protobuf:&quot;bytes,2,opt,name=endpoint,proto3&quot; json:&quot;endpoint,omitempty&quot;`</span></span><br><span class="line">	<span class="comment">// 设备名称</span></span><br><span class="line">	ResourceName <span class="type">string</span> <span class="string">`protobuf:&quot;bytes,3,opt,name=resource_name,json=resourceName,proto3&quot; json:&quot;resource_name,omitempty&quot;`</span></span><br><span class="line"></span><br><span class="line">	Options              *DevicePluginOptions <span class="string">`protobuf:&quot;bytes,4,opt,name=options,proto3&quot; json:&quot;options,omitempty&quot;`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li>成功注册自身后，设备插件将以服务模式运行，在此期间，它将持续监控设备运行状况， 并在设备状态发生任何变化时向 kubelet 报告。它还负责响应 <code>Allocate</code> gRPC 请求。 在 <code>Allocate</code> 期间，设备插件可能还会做一些设备特定的准备；例如 GPU 清理或 QRNG 初始化。 如果操作成功，则设备插件将返回 <code>AllocateResponse</code>，其中包含用于访问被分配的设备容器运行时的配置。 kubelet 将此信息传递到容器运行时。</li>
+</ol>
+<h2 id="处理-kubelet-重启"><a href="#处理-kubelet-重启" class="headerlink" title="处理 kubelet 重启"></a>处理 kubelet 重启</h2><ul>
 <li>设备插件应能监测到 kubelet 重启，并且向新的 kubelet 实例来重新注册自己。 新的 kubelet 实例启动时会删除 <code>/var/lib/kubelet/device-plugins</code> 下所有已经存在的 Unix 套接字。 </li>
 <li>设备插件需要能够监控到它的 Unix 套接字被删除，并且当发生此类事件时重新注册自己。</li>
 </ul>
+<h2 id="Pod申请异构资源"><a href="#Pod申请异构资源" class="headerlink" title="Pod申请异构资源"></a>Pod申请异构资源</h2><p>用户可以请求设备作为 Pod 规范的一部分， 参见 <a target="_blank" rel="noopener" href="https://kubernetes.io/zh-cn/docs/reference/kubernetes-api/workload-resources/pod-v1/#Container">Container</a>。 请求扩展资源类似于管理请求和限制的方式，和其他资源有以下区别：</p>
+<ul>
+<li>扩展资源仅可作为整数资源使用，并且不能被过量使用</li>
+<li>设备不能在容器之间共享</li>
+</ul>
+<p>示例：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">demo-pod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">demo-container-1</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">registry.k8s.io/pause:2.0</span></span><br><span class="line">      <span class="attr">resources:</span></span><br><span class="line">        <span class="attr">limits:</span></span><br><span class="line">          <span class="attr">hardware-vendor.example/foo:</span> <span class="number">2</span></span><br></pre></td></tr></table></figure>
+
+
+
+<img src="/2022/11/29/16/image-20231017113359021.png" class="" title="image-20231017113359021">
 
       
     </div>
@@ -343,7 +363,7 @@
     
     <li class="post-copyright-link hidden-xs">
       <strong>本文链接：</strong>
-      <a href="http://lizhewei91.github.io/2022/11/29/16/" title="浅谈k8s中device-plugins机制" target="_blank" rel="external">http://lizhewei91.github.io/2022/11/29/16/</a>
+      <a href="http://lizhewei91.github.io/2022/11/29/16/" title="浅谈 k8s 中 device-plugins 机制" target="_blank" rel="external">http://lizhewei91.github.io/2022/11/29/16/</a>
     </li>
     
     <li class="post-copyright-license">

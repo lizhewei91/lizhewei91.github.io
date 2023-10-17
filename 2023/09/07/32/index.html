@@ -17,18 +17,25 @@
   <meta http-equiv="window-target" content="_top" />
   
   
-  <title>nexus使用总结 | lizhewei&#39;s Blog</title>
-  <meta name="description" content="专注于云原生领域">
+  <title>nexus 使用总结 | lizhewei&#39;s Blog</title>
+  <meta name="description" content="部署 nexus 服务创建docker-compose.yml文件： version: &quot;3&quot;services:  # 服务名称  nexus3:    # 镜像    image: sonatype&#x2F;nexus3:3.59.0    # 容器名称    container_name: nexus3-lzw-test    # 重启策略    restart: on-failu">
 <meta property="og:type" content="article">
-<meta property="og:title" content="nexus使用总结">
+<meta property="og:title" content="nexus 使用总结">
 <meta property="og:url" content="http://lizhewei91.github.io/2023/09/07/32/index.html">
 <meta property="og:site_name" content="lizhewei&#39;Blog">
-<meta property="og:description" content="专注于云原生领域">
+<meta property="og:description" content="部署 nexus 服务创建docker-compose.yml文件： version: &quot;3&quot;services:  # 服务名称  nexus3:    # 镜像    image: sonatype&#x2F;nexus3:3.59.0    # 容器名称    container_name: nexus3-lzw-test    # 重启策略    restart: on-failu">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://lizhewei91.github.io/2023/09/07/32/image-20230911155849960.png">
+<meta property="og:image" content="http://lizhewei91.github.io/2023/09/07/32/image-20230911155929241.png">
+<meta property="og:image" content="http://lizhewei91.github.io/2023/09/07/32/5711b837e3314244a5928be6f168c8f9.png">
+<meta property="og:image" content="http://lizhewei91.github.io/2023/09/07/32/c354c1d40b9c4e939ac0b7e9c1edbe40.png">
 <meta property="article:published_time" content="2023-09-07T09:28:32.000Z">
-<meta property="article:modified_time" content="2023-09-07T09:28:32.328Z">
+<meta property="article:modified_time" content="2023-09-11T08:04:53.023Z">
 <meta property="article:author" content="lizhewei">
+<meta property="article:tag" content="nexus">
+<meta property="article:tag" content="docker-repositories">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://lizhewei91.github.io/2023/09/07/32/image-20230911155849960.png">
   <!-- Canonical links -->
   <link rel="canonical" href="http://lizhewei91.github.io/2023/09/07/32/index.html">
   
@@ -178,7 +185,7 @@
   <div class="widget">
     <h3 class="widget-title">分类</h3>
     <div class="widget-body">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/device-plugins/">device-plugins</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/gin/">gin</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/k8s-swagger-ui/">k8s-swagger-ui</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/kubectl-%E6%8F%92%E4%BB%B6/">kubectl 插件</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/kubelet/">kubelet</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/operator/">operator</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/pprof/">pprof</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/reloader/">reloader</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/webhook/">webhook</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%95%9C%E5%83%8F/">镜像</a><span class="category-list-count">1</span></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/device-plugins/">device-plugins</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/gin/">gin</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/k8s-swagger-ui/">k8s-swagger-ui</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/kubeadm/">kubeadm</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/kubectl-%E6%8F%92%E4%BB%B6/">kubectl 插件</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/kubelet/">kubelet</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/nexus/">nexus</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/operator/">operator</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/pprof/">pprof</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/reloader/">reloader</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/webhook/">webhook</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%95%9C%E5%83%8F/">镜像</a><span class="category-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -188,7 +195,7 @@
   <div class="widget">
     <h3 class="widget-title">标签</h3>
     <div class="widget-body">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/buildx/" rel="tag">buildx</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/code-generator/" rel="tag">code-generator</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/configMap/" rel="tag">configMap</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/device-manager/" rel="tag">device-manager</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/device-plugins/" rel="tag">device-plugins</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gin/" rel="tag">gin</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/golang/" rel="tag">golang</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gpu/" rel="tag">gpu</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jwt/" rel="tag">jwt</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s-swagger-ui/" rel="tag">k8s-swagger-ui</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/krew/" rel="tag">krew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubebuilder/" rel="tag">kubebuilder</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubectl-plugins/" rel="tag">kubectl-plugins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubelet/" rel="tag">kubelet</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubernetnes/" rel="tag">kubernetnes</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubevirt-gpu-device-plugin/" rel="tag">kubevirt-gpu-device-plugin</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/manifest/" rel="tag">manifest</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/node-%E8%8A%82%E7%82%B9%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D/" rel="tag">node 节点资源分配</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nvidia/" rel="tag">nvidia</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/operator/" rel="tag">operator</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pprof/" rel="tag">pprof</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/reloader/" rel="tag">reloader</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/secret/" rel="tag">secret</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webhook/" rel="tag">webhook</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%9B%E5%BB%BApod%E6%B5%81%E7%A8%8B/" rel="tag">创建pod流程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/" rel="tag">性能分析</a><span class="tag-list-count">1</span></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/buildx/" rel="tag">buildx</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/code-generator/" rel="tag">code-generator</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/configMap/" rel="tag">configMap</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/device-manager/" rel="tag">device-manager</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/device-plugins/" rel="tag">device-plugins</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker-repositories/" rel="tag">docker-repositories</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gin/" rel="tag">gin</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/golang/" rel="tag">golang</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gpu/" rel="tag">gpu</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jwt/" rel="tag">jwt</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s-swagger-ui/" rel="tag">k8s-swagger-ui</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/krew/" rel="tag">krew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubeadm/" rel="tag">kubeadm</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubebuilder/" rel="tag">kubebuilder</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubectl-plugins/" rel="tag">kubectl-plugins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubelet/" rel="tag">kubelet</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubevirt-gpu-device-plugin/" rel="tag">kubevirt-gpu-device-plugin</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/manifest/" rel="tag">manifest</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/node-%E8%8A%82%E7%82%B9%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D/" rel="tag">node 节点资源分配</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nvidia/" rel="tag">nvidia</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/operator/" rel="tag">operator</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pprof/" rel="tag">pprof</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/reloader/" rel="tag">reloader</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/secret/" rel="tag">secret</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webhook/" rel="tag">webhook</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%9B%E5%BB%BApod%E6%B5%81%E7%A8%8B/" rel="tag">创建pod流程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/" rel="tag">性能分析</a><span class="tag-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -198,7 +205,7 @@
   <div class="widget">
     <h3 class="widget-title">归档</h3>
     <div class="widget-body">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/09/">九月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/08/">八月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">三月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a><span class="archive-list-count">2</span></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/09/">九月 2023</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/08/">八月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">三月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a><span class="archive-list-count">2</span></li></ul>
     </div>
   </div>
 
@@ -209,6 +216,15 @@
 
   
   
+  <aside class="sidebar sidebar-toc collapse   in  " id="collapseToc" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    <nav id="toc" class="article-toc">
+      <h3 class="toc-title">文章目录</h3>
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2-nexus-%E6%9C%8D%E5%8A%A1"><span class="toc-number">1.</span> <span class="toc-text">部署 nexus 服务</span></a></li></ol>
+    </nav>
+  </div>
+</aside>
+
 <main class="main" role="main">
   <div class="content">
   <article id="post-nexus使用总结" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
@@ -218,7 +234,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      nexus使用总结
+      nexus 使用总结
     </h1>
   
 
@@ -231,14 +247,24 @@
 	</a>
 </span>
         
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/nexus/">nexus</a>
+  </span>
+
         
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/docker-repositories/" rel="tag">docker-repositories</a>, <a class="article-tag-link-link" href="/tags/nexus/" rel="tag">nexus</a>
+  </span>
+
 
         
 
         <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2023/09/07/32/#comments" class="article-comment-link">评论</a></span>
         
 	
-		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 0(字)</span>
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 330(字)</span>
 	
 	
 		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 1(分)</span>
@@ -248,7 +274,27 @@
     </div>
     <div class="article-entry marked-body" itemprop="articleBody">
       
-        
+        <h1 id="部署-nexus-服务"><a href="#部署-nexus-服务" class="headerlink" title="部署 nexus 服务"></a>部署 nexus 服务</h1><p>创建docker-compose.yml文件：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&quot;3&quot;</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="comment"># 服务名称</span></span><br><span class="line">  <span class="attr">nexus3:</span></span><br><span class="line">    <span class="comment"># 镜像</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">sonatype/nexus3:3.59.0</span></span><br><span class="line">    <span class="comment"># 容器名称</span></span><br><span class="line">    <span class="attr">container_name:</span> <span class="string">nexus3-lzw-test</span></span><br><span class="line">    <span class="comment"># 重启策略</span></span><br><span class="line">    <span class="attr">restart:</span> <span class="string">on-failure</span></span><br><span class="line">    <span class="comment"># 端口映射</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="comment"># web 服务使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;8081:8081&quot;</span></span><br><span class="line">      <span class="comment"># http 仓库使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;8082:8082&quot;</span></span><br><span class="line">      <span class="comment"># 代理仓库使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5000:5000&quot;</span></span><br><span class="line">    <span class="comment"># 挂载数据卷</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="comment"># 将主机的/opt/neuxus3/data目录挂载映射到容器的/nexus-data目录</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">/opt/nexus3/data:/nexus-data</span></span><br><span class="line">    <span class="comment"># 设置环境变量</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="comment"># 配置nexus3服务的内存，避免小规格机器崩掉</span></span><br><span class="line">      <span class="attr">INSTALL4J_ADD_VM_PARAMS:</span> <span class="string">&quot;-Xms512m -Xmx512m -XX:MaxDirectMemorySize=512m -Djava.util.prefs.userRoot=/nexus-data/javaprefs&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p> 创建启动脚本start.sh</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">仓库数据挂载位置</span></span><br><span class="line">mkdir -p &quot;/opt/nexus3/data&quot;</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">目录权限</span></span><br><span class="line">chmod -R 777 &quot;/opt/nexus3/data&quot;</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">启动</span></span><br><span class="line">if [ &quot;$1&quot; == &quot;backend&quot; ]; then</span><br><span class="line">    docker-compose up -d</span><br><span class="line">else</span><br><span class="line">  docker-compose up</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
+
+<p>启动 nexus3，启动会比较慢，需要一段时间才能启动成功</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">方式一、前台启动，查看启动日志调试用</span></span><br><span class="line">sudo sh ./start.sh</span><br><span class="line"><span class="meta prompt_"> </span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">方式二、后台启动</span></span><br><span class="line">sudo sh ./start.sh backend</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/09/07/32/image-20230911155849960.png" class="" title="image-20230911155849960">
+
+<p>访问 http://<ip>:8081或<a href="http://localhost:8081（本地），查看仓库页面">http://localhost:8081（本地），查看仓库页面</a></p>
+<img src="/2023/09/07/32/image-20230911155929241.png" class="" title="image-20230911155929241">
+
+<p>点击右上角“Sign in”，用户名为“admin”，在映射的主机目录/opt/nexus3/data/admin.password文件中查看登录密码</p>
+<img src="/2023/09/07/32/5711b837e3314244a5928be6f168c8f9.png" class="" title="img">
+
+<img src="/2023/09/07/32/c354c1d40b9c4e939ac0b7e9c1edbe40.png" class="" title="img">
+
+<p>登录后会有引导窗口，跟着知道重新配置密码，开启匿名访问即可。</p>
+
       
     </div>
     <div class="article-footer">
@@ -257,7 +303,7 @@
     
     <li class="post-copyright-link hidden-xs">
       <strong>本文链接：</strong>
-      <a href="http://lizhewei91.github.io/2023/09/07/32/" title="nexus使用总结" target="_blank" rel="external">http://lizhewei91.github.io/2023/09/07/32/</a>
+      <a href="http://lizhewei91.github.io/2023/09/07/32/" title="nexus 使用总结" target="_blank" rel="external">http://lizhewei91.github.io/2023/09/07/32/</a>
     </li>
     
     <li class="post-copyright-license">
@@ -303,11 +349,23 @@
   
   <ul class="pager pull-left">
     
+    <li class="prev">
+      <a href="/2023/09/25/51/" title="利用 kubeadm 部署高可用 k8s 集群"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
     
     <li class="next">
       <a href="/2023/09/01/10/" title="使用 kubebuilder 开发一个 operator 应用"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
     </li>
     
+    
+    <li class="toggle-toc">
+      <a class="toggle-btn " data-toggle="collapse" href="#collapseToc" aria-expanded="false" title="文章目录" role="button">    <span>[&nbsp;</span><span>文章目录</span>
+        <i class="text-collapsed icon icon-anchor"></i>
+        <i class="text-in icon icon-close"></i>
+        <span>]</span>
+      </a>
+    </li>
     
   </ul>
   

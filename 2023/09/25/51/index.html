@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>利用 kubeadm 部署高可用 k8s 集群 | lizhewei&#39;s Blog</title>
+  <meta name="description" content="高可用拓扑可以设置 HA 集群：  使用堆叠（stacked）控制平面节点，其中 etcd 节点与控制平面节点共存； 使用外部 etcd 节点，其中 etcd 在与控制平面不同的节点上运行；  在设置 HA 集群之前，应该仔细考虑每种拓扑的优缺点。 堆叠（Stacked） etcd 拓扑  主要特点：  etcd 分布式数据存储集群堆叠在 kubeadm 管理的控制平面节点上，作为控制平面的一个组">
+<meta property="og:type" content="article">
+<meta property="og:title" content="利用 kubeadm 部署高可用 k8s 集群">
+<meta property="og:url" content="http://lizhewei91.github.io/2023/09/25/51/index.html">
+<meta property="og:site_name" content="lizhewei&#39;Blog">
+<meta property="og:description" content="高可用拓扑可以设置 HA 集群：  使用堆叠（stacked）控制平面节点，其中 etcd 节点与控制平面节点共存； 使用外部 etcd 节点，其中 etcd 在与控制平面不同的节点上运行；  在设置 HA 集群之前，应该仔细考虑每种拓扑的优缺点。 堆叠（Stacked） etcd 拓扑  主要特点：  etcd 分布式数据存储集群堆叠在 kubeadm 管理的控制平面节点上，作为控制平面的一个组">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://lizhewei91.github.io/2023/09/25/51/1646207343118-e2965629-832f-48e1-9e63-c774ba47fb28.png">
+<meta property="og:image" content="http://lizhewei91.github.io/2023/09/25/51/1646207402403-1f4b8329-dff3-4a6c-9491-f0a7c33686f9.png">
+<meta property="og:image" content="http://lizhewei91.github.io/2023/09/25/51/1646207655247-b9bb4b48-88d5-4d34-9048-a90ec7355274-5609124.png">
+<meta property="article:published_time" content="2023-09-25T02:16:51.000Z">
+<meta property="article:modified_time" content="2023-10-07T07:08:58.316Z">
+<meta property="article:author" content="lizhewei">
+<meta property="article:tag" content="kubeadm">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://lizhewei91.github.io/2023/09/25/51/1646207343118-e2965629-832f-48e1-9e63-c774ba47fb28.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="http://lizhewei91.github.io/2023/09/25/51/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="lizhewei&#39;Blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/lizhewei91" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">李哲伟</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Cloud Native Developer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/lizhewei91" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/device-plugins/">device-plugins</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/gin/">gin</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/k8s-swagger-ui/">k8s-swagger-ui</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/kubeadm/">kubeadm</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/kubectl-%E6%8F%92%E4%BB%B6/">kubectl 插件</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/kubelet/">kubelet</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/nexus/">nexus</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/operator/">operator</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/pprof/">pprof</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/reloader/">reloader</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/webhook/">webhook</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%95%9C%E5%83%8F/">镜像</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/buildx/" rel="tag">buildx</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/code-generator/" rel="tag">code-generator</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/configMap/" rel="tag">configMap</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/device-manager/" rel="tag">device-manager</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/device-plugins/" rel="tag">device-plugins</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker-repositories/" rel="tag">docker-repositories</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gin/" rel="tag">gin</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/golang/" rel="tag">golang</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gpu/" rel="tag">gpu</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jwt/" rel="tag">jwt</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s-swagger-ui/" rel="tag">k8s-swagger-ui</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/krew/" rel="tag">krew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubeadm/" rel="tag">kubeadm</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubebuilder/" rel="tag">kubebuilder</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubectl-plugins/" rel="tag">kubectl-plugins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubelet/" rel="tag">kubelet</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubevirt-gpu-device-plugin/" rel="tag">kubevirt-gpu-device-plugin</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/manifest/" rel="tag">manifest</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/node-%E8%8A%82%E7%82%B9%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D/" rel="tag">node 节点资源分配</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nvidia/" rel="tag">nvidia</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/operator/" rel="tag">operator</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pprof/" rel="tag">pprof</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/reloader/" rel="tag">reloader</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/secret/" rel="tag">secret</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webhook/" rel="tag">webhook</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%9B%E5%BB%BApod%E6%B5%81%E7%A8%8B/" rel="tag">创建pod流程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/" rel="tag">性能分析</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/09/">九月 2023</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/08/">八月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">三月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a><span class="archive-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-kubeadm部署高可用kubernetes集群" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      利用 kubeadm 部署高可用 k8s 集群
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2023/09/25/51/" class="article-date">
+	  <time datetime="2023-09-25T02:16:51.000Z" itemprop="datePublished">2023-09-25</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/kubeadm/">kubeadm</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/kubeadm/" rel="tag">kubeadm</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2023/09/25/51/#comments" class="article-comment-link">评论</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 1.6k(字)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 6(分)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h1 id="高可用拓扑"><a href="#高可用拓扑" class="headerlink" title="高可用拓扑"></a>高可用拓扑</h1><p>可以设置 HA 集群：</p>
+<ul>
+<li>使用堆叠（stacked）控制平面节点，其中 etcd 节点与控制平面节点共存；</li>
+<li>使用外部 etcd 节点，其中 etcd 在与控制平面不同的节点上运行；</li>
+</ul>
+<p>在设置 HA 集群之前，应该仔细考虑每种拓扑的优缺点。</p>
+<h2 id="堆叠（Stacked）-etcd-拓扑"><a href="#堆叠（Stacked）-etcd-拓扑" class="headerlink" title="堆叠（Stacked） etcd 拓扑"></a>堆叠（Stacked） etcd 拓扑</h2><img src="/2023/09/25/51/1646207343118-e2965629-832f-48e1-9e63-c774ba47fb28.png" class="" title="img">
+
+<p>主要特点：</p>
+<ul>
+<li>etcd 分布式数据存储集群堆叠在 kubeadm 管理的控制平面节点上，作为控制平面的一个组件运行。</li>
+<li>每个控制平面节点运行 kube-apiserver，kube-scheduler 和 kube-controller-manager 实例。</li>
+<li>kube-apiserver 使用 LB 暴露给工作节点。</li>
+<li>每个控制平面节点创建一个本地 etcd 成员（member），这个 etcd 成员只与该节点的 kube-apiserver 通信。这同样适用于本地 kube-controller-manager 和 kube-scheduler 实例。</li>
+<li>简单概况：每个 master 节点上运行一个 apiserver 和 etcd, etcd 只与本节点 apiserver 通信。</li>
+<li>这种拓扑将控制平面和 etcd 成员耦合在同一节点上。相对使用外部 etcd 集群，设置起来更简单，而且更易于副本管理。</li>
+<li>然而堆叠集群存在耦合失败的风险。如果一个节点发生故障，则 etcd 成员和控制平面实例都将丢失，并且冗余会受到影响。可以通过添加更多控制平面节点来降低此风险。应该为 HA 集群运行至少三个堆叠的控制平面节点（防止脑裂）。</li>
+<li>这是 kubeadm 中的默认拓扑。当使用 kubeadm init 和 kubeadm join –control-plane 时，在控制平面节点上会自动创建本地 etcd 成员。</li>
+</ul>
+<h2 id="外部-etcd-拓扑"><a href="#外部-etcd-拓扑" class="headerlink" title="外部 etcd 拓扑"></a>外部 etcd 拓扑</h2><img src="/2023/09/25/51/1646207402403-1f4b8329-dff3-4a6c-9491-f0a7c33686f9.png" class="" title="img">
+
+<p>主要特点：</p>
+<ul>
+<li>具有外部 etcd 的 HA 集群是一种这样的拓扑，其中 etcd 分布式数据存储集群在独立于控制平面节点的其他节点上运行。</li>
+<li>就像堆叠的 etcd 拓扑一样，外部 etcd 拓扑中的每个控制平面节点都运行 kube-apiserver，kube-scheduler 和 kube-controller-manager 实例。</li>
+<li>同样 kube-apiserver 使用负载均衡器暴露给工作节点。但是，etcd 成员在不同的主机上运行，每个 etcd 主机与每个控制平面节点的 kube-apiserver 通信。</li>
+<li>简单概况： etcd 集群运行在单独的主机上，每个 etcd 都与 apiserver 节点通信。</li>
+<li>这种拓扑结构解耦了控制平面和 etcd 成员。因此，它提供了一种 HA 设置，其中失去控制平面实例或者 etcd 成员的影响较小，并且不会像堆叠的 HA 拓扑那样影响集群冗余。</li>
+<li>但是，此拓扑需要两倍于堆叠 HA 拓扑的主机数量。具有此拓扑的 HA 集群至少需要三个用于控制平面节点的主机和三个用于 etcd 节点的主机。</li>
+<li>需要单独设置外部 etcd 集群。</li>
+</ul>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>官方这里主要是解决了高可用场景下 apiserver 与 etcd 集群的关系，以及控制平面节点防止单点故障。但是集群对外访问接口不可能将三个 apiserver 都暴露出去，一个节点挂掉时还是不能自动切换到其他节点。官方只提到了一句“使用负载均衡器将 apiserver 暴露给工作节点”，而这恰恰是部署过程中需要解决的重点问题。</p>
+<p>Notes: 此处的负载均衡器并不是 kube-proxy，此处的 Load Balancer 是针对 apiserver 的。</p>
+<p>最后，我们总结一下两种拓扑：</p>
+<ul>
+<li>堆叠（Stacked） etcd 拓扑：设置简单，易于副本管理 ，不过存在耦合失败风险。如果节点发生故障，则 etcd 成员和控制平面实例有丢失的可能，推荐测试开发环境；</li>
+<li>外部 etcd 拓扑：解耦了控制平面和 etcd 成员，不会像堆叠的 HA 拓扑那样有影响集群冗余的风险，不过需要两倍于堆叠 HA 拓扑的主机数量，设置相对复杂，推荐生产环境。</li>
+</ul>
+<h1 id="部署stacked高可用集群"><a href="#部署stacked高可用集群" class="headerlink" title="部署stacked高可用集群"></a>部署stacked高可用集群</h1><h2 id="部署架构"><a href="#部署架构" class="headerlink" title="部署架构"></a>部署架构</h2><img src="/2023/09/25/51/1646207655247-b9bb4b48-88d5-4d34-9048-a90ec7355274-5609124.png" class="" title="image.png">
+
+<h2 id="资源信息"><a href="#资源信息" class="headerlink" title="资源信息"></a>资源信息</h2><table>
+<thead>
+<tr>
+<th>主机hostname</th>
+<th>IP地址</th>
+<th>安装组件</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>master-01</td>
+<td>192.168.1.143</td>
+<td>containerd、kubeadm、 kubelet、 kubectl</td>
+</tr>
+<tr>
+<td>master-02</td>
+<td>192.168.1.130</td>
+<td>containerd、kubeadm、 kubelet、 kubectl</td>
+</tr>
+<tr>
+<td>master-03</td>
+<td>192.168.1.168</td>
+<td>containerd、kubeadm、 kubelet、 kubectl</td>
+</tr>
+<tr>
+<td>work-01</td>
+<td>106.74.16.106</td>
+<td>containerd、kubeadm、 kubelet、 kubectl</td>
+</tr>
+<tr>
+<td>VIP</td>
+<td>192.168.1.100</td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><h3 id="保证环境正确性"><a href="#保证环境正确性" class="headerlink" title="保证环境正确性"></a>保证环境正确性</h3><table>
+<thead>
+<tr>
+<th>purpose</th>
+<th>commands</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>保证集群各节点互通</td>
+<td>ping -c 3 <ip></td>
+</tr>
+<tr>
+<td>保证MAC地址唯一</td>
+<td>ip link 或 ifconfig -a</td>
+</tr>
+<tr>
+<td>保证集群内主机名唯一</td>
+<td>查询 hostnamectl status，修改 hostnamectl set-hostname <hostname></td>
+</tr>
+<tr>
+<td>保证系统产品uuid唯一</td>
+<td>sudo cat /sys/class/dmi/id/product_uuid</td>
+</tr>
+</tbody></table>
+<p>修改MAC地址参考命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ifconfig eth0 down</span><br><span class="line">ifconfig eth0 hw ether 00:0C:18:EF:FF:ED</span><br><span class="line">ifconfig eth0 up</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>如product_uuid不唯一，请考虑重装CentOS系统.</p>
+</blockquote>
+<h3 id="检查所需端口"><a href="#检查所需端口" class="headerlink" title="检查所需端口"></a>检查所需端口</h3><p>启用这些<a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/reference/ports-and-protocols/">必要的端口</a>后才能使 Kubernetes 的各组件相互通信。可以使用 telnet 来检查端口是否启用，例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">telnet 127.0.0.1 6443</span><br></pre></td></tr></table></figure>
+
+<p><strong>控制面</strong> </p>
+<table>
+<thead>
+<tr>
+<th>协议</th>
+<th>方向</th>
+<th>端口范围</th>
+<th>目的</th>
+<th>使用者</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TCP</td>
+<td>入站</td>
+<td>6443</td>
+<td>Kubernetes API server</td>
+<td>所有</td>
+</tr>
+<tr>
+<td>TCP</td>
+<td>入站</td>
+<td>2379-2380</td>
+<td>etcd server client API</td>
+<td>kube-apiserver, etcd</td>
+</tr>
+<tr>
+<td>TCP</td>
+<td>入站</td>
+<td>10250</td>
+<td>Kubelet API</td>
+<td>自身, 控制面</td>
+</tr>
+<tr>
+<td>TCP</td>
+<td>入站</td>
+<td>10259</td>
+<td>kube-scheduler</td>
+<td>自身</td>
+</tr>
+<tr>
+<td>TCP</td>
+<td>入站</td>
+<td>10257</td>
+<td>kube-controller-manager</td>
+<td>自身</td>
+</tr>
+</tbody></table>
+<p>尽管 etcd 的端口也列举在控制面的部分，但你也可以在外部自己托管 etcd 集群或者自定义端口。</p>
+<p><strong>工作节点</strong> </p>
+<table>
+<thead>
+<tr>
+<th>协议</th>
+<th>方向</th>
+<th>端口范围</th>
+<th>目的</th>
+<th>使用者</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TCP</td>
+<td>入站</td>
+<td>10250</td>
+<td>Kubelet API</td>
+<td>自身, 控制面</td>
+</tr>
+<tr>
+<td>TCP</td>
+<td>入站</td>
+<td>30000-32767</td>
+<td>NodePort Services</td>
+<td>所有</td>
+</tr>
+</tbody></table>
+<h3 id="禁用swap"><a href="#禁用swap" class="headerlink" title="禁用swap"></a>禁用swap</h3><p>swap仅当内存不够时会使用硬盘块充当额外内存，硬盘的io较内存差距极大，禁用swap以提高性能</p>
+<p>各节点均需执行：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">swapoff -a </span><br><span class="line">sed -i &#x27;s/.*swap.*/#&amp;/&#x27; /etc/fstab</span><br></pre></td></tr></table></figure>
+
+<h2 id="安装containerd"><a href="#安装containerd" class="headerlink" title="安装containerd"></a>安装containerd</h2><h3 id="获取containerd安装包"><a href="#获取containerd安装包" class="headerlink" title="获取containerd安装包"></a>获取containerd安装包</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ wget https://github.com/containerd/containerd/releases/download/v1.7.0/cri-containerd-cni-1.7.0-linux-amd64.tar.gz</span><br></pre></td></tr></table></figure>
+
+<h3 id="查看压缩包中文件"><a href="#查看压缩包中文件" class="headerlink" title="查看压缩包中文件"></a>查看压缩包中文件</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ tar -tf cri-containerd-cni-1.7.0-linux-amd64.tar.gz</span><br><span class="line">cri-containerd.DEPRECATED.txt</span><br><span class="line">etc/</span><br><span class="line">etc/systemd/</span><br><span class="line">etc/systemd/system/</span><br><span class="line">etc/systemd/system/containerd.service</span><br><span class="line">etc/crictl.yaml</span><br><span class="line">etc/cni/</span><br><span class="line">etc/cni/net.d/</span><br><span class="line">etc/cni/net.d/10-containerd-net.conflist</span><br><span class="line">usr/</span><br><span class="line">usr/local/</span><br><span class="line">usr/local/sbin/</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<h3 id="直接将压缩包解压到系统的各个目录中"><a href="#直接将压缩包解压到系统的各个目录中" class="headerlink" title="直接将压缩包解压到系统的各个目录中"></a>直接将压缩包解压到系统的各个目录中</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ tar -C / -xzf cri-containerd-cni-1.7.0-linux-amd64.tar.gz</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo kubeadm init --kubernetes-version=v1.27.6 \</span><br><span class="line">--control-plane-endpoint &quot;106.74.16.106:8443&quot; \</span><br><span class="line">--image-repository registry.aliyuncs.com/google_containers \</span><br><span class="line">--pod-network-cidr=10.244.0.0/16 \</span><br><span class="line">--service-cidr=10.96.0.0/12 \</span><br><span class="line">--upload-certs</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="http://lizhewei91.github.io/2023/09/25/51/" title="利用 kubeadm 部署高可用 k8s 集群" target="_blank" rel="external">http://lizhewei91.github.io/2023/09/25/51/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/lizhewei91" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/lizhewei91" target="_blank"><span class="text-dark">李哲伟</span><small class="ml-1x">Cloud Native Developer</small></a></h3>
+        <div>专注于云原生领域。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    
+    <li class="next">
+      <a href="/2023/09/07/32/" title="nexus 使用总结"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/lizhewei91" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+    <script>
+(function ($) {
+    $('.search-form').on('submit', function (e) {
+        var keyword = $('.search-form-input[name="wd"]').val();
+        window.location = 'https://www.baidu.com/s?wd=site:lizhewei91.github.io ' + keyword;
+        return false;
+    });
+})(jQuery);
+</script>
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

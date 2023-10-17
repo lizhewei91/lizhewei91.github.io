@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>浅谈k8s中device-plugins机制</title>
+    <title>浅谈 k8s 中 device-plugins 机制</title>
     <url>/2022/11/29/16/</url>
     <content><![CDATA[<h1 id="Extended-Resource"><a href="#Extended-Resource" class="headerlink" title="Extended Resource"></a>Extended Resource</h1><p>官方链接：<a href="https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/extended-resource-node/">extended-resource-node</a></p>
 <p><strong>特性状态</strong>： <code>Kubernetes v1.9 [stable]</code></p>
@@ -46,32 +46,51 @@
 <p><strong>特性状态：</strong> <code>Kubernetes v1.26 [stable]</code></p>
 <p>Kubernetes 提供了一个 <a href="https://git.k8s.io/design-proposals-archive/resource-management/device-plugin.md">设备插件框架</a>， 你可以用它来将系统硬件资源发布到 <a href="https://kubernetes.io/docs/reference/generated/kubelet">Kubelet</a>。</p>
 <p>供应商可以实现设备插件，由你手动部署或作为 <a href="https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/daemonset/">DaemonSet</a> 来部署，而不必定制 Kubernetes 本身的代码。目标设备包括 GPU、高性能 NIC、FPGA、 InfiniBand 适配器以及其他类似的、可能需要特定于供应商的初始化和设置的计算资源。</p>
-<h2 id="设备插件框架"><a href="#设备插件框架" class="headerlink" title="设备插件框架"></a>设备插件框架</h2><img src="/2022/11/29/16/device-plugin-overview.png" class="" title="Process">
+<h2 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h2><p>Device Plugin 实际上是一个 gPRC 接口，需要实现 <code>ListAndWatch()</code> 和 <code>Allocate()</code> 等方法，并监听 gRPC Server 的 Unix Socket 在 <code>/var/lib/kubelet/device-plugins/</code> 目录中，如 <code>/var/lib/kubelet/device-plugins/nvidiaGPU.sock</code>，并向 kubelet 注册自身  gRPC 服务。</p>
+<h2 id="主要流程"><a href="#主要流程" class="headerlink" title="主要流程"></a>主要流程</h2><img src="/2022/11/29/16/device-plugin-overview.png" class="" title="Process">
 
 <p>设备插件的常规工作流程包括以下几个步骤：</p>
-<ul>
-<li>初始化。在这个阶段，设备插件将执行供应商特定的初始化和设置， 以确保设备处于就绪状态。</li>
-<li>插件使用主机路径 <code>/var/lib/kubelet/device-plugins/</code> 下的 Unix 套接字启动一个 gRPC 服务，如：<code>/var/lib/kubelet/device-plugins/nvidia-gpu.sock</code>，该服务实现以下接口：</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service DevicePlugin &#123;</span><br><span class="line">    // GetDevicePluginOptions 返回与设备管理器沟通的选项。</span><br><span class="line">    rpc GetDevicePluginOptions(Empty) returns (DevicePluginOptions) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    // ListAndWatch 返回 Device 列表构成的数据流。</span><br><span class="line">    // 当 Device 状态发生变化或者 Device 消失时，ListAndWatch</span><br><span class="line">    // 会返回新的列表。</span><br><span class="line">    rpc ListAndWatch(Empty) returns (stream ListAndWatchResponse) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    // Allocate 在容器创建期间调用，这样设备插件可以运行一些特定于设备的操作，</span><br><span class="line">    // 并告诉 kubelet 如何令 Device 可在容器中访问的所需执行的具体步骤</span><br><span class="line">    rpc Allocate(AllocateRequest) returns (AllocateResponse) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    // GetPreferredAllocation 从一组可用的设备中返回一些优选的设备用来分配，</span><br><span class="line">    // 所返回的优选分配结果不一定会是设备管理器的最终分配方案。</span><br><span class="line">    // 此接口的设计仅是为了让设备管理器能够在可能的情况下做出更有意义的决定。</span><br><span class="line">    rpc GetPreferredAllocation(PreferredAllocationRequest) returns (PreferredAllocationResponse) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    // PreStartContainer 在设备插件注册阶段根据需要被调用，调用发生在容器启动之前。</span><br><span class="line">    // 在将设备提供给容器使用之前，设备插件可以运行一些诸如重置设备之类的特定于</span><br><span class="line">    // 具体设备的操作，</span><br><span class="line">    rpc PreStartContainer(PreStartContainerRequest) returns (PreStartContainerResponse) &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol>
+<li>初始化。在这个阶段，设备插件将执行特定于供应商的初始化和设置，以确保设备处于就绪状态。</li>
+<li>Device Plugin 实际上是一个 gPRC 接口，需要实现 <code>ListAndWatch()</code> 和 <code>Allocate()</code> 等方法，并监听 gRPC Server 的 Unix Socket 在 <code>/var/lib/kubelet/device-plugins/</code> 目录中，如 <code>/var/lib/kubelet/device-plugins/nvidiaGPU.sock</code>。</li>
+</ol>
+<p>设备插件服务需要实现下面服务端的接口：</p>
+<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line">service DevicePlugin &#123;</span><br><span class="line"> </span><br><span class="line">    rpc GetDevicePluginOptions(Empty) returns (DevicePluginOptions) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ListAndWatch 返回 Device 列表构成的数据流。</span></span><br><span class="line">    <span class="comment">// 当 Device 状态发生变化或者 Device 消失时，ListAndWatch 会返回新的列表。</span></span><br><span class="line">    rpc ListAndWatch(Empty) returns (stream ListAndWatchResponse) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Allocate 在容器创建期间调用，这样设备插件可以运行一些特定于设备的操作，</span></span><br><span class="line">    <span class="comment">// 并告诉 kubelet 如何令 Device 可在容器中访问的所需执行的具体步骤</span></span><br><span class="line">    rpc Allocate(AllocateRequest) returns (AllocateResponse) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    rpc GetPreferredAllocation(PreferredAllocationRequest) returns (PreferredAllocationResponse) &#123;&#125;</span><br><span class="line">  </span><br><span class="line">    rpc PreStartContainer(PreStartContainerRequest) returns (PreStartContainerResponse) &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<ul>
-<li><p>插件通过 Unix socket 在主机路径 <code>/var/lib/kubelet/device-plugins/kubelet.sock</code> 处向 kubelet 注册自身。</p>
-</li>
-<li><p>成功注册自身后，设备插件将以服务模式运行，在此期间，它将持续监控设备运行状况， 并在设备状态发生任何变化时向 kubelet 报告。它还负责响应 <code>Allocate</code> gRPC 请求。 在 <code>Allocate</code> 期间，设备插件可能还会做一些设备特定的准备；例如 GPU 清理或 QRNG 初始化。 如果操作成功，则设备插件将返回 <code>AllocateResponse</code>，其中包含用于访问被分配的设备容器运行时的配置。 kubelet 将此信息传递到容器运行时。</p>
-</li>
-</ul>
-<h3 id="处理-kubelet-重启"><a href="#处理-kubelet-重启" class="headerlink" title="处理 kubelet 重启"></a>处理 kubelet 重启</h3><ul>
+<ol start="3">
+<li>插件通过 Unix socket 在主机路径 <code>/var/lib/kubelet/device-plugins/kubelet.sock</code> 处向 kubelet 注册自身。</li>
+</ol>
+<p><code>kubelet</code> 提供了一个 <code>Registration</code> 的 gRPC 服务：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service Registration &#123;</span><br><span class="line">	rpc Register(RegisterRequest) returns (Empty) &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>设备插件可以通过此 gRPC 服务在 kubelet 进行注册。在注册期间，设备插件需要发送下面几样内容：</p>
+<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> RegisterRequest <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">// 设备插件版本</span></span><br><span class="line">	Version <span class="type">string</span> <span class="string">`protobuf:&quot;bytes,1,opt,name=version,proto3&quot; json:&quot;version,omitempty&quot;`</span></span><br><span class="line">  <span class="comment">// 设备插件的 Unix 套接字</span></span><br><span class="line">	Endpoint <span class="type">string</span> <span class="string">`protobuf:&quot;bytes,2,opt,name=endpoint,proto3&quot; json:&quot;endpoint,omitempty&quot;`</span></span><br><span class="line">	<span class="comment">// 设备名称</span></span><br><span class="line">	ResourceName <span class="type">string</span> <span class="string">`protobuf:&quot;bytes,3,opt,name=resource_name,json=resourceName,proto3&quot; json:&quot;resource_name,omitempty&quot;`</span></span><br><span class="line"></span><br><span class="line">	Options              *DevicePluginOptions <span class="string">`protobuf:&quot;bytes,4,opt,name=options,proto3&quot; json:&quot;options,omitempty&quot;`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li>成功注册自身后，设备插件将以服务模式运行，在此期间，它将持续监控设备运行状况， 并在设备状态发生任何变化时向 kubelet 报告。它还负责响应 <code>Allocate</code> gRPC 请求。 在 <code>Allocate</code> 期间，设备插件可能还会做一些设备特定的准备；例如 GPU 清理或 QRNG 初始化。 如果操作成功，则设备插件将返回 <code>AllocateResponse</code>，其中包含用于访问被分配的设备容器运行时的配置。 kubelet 将此信息传递到容器运行时。</li>
+</ol>
+<h2 id="处理-kubelet-重启"><a href="#处理-kubelet-重启" class="headerlink" title="处理 kubelet 重启"></a>处理 kubelet 重启</h2><ul>
 <li>设备插件应能监测到 kubelet 重启，并且向新的 kubelet 实例来重新注册自己。 新的 kubelet 实例启动时会删除 <code>/var/lib/kubelet/device-plugins</code> 下所有已经存在的 Unix 套接字。 </li>
 <li>设备插件需要能够监控到它的 Unix 套接字被删除，并且当发生此类事件时重新注册自己。</li>
 </ul>
+<h2 id="Pod申请异构资源"><a href="#Pod申请异构资源" class="headerlink" title="Pod申请异构资源"></a>Pod申请异构资源</h2><p>用户可以请求设备作为 Pod 规范的一部分， 参见 <a href="https://kubernetes.io/zh-cn/docs/reference/kubernetes-api/workload-resources/pod-v1/#Container">Container</a>。 请求扩展资源类似于管理请求和限制的方式，和其他资源有以下区别：</p>
+<ul>
+<li>扩展资源仅可作为整数资源使用，并且不能被过量使用</li>
+<li>设备不能在容器之间共享</li>
+</ul>
+<p>示例：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">demo-pod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">demo-container-1</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">registry.k8s.io/pause:2.0</span></span><br><span class="line">      <span class="attr">resources:</span></span><br><span class="line">        <span class="attr">limits:</span></span><br><span class="line">          <span class="attr">hardware-vendor.example/foo:</span> <span class="number">2</span></span><br></pre></td></tr></table></figure>
+
+
+
+<img src="/2022/11/29/16/image-20231017113359021.png" class="" title="image-20231017113359021">
 ]]></content>
       <categories>
         <category>device-plugins</category>
       </categories>
       <tags>
-        <tag>kubernetnes</tag>
         <tag>device-plugins</tag>
+        <tag>gpu</tag>
       </tags>
   </entry>
   <entry>
@@ -1514,8 +1533,249 @@
       </tags>
   </entry>
   <entry>
-    <title>nexus使用总结</title>
+    <title>nexus 使用总结</title>
     <url>/2023/09/07/32/</url>
-    <content><![CDATA[]]></content>
+    <content><![CDATA[<h1 id="部署-nexus-服务"><a href="#部署-nexus-服务" class="headerlink" title="部署 nexus 服务"></a>部署 nexus 服务</h1><p>创建docker-compose.yml文件：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&quot;3&quot;</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="comment"># 服务名称</span></span><br><span class="line">  <span class="attr">nexus3:</span></span><br><span class="line">    <span class="comment"># 镜像</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">sonatype/nexus3:3.59.0</span></span><br><span class="line">    <span class="comment"># 容器名称</span></span><br><span class="line">    <span class="attr">container_name:</span> <span class="string">nexus3-lzw-test</span></span><br><span class="line">    <span class="comment"># 重启策略</span></span><br><span class="line">    <span class="attr">restart:</span> <span class="string">on-failure</span></span><br><span class="line">    <span class="comment"># 端口映射</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="comment"># web 服务使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;8081:8081&quot;</span></span><br><span class="line">      <span class="comment"># http 仓库使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;8082:8082&quot;</span></span><br><span class="line">      <span class="comment"># 代理仓库使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5000:5000&quot;</span></span><br><span class="line">    <span class="comment"># 挂载数据卷</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="comment"># 将主机的/opt/neuxus3/data目录挂载映射到容器的/nexus-data目录</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">/opt/nexus3/data:/nexus-data</span></span><br><span class="line">    <span class="comment"># 设置环境变量</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="comment"># 配置nexus3服务的内存，避免小规格机器崩掉</span></span><br><span class="line">      <span class="attr">INSTALL4J_ADD_VM_PARAMS:</span> <span class="string">&quot;-Xms512m -Xmx512m -XX:MaxDirectMemorySize=512m -Djava.util.prefs.userRoot=/nexus-data/javaprefs&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p> 创建启动脚本start.sh</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">仓库数据挂载位置</span></span><br><span class="line">mkdir -p &quot;/opt/nexus3/data&quot;</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">目录权限</span></span><br><span class="line">chmod -R 777 &quot;/opt/nexus3/data&quot;</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">启动</span></span><br><span class="line">if [ &quot;$1&quot; == &quot;backend&quot; ]; then</span><br><span class="line">    docker-compose up -d</span><br><span class="line">else</span><br><span class="line">  docker-compose up</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
+
+<p>启动 nexus3，启动会比较慢，需要一段时间才能启动成功</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">方式一、前台启动，查看启动日志调试用</span></span><br><span class="line">sudo sh ./start.sh</span><br><span class="line"><span class="meta prompt_"> </span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">方式二、后台启动</span></span><br><span class="line">sudo sh ./start.sh backend</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/09/07/32/image-20230911155849960.png" class="" title="image-20230911155849960">
+
+<p>访问 http://<ip>:8081或<a href="http://localhost:8081（本地），查看仓库页面">http://localhost:8081（本地），查看仓库页面</a></p>
+<img src="/2023/09/07/32/image-20230911155929241.png" class="" title="image-20230911155929241">
+
+<p>点击右上角“Sign in”，用户名为“admin”，在映射的主机目录/opt/nexus3/data/admin.password文件中查看登录密码</p>
+<img src="/2023/09/07/32/5711b837e3314244a5928be6f168c8f9.png" class="" title="img">
+
+<img src="/2023/09/07/32/c354c1d40b9c4e939ac0b7e9c1edbe40.png" class="" title="img">
+
+<p>登录后会有引导窗口，跟着知道重新配置密码，开启匿名访问即可。</p>
+]]></content>
+      <categories>
+        <category>nexus</category>
+      </categories>
+      <tags>
+        <tag>nexus</tag>
+        <tag>docker-repositories</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>利用 kubeadm 部署高可用 k8s 集群</title>
+    <url>/2023/09/25/51/</url>
+    <content><![CDATA[<h1 id="高可用拓扑"><a href="#高可用拓扑" class="headerlink" title="高可用拓扑"></a>高可用拓扑</h1><p>可以设置 HA 集群：</p>
+<ul>
+<li>使用堆叠（stacked）控制平面节点，其中 etcd 节点与控制平面节点共存；</li>
+<li>使用外部 etcd 节点，其中 etcd 在与控制平面不同的节点上运行；</li>
+</ul>
+<p>在设置 HA 集群之前，应该仔细考虑每种拓扑的优缺点。</p>
+<h2 id="堆叠（Stacked）-etcd-拓扑"><a href="#堆叠（Stacked）-etcd-拓扑" class="headerlink" title="堆叠（Stacked） etcd 拓扑"></a>堆叠（Stacked） etcd 拓扑</h2><img src="/2023/09/25/51/1646207343118-e2965629-832f-48e1-9e63-c774ba47fb28.png" class="" title="img">
+
+<p>主要特点：</p>
+<ul>
+<li>etcd 分布式数据存储集群堆叠在 kubeadm 管理的控制平面节点上，作为控制平面的一个组件运行。</li>
+<li>每个控制平面节点运行 kube-apiserver，kube-scheduler 和 kube-controller-manager 实例。</li>
+<li>kube-apiserver 使用 LB 暴露给工作节点。</li>
+<li>每个控制平面节点创建一个本地 etcd 成员（member），这个 etcd 成员只与该节点的 kube-apiserver 通信。这同样适用于本地 kube-controller-manager 和 kube-scheduler 实例。</li>
+<li>简单概况：每个 master 节点上运行一个 apiserver 和 etcd, etcd 只与本节点 apiserver 通信。</li>
+<li>这种拓扑将控制平面和 etcd 成员耦合在同一节点上。相对使用外部 etcd 集群，设置起来更简单，而且更易于副本管理。</li>
+<li>然而堆叠集群存在耦合失败的风险。如果一个节点发生故障，则 etcd 成员和控制平面实例都将丢失，并且冗余会受到影响。可以通过添加更多控制平面节点来降低此风险。应该为 HA 集群运行至少三个堆叠的控制平面节点（防止脑裂）。</li>
+<li>这是 kubeadm 中的默认拓扑。当使用 kubeadm init 和 kubeadm join –control-plane 时，在控制平面节点上会自动创建本地 etcd 成员。</li>
+</ul>
+<h2 id="外部-etcd-拓扑"><a href="#外部-etcd-拓扑" class="headerlink" title="外部 etcd 拓扑"></a>外部 etcd 拓扑</h2><img src="/2023/09/25/51/1646207402403-1f4b8329-dff3-4a6c-9491-f0a7c33686f9.png" class="" title="img">
+
+<p>主要特点：</p>
+<ul>
+<li>具有外部 etcd 的 HA 集群是一种这样的拓扑，其中 etcd 分布式数据存储集群在独立于控制平面节点的其他节点上运行。</li>
+<li>就像堆叠的 etcd 拓扑一样，外部 etcd 拓扑中的每个控制平面节点都运行 kube-apiserver，kube-scheduler 和 kube-controller-manager 实例。</li>
+<li>同样 kube-apiserver 使用负载均衡器暴露给工作节点。但是，etcd 成员在不同的主机上运行，每个 etcd 主机与每个控制平面节点的 kube-apiserver 通信。</li>
+<li>简单概况： etcd 集群运行在单独的主机上，每个 etcd 都与 apiserver 节点通信。</li>
+<li>这种拓扑结构解耦了控制平面和 etcd 成员。因此，它提供了一种 HA 设置，其中失去控制平面实例或者 etcd 成员的影响较小，并且不会像堆叠的 HA 拓扑那样影响集群冗余。</li>
+<li>但是，此拓扑需要两倍于堆叠 HA 拓扑的主机数量。具有此拓扑的 HA 集群至少需要三个用于控制平面节点的主机和三个用于 etcd 节点的主机。</li>
+<li>需要单独设置外部 etcd 集群。</li>
+</ul>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>官方这里主要是解决了高可用场景下 apiserver 与 etcd 集群的关系，以及控制平面节点防止单点故障。但是集群对外访问接口不可能将三个 apiserver 都暴露出去，一个节点挂掉时还是不能自动切换到其他节点。官方只提到了一句“使用负载均衡器将 apiserver 暴露给工作节点”，而这恰恰是部署过程中需要解决的重点问题。</p>
+<p>Notes: 此处的负载均衡器并不是 kube-proxy，此处的 Load Balancer 是针对 apiserver 的。</p>
+<p>最后，我们总结一下两种拓扑：</p>
+<ul>
+<li>堆叠（Stacked） etcd 拓扑：设置简单，易于副本管理 ，不过存在耦合失败风险。如果节点发生故障，则 etcd 成员和控制平面实例有丢失的可能，推荐测试开发环境；</li>
+<li>外部 etcd 拓扑：解耦了控制平面和 etcd 成员，不会像堆叠的 HA 拓扑那样有影响集群冗余的风险，不过需要两倍于堆叠 HA 拓扑的主机数量，设置相对复杂，推荐生产环境。</li>
+</ul>
+<h1 id="部署stacked高可用集群"><a href="#部署stacked高可用集群" class="headerlink" title="部署stacked高可用集群"></a>部署stacked高可用集群</h1><h2 id="部署架构"><a href="#部署架构" class="headerlink" title="部署架构"></a>部署架构</h2><img src="/2023/09/25/51/1646207655247-b9bb4b48-88d5-4d34-9048-a90ec7355274-5609124.png" class="" title="image.png">
+
+<h2 id="资源信息"><a href="#资源信息" class="headerlink" title="资源信息"></a>资源信息</h2><table>
+<thead>
+<tr>
+<th>主机hostname</th>
+<th>IP地址</th>
+<th>安装组件</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>master-01</td>
+<td>192.168.1.143</td>
+<td>containerd、kubeadm、 kubelet、 kubectl</td>
+</tr>
+<tr>
+<td>master-02</td>
+<td>192.168.1.130</td>
+<td>containerd、kubeadm、 kubelet、 kubectl</td>
+</tr>
+<tr>
+<td>master-03</td>
+<td>192.168.1.168</td>
+<td>containerd、kubeadm、 kubelet、 kubectl</td>
+</tr>
+<tr>
+<td>work-01</td>
+<td>106.74.16.106</td>
+<td>containerd、kubeadm、 kubelet、 kubectl</td>
+</tr>
+<tr>
+<td>VIP</td>
+<td>192.168.1.100</td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><h3 id="保证环境正确性"><a href="#保证环境正确性" class="headerlink" title="保证环境正确性"></a>保证环境正确性</h3><table>
+<thead>
+<tr>
+<th>purpose</th>
+<th>commands</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>保证集群各节点互通</td>
+<td>ping -c 3 <ip></td>
+</tr>
+<tr>
+<td>保证MAC地址唯一</td>
+<td>ip link 或 ifconfig -a</td>
+</tr>
+<tr>
+<td>保证集群内主机名唯一</td>
+<td>查询 hostnamectl status，修改 hostnamectl set-hostname <hostname></td>
+</tr>
+<tr>
+<td>保证系统产品uuid唯一</td>
+<td>sudo cat /sys/class/dmi/id/product_uuid</td>
+</tr>
+</tbody></table>
+<p>修改MAC地址参考命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ifconfig eth0 down</span><br><span class="line">ifconfig eth0 hw ether 00:0C:18:EF:FF:ED</span><br><span class="line">ifconfig eth0 up</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>如product_uuid不唯一，请考虑重装CentOS系统.</p>
+</blockquote>
+<h3 id="检查所需端口"><a href="#检查所需端口" class="headerlink" title="检查所需端口"></a>检查所需端口</h3><p>启用这些<a href="https://kubernetes.io/zh/docs/reference/ports-and-protocols/">必要的端口</a>后才能使 Kubernetes 的各组件相互通信。可以使用 telnet 来检查端口是否启用，例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">telnet 127.0.0.1 6443</span><br></pre></td></tr></table></figure>
+
+<p><strong>控制面</strong> </p>
+<table>
+<thead>
+<tr>
+<th>协议</th>
+<th>方向</th>
+<th>端口范围</th>
+<th>目的</th>
+<th>使用者</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TCP</td>
+<td>入站</td>
+<td>6443</td>
+<td>Kubernetes API server</td>
+<td>所有</td>
+</tr>
+<tr>
+<td>TCP</td>
+<td>入站</td>
+<td>2379-2380</td>
+<td>etcd server client API</td>
+<td>kube-apiserver, etcd</td>
+</tr>
+<tr>
+<td>TCP</td>
+<td>入站</td>
+<td>10250</td>
+<td>Kubelet API</td>
+<td>自身, 控制面</td>
+</tr>
+<tr>
+<td>TCP</td>
+<td>入站</td>
+<td>10259</td>
+<td>kube-scheduler</td>
+<td>自身</td>
+</tr>
+<tr>
+<td>TCP</td>
+<td>入站</td>
+<td>10257</td>
+<td>kube-controller-manager</td>
+<td>自身</td>
+</tr>
+</tbody></table>
+<p>尽管 etcd 的端口也列举在控制面的部分，但你也可以在外部自己托管 etcd 集群或者自定义端口。</p>
+<p><strong>工作节点</strong> </p>
+<table>
+<thead>
+<tr>
+<th>协议</th>
+<th>方向</th>
+<th>端口范围</th>
+<th>目的</th>
+<th>使用者</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TCP</td>
+<td>入站</td>
+<td>10250</td>
+<td>Kubelet API</td>
+<td>自身, 控制面</td>
+</tr>
+<tr>
+<td>TCP</td>
+<td>入站</td>
+<td>30000-32767</td>
+<td>NodePort Services</td>
+<td>所有</td>
+</tr>
+</tbody></table>
+<h3 id="禁用swap"><a href="#禁用swap" class="headerlink" title="禁用swap"></a>禁用swap</h3><p>swap仅当内存不够时会使用硬盘块充当额外内存，硬盘的io较内存差距极大，禁用swap以提高性能</p>
+<p>各节点均需执行：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">swapoff -a </span><br><span class="line">sed -i &#x27;s/.*swap.*/#&amp;/&#x27; /etc/fstab</span><br></pre></td></tr></table></figure>
+
+<h2 id="安装containerd"><a href="#安装containerd" class="headerlink" title="安装containerd"></a>安装containerd</h2><h3 id="获取containerd安装包"><a href="#获取containerd安装包" class="headerlink" title="获取containerd安装包"></a>获取containerd安装包</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ wget https://github.com/containerd/containerd/releases/download/v1.7.0/cri-containerd-cni-1.7.0-linux-amd64.tar.gz</span><br></pre></td></tr></table></figure>
+
+<h3 id="查看压缩包中文件"><a href="#查看压缩包中文件" class="headerlink" title="查看压缩包中文件"></a>查看压缩包中文件</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ tar -tf cri-containerd-cni-1.7.0-linux-amd64.tar.gz</span><br><span class="line">cri-containerd.DEPRECATED.txt</span><br><span class="line">etc/</span><br><span class="line">etc/systemd/</span><br><span class="line">etc/systemd/system/</span><br><span class="line">etc/systemd/system/containerd.service</span><br><span class="line">etc/crictl.yaml</span><br><span class="line">etc/cni/</span><br><span class="line">etc/cni/net.d/</span><br><span class="line">etc/cni/net.d/10-containerd-net.conflist</span><br><span class="line">usr/</span><br><span class="line">usr/local/</span><br><span class="line">usr/local/sbin/</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<h3 id="直接将压缩包解压到系统的各个目录中"><a href="#直接将压缩包解压到系统的各个目录中" class="headerlink" title="直接将压缩包解压到系统的各个目录中"></a>直接将压缩包解压到系统的各个目录中</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ tar -C / -xzf cri-containerd-cni-1.7.0-linux-amd64.tar.gz</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sudo kubeadm init --kubernetes-version=v1.27.6 \</span><br><span class="line">--control-plane-endpoint &quot;106.74.16.106:8443&quot; \</span><br><span class="line">--image-repository registry.aliyuncs.com/google_containers \</span><br><span class="line">--pod-network-cidr=10.244.0.0/16 \</span><br><span class="line">--service-cidr=10.96.0.0/12 \</span><br><span class="line">--upload-certs</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>kubeadm</category>
+      </categories>
+      <tags>
+        <tag>kubeadm</tag>
+      </tags>
   </entry>
 </search>
