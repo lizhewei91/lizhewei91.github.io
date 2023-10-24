@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>在 kubernetes 集群中实现 gpu 共享调度 | lizhewei&#39;s Blog</title>
+  <meta name="description" content="问题背景 Kubernetes 集群中，GPU 资源作为一种外部资源(extended resources)，部署Nvidia官方提供的插件(k8s-device-plugin)后，GPU资源在节点上是以个数暴露给 kubernetes 集群来进行调度的，也就是说如果有两个后端应用 pod 需要使用到 GPU 资源，但集群节点上只有一张 GPU 物理卡的情况下，会导致两个后端应用容器中仅有一个可以">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在 kubernetes 集群中实现 gpu 共享调度">
+<meta property="og:url" content="http://lizhewei91.github.io/2023/10/24/08/index.html">
+<meta property="og:site_name" content="lizhewei&#39;Blog">
+<meta property="og:description" content="问题背景 Kubernetes 集群中，GPU 资源作为一种外部资源(extended resources)，部署Nvidia官方提供的插件(k8s-device-plugin)后，GPU资源在节点上是以个数暴露给 kubernetes 集群来进行调度的，也就是说如果有两个后端应用 pod 需要使用到 GPU 资源，但集群节点上只有一张 GPU 物理卡的情况下，会导致两个后端应用容器中仅有一个可以">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://lizhewei91.github.io/2023/10/24/08/arch.jpg">
+<meta property="og:image" content="http://lizhewei91.github.io/2023/10/24/08/filter.jpg">
+<meta property="og:image" content="http://lizhewei91.github.io/2023/10/24/08/bind.jpg">
+<meta property="og:image" content="http://lizhewei91.github.io/2023/10/24/08/sequence.jpg">
+<meta property="article:published_time" content="2023-10-24T08:26:08.000Z">
+<meta property="article:modified_time" content="2023-10-24T09:48:27.279Z">
+<meta property="article:author" content="lizhewei">
+<meta property="article:tag" content="gpu">
+<meta property="article:tag" content="gpushare">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://lizhewei91.github.io/2023/10/24/08/arch.jpg">
+  <!-- Canonical links -->
+  <link rel="canonical" href="http://lizhewei91.github.io/2023/10/24/08/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="lizhewei&#39;Blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/lizhewei91" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">李哲伟</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Cloud Native Developer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Beijing, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/lizhewei91" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/device-plugins/">device-plugins</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/gin/">gin</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/gpushare/">gpushare</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/k8s-swagger-ui/">k8s-swagger-ui</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/kubeadm/">kubeadm</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/kubectl-%E6%8F%92%E4%BB%B6/">kubectl 插件</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/kubelet/">kubelet</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/nexus/">nexus</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/operator/">operator</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/pprof/">pprof</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/reloader/">reloader</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/webhook/">webhook</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%95%9C%E5%83%8F/">镜像</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/buildx/" rel="tag">buildx</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/code-generator/" rel="tag">code-generator</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/configMap/" rel="tag">configMap</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/device-manager/" rel="tag">device-manager</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/device-plugins/" rel="tag">device-plugins</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker-repositories/" rel="tag">docker-repositories</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gin/" rel="tag">gin</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/golang/" rel="tag">golang</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gpu/" rel="tag">gpu</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gpushare/" rel="tag">gpushare</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jwt/" rel="tag">jwt</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s-swagger-ui/" rel="tag">k8s-swagger-ui</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/krew/" rel="tag">krew</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubeadm/" rel="tag">kubeadm</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubebuilder/" rel="tag">kubebuilder</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubectl-plugins/" rel="tag">kubectl-plugins</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubelet/" rel="tag">kubelet</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kubevirt-gpu-device-plugin/" rel="tag">kubevirt-gpu-device-plugin</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/manifest/" rel="tag">manifest</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nexus/" rel="tag">nexus</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/node-%E8%8A%82%E7%82%B9%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D/" rel="tag">node 节点资源分配</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nvidia/" rel="tag">nvidia</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/operator/" rel="tag">operator</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pprof/" rel="tag">pprof</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/reloader/" rel="tag">reloader</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/secret/" rel="tag">secret</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webhook/" rel="tag">webhook</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag">中间件</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%9B%E5%BB%BApod%E6%B5%81%E7%A8%8B/" rel="tag">创建pod流程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/" rel="tag">性能分析</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/10/">十月 2023</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/09/">九月 2023</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/08/">八月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">七月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/03/">三月 2023</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/02/">二月 2023</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">一月 2023</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a><span class="archive-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+  </div>
+</aside>
+
+  
+  
+  <aside class="sidebar sidebar-toc collapse   in  " id="collapseToc" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    <nav id="toc" class="article-toc">
+      <h3 class="toc-title">文章目录</h3>
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="toc-number">1.</span> <span class="toc-text">问题背景</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%AE%E6%A0%87"><span class="toc-number">1.1.</span> <span class="toc-text">目标</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%AE%BE%E8%AE%A1%E5%8E%9F%E5%88%99"><span class="toc-number">2.</span> <span class="toc-text">设计原则</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%95%B4%E4%BD%93%E8%AE%BE%E8%AE%A1"><span class="toc-number">3.</span> <span class="toc-text">整体设计</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6"><span class="toc-number">3.1.</span> <span class="toc-text">核心组件</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B"><span class="toc-number">4.</span> <span class="toc-text">工作流程</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E5%A4%87%E8%B5%84%E6%BA%90%E4%B8%8A%E6%8A%A5"><span class="toc-number">4.1.</span> <span class="toc-text">设备资源上报</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B0%83%E5%BA%A6"><span class="toc-number">4.2.</span> <span class="toc-text">调度</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Filter"><span class="toc-number">4.2.1.</span> <span class="toc-text">Filter</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Priority"><span class="toc-number">4.2.2.</span> <span class="toc-text">Priority</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Bind"><span class="toc-number">4.2.3.</span> <span class="toc-text">Bind</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%A8%E8%8A%82%E7%82%B9%E4%B8%8A%E8%BF%90%E8%A1%8C%E5%AE%B9%E5%99%A8"><span class="toc-number">4.3.</span> <span class="toc-text">在节点上运行容器</span></a></li></ol></li></ol>
+    </nav>
+  </div>
+</aside>
+
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-在kubernetes集群中实现gpu共享调度" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      在 kubernetes 集群中实现 gpu 共享调度
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2023/10/24/08/" class="article-date">
+	  <time datetime="2023-10-24T08:26:08.000Z" itemprop="datePublished">2023-10-24</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/gpushare/">gpushare</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/gpu/" rel="tag">gpu</a>, <a class="article-tag-link-link" href="/tags/gpushare/" rel="tag">gpushare</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2023/10/24/08/#comments" class="article-comment-link">评论</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 1.4k(字)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 5(分)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h1 id="问题背景"><a href="#问题背景" class="headerlink" title="问题背景"></a>问题背景</h1><blockquote>
+<p>Kubernetes 集群中，GPU 资源作为一种外部资源(<a target="_blank" rel="noopener" href="https://links.jianshu.com/go?to=https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/%23extended-resources">extended resources</a>)，部署Nvidia官方提供的插件(<a target="_blank" rel="noopener" href="https://links.jianshu.com/go?to=https://github.com/NVIDIA/k8s-device-plugin">k8s-device-plugin</a>)后，GPU资源在节点上是以个数暴露给 kubernetes 集群来进行调度的，也就是说如果有两个后端应用 pod 需要使用到 GPU 资源，但集群节点上只有一张 GPU 物理卡的情况下，会导致两个后端应用容器中仅有一个可以正常运行，另一个 pod 则会处于 pending 状态。</p>
+</blockquote>
+<p>想要在 Kubenentes 集群中实现 GPUshare，可以采用阿里云于2019年开源的 <a target="_blank" rel="noopener" href="https://links.jianshu.com/go?to=https://github.com/AliyunContainerService/gpushare-device-plugin">gpushare-device-plugin</a>：</p>
+<h2 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h2><p>将节点上的 GPU 资源以 GPU 显存或者 GPU 个数的形式暴露给 Kubernetes，实现多容器共享 GPU 资源。</p>
+<h1 id="设计原则"><a href="#设计原则" class="headerlink" title="设计原则"></a>设计原则</h1><ul>
+<li>虽然有两种方法来衡量 GPU 的能力( CUDA 核心和 GPU 内存)，在推理场景中，我们可以假设 CUDA 核心和 GPU 内存的数量是成比例的。</li>
+<li>通过<strong>将度量单位从“ GPU 数量”更改为“ MiB 中 GPU 内存的数量”</strong>，利用扩展资源来表达设备共享请求，单位为 : Gi。</li>
+<li>用户对共享GPU的诉求是用于模型开发和预测场景。在这种情况下，<strong>用户请求的 GPU 资源上限不超过一个，即应用的资源上限为单个 GPU</strong>。</li>
+<li>不需要改变任何 Kubernetes 的原生代码，只需要利用扩展的资源、调度扩展器和设备插件机制。</li>
+</ul>
+<h1 id="整体设计"><a href="#整体设计" class="headerlink" title="整体设计"></a>整体设计</h1><p>定义两个新的扩展资源:</p>
+<ul>
+<li><p>GPU -mem，对应 GPU 内存;</p>
+</li>
+<li><p>GPU -count，对应 GPU 设备的数量。</p>
+</li>
+</ul>
+<img src="/2023/10/24/08/arch.jpg" class="" title="img">
+
+<h2 id="核心组件"><a href="#核心组件" class="headerlink" title="核心组件"></a>核心组件</h2><p><strong>gpushare-scheduler-extender：</strong> 它使用 Kubernetes 调度器 extender 扩展机制，在全局调度器筛选和绑定时，负责确定节点上单个GPU 设备是否能够提供足够的 GPU Memory，并在绑定时将 GPU 分配结果记录到 Pod Spec Annotation中，供后续筛选使用。</p>
+<p><strong>gpushare-device-plugin：</strong>它使用 Device Plugin机制，根据 Pod Spec Annotation上记录的 GPU Share Scheduler Extender 的决定负责分配 GPU 设备。</p>
+<h1 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h1><img src="/2023/10/24/08/filter.jpg" class="" title="img">
+
+<h2 id="设备资源上报"><a href="#设备资源上报" class="headerlink" title="设备资源上报"></a>设备资源上报</h2><p>Gpushare-device-plugin 插件使用 nvml 库查询 GPU 设备个数和设备的 GPU 内存。节点的 GPU 总内存( 个数 * memory)通过listanwatch() 报告给 Kubelet ; Kubelet 将这些报告给 Kubernetes API Server。</p>
+<p>如果节点有 2 个 GPU，每个 GPU 有 16276 MiB，则该节点的 GPU 内存为16276 * 2 = 32552。则一共上报两种 “扩展资源”：</p>
+<p> <code>aliyun.com/gpu-count: 2</code>和<code>aliyun.com/gpu-mem: 31 </code></p>
+<h2 id="调度"><a href="#调度" class="headerlink" title="调度"></a>调度</h2><p>Gpushare-scheduler-extender 将分配信息记录到 pod 注释中，并在调度器进行过滤时根据这些信息确定每个 GPU 是否有足够的GPU -mem。</p>
+<h3 id="Filter"><a href="#Filter" class="headerlink" title="Filter"></a>Filter</h3><p>Kubernetes 调度器完成所有默认过滤器后，通过 http 调用 GPU 共享调度器扩展器的 filter 方法。这是因为默认调度器计算扩展的资源，并且只能确定资源总量是否有满足需求的空闲资源。具体确定是否在单个设备上满足需求; 因此，有必要通过 gpushare-scheduler-extender检查单个设备是否有可用的资源。</p>
+<p>如下图所示。Kubernetes 集群中有3个节点，2个 GPU 设备，当用户申请 GPU -mem=8138时，默认调度器扫描所有节点，发现 N1的剩余资源为(16276 * 2 - 16276 - 12207 = 4069)，因此资源需求不满足，因此 N1 节点被过滤掉。</p>
+<p>N2 和 N3 节点剩余资源为 8138 MiB。它们都满足默认调度器的要求。此时，默认调度器委托 gpushare-scheduler-extender 进行二次过滤。</p>
+<h3 id="Priority"><a href="#Priority" class="headerlink" title="Priority"></a>Priority</h3><p>在二次过滤时，gpushare-scheduler-extender 需要判断单个 GPU 设备是否满足资源需求。在检查 N2 节点时，发现该节点虽然有8138MiB的可用资源，但分布在两个设备上:GPU0 和 GPU1只有4069MiB的可用资源。不能满足单个设备 8138 MiB的要求。</p>
+<p>虽然 N3 节点共有8138MiB可用资源，但这些可用资源都属于GPU0，满足单设备需求。因此，精确的调度可以通过过滤GPU共享调度扩展器来实现。</p>
+<h3 id="Bind"><a href="#Bind" class="headerlink" title="Bind"></a>Bind</h3><p>当调度器找到满足需求的节点时，它委托 gpushare-scheduler-extender 绑定节点和 pod。在这里，扩展程序需要做两件事:</p>
+<ul>
+<li>根据 binpack 规则在节点中找到 GPU 设备，记录 GPU 设备ID，并在 pod 注释中保存为<code>ALIYUN_GPU_ID</code>。它还将 pod 应用的 GPU内存保存为 pod 注释中的 <code>ALIYUN_COM_GPU_MEM_POD</code>和<code>ALIYUN_COM_GPU_MEM_ASSUME_TIME</code>。如果绑定时未找到图形处理器，则不进行绑定。默认调度程序将在过期超时后重新调度。</li>
+</ul>
+<blockquote>
+<p>注意: 还有一个名为<code>ALIYUN_COM_GPU_MEM_ASSIGNED</code> 的pod注释，初始化为false。它表示在调度期间假定该pod与GPU设备在一起，但在运行时没有分配。</p>
+</blockquote>
+<ul>
+<li>将 pod 和 node 绑定关系上报给 kube-apiserver </li>
+</ul>
+<p>例如，用户想要请求一个gpu-mem:8138 的 pod，选择节点N1:首先分析不同gpu的可用资源，分别是GPU0(12207)、GPU1(8138)、GPU2(4069)和GPU3(16276)。GPU2(4069)的剩余资源不令人满意，因此丢弃设备;在满足要求的其他三个gpu中，选择剩余资源最少的GPU1(8138)。</p>
+<img src="/2023/10/24/08/bind.jpg" class="" title="img">
+
+<h2 id="在节点上运行容器"><a href="#在节点上运行容器" class="headerlink" title="在节点上运行容器"></a>在节点上运行容器</h2><p>在创建容器之前，在 Kubelet 中调用 gpushare-device-plugin 中的 Allocate 函数( Allocate 的参数是 GPU 内存请求量) :</p>
+<p>从Kubernetes API Server 获取所有 pending状态和申请gpu共享的pod，该节点中GPU内存请求量由assumedTimestamp排序</p>
+<img src="/2023/10/24/08/sequence.jpg" class="" title="img">
+
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="http://lizhewei91.github.io/2023/10/24/08/" title="在 kubernetes 集群中实现 gpu 共享调度" target="_blank" rel="external">http://lizhewei91.github.io/2023/10/24/08/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/lizhewei91" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/lizhewei91" target="_blank"><span class="text-dark">李哲伟</span><small class="ml-1x">Cloud Native Developer</small></a></h3>
+        <div>专注于云原生领域。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    
+    <li class="next">
+      <a href="/2023/09/25/51/" title="利用 kubeadm 部署高可用 k8s 集群"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+    <li class="toggle-toc">
+      <a class="toggle-btn " data-toggle="collapse" href="#collapseToc" aria-expanded="false" title="文章目录" role="button">    <span>[&nbsp;</span><span>文章目录</span>
+        <i class="text-collapsed icon icon-anchor"></i>
+        <i class="text-in icon icon-close"></i>
+        <span>]</span>
+      </a>
+    </li>
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/lizhewei91" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+    <script>
+(function ($) {
+    $('.search-form').on('submit', function (e) {
+        var keyword = $('.search-form-input[name="wd"]').val();
+        window.location = 'https://www.baidu.com/s?wd=site:lizhewei91.github.io ' + keyword;
+        return false;
+    });
+})(jQuery);
+</script>
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

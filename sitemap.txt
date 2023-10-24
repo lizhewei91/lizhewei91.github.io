@@ -1,3 +1,4 @@
+http://lizhewei91.github.io/2023/10/24/08/
 http://lizhewei91.github.io/2022/11/29/16/
 http://lizhewei91.github.io/2023/09/25/51/
 http://lizhewei91.github.io/2023/09/07/32/
@@ -52,6 +53,7 @@ http://lizhewei91.github.io/tags/kubebuilder/
 http://lizhewei91.github.io/tags/webhook/
 http://lizhewei91.github.io/tags/nexus/
 http://lizhewei91.github.io/tags/docker-repositories/
+http://lizhewei91.github.io/tags/gpushare/
 http://lizhewei91.github.io/categories/device-plugins/
 http://lizhewei91.github.io/categories/pprof/
 http://lizhewei91.github.io/categories/kubelet/
@@ -64,3 +66,4 @@ http://lizhewei91.github.io/categories/k8s-swagger-ui/
 http://lizhewei91.github.io/categories/webhook/
 http://lizhewei91.github.io/categories/kubeadm/
 http://lizhewei91.github.io/categories/nexus/
+http://lizhewei91.github.io/categories/gpushare/

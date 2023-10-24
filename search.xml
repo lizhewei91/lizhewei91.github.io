@@ -1778,4 +1778,66 @@
         <tag>kubeadm</tag>
       </tags>
   </entry>
+  <entry>
+    <title>在 kubernetes 集群中实现 gpu 共享调度</title>
+    <url>/2023/10/24/08/</url>
+    <content><![CDATA[<h1 id="问题背景"><a href="#问题背景" class="headerlink" title="问题背景"></a>问题背景</h1><blockquote>
+<p>Kubernetes 集群中，GPU 资源作为一种外部资源(<a href="https://links.jianshu.com/go?to=https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/%23extended-resources">extended resources</a>)，部署Nvidia官方提供的插件(<a href="https://links.jianshu.com/go?to=https://github.com/NVIDIA/k8s-device-plugin">k8s-device-plugin</a>)后，GPU资源在节点上是以个数暴露给 kubernetes 集群来进行调度的，也就是说如果有两个后端应用 pod 需要使用到 GPU 资源，但集群节点上只有一张 GPU 物理卡的情况下，会导致两个后端应用容器中仅有一个可以正常运行，另一个 pod 则会处于 pending 状态。</p>
+</blockquote>
+<p>想要在 Kubenentes 集群中实现 GPUshare，可以采用阿里云于2019年开源的 <a href="https://links.jianshu.com/go?to=https://github.com/AliyunContainerService/gpushare-device-plugin">gpushare-device-plugin</a>：</p>
+<h2 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h2><p>将节点上的 GPU 资源以 GPU 显存或者 GPU 个数的形式暴露给 Kubernetes，实现多容器共享 GPU 资源。</p>
+<h1 id="设计原则"><a href="#设计原则" class="headerlink" title="设计原则"></a>设计原则</h1><ul>
+<li>虽然有两种方法来衡量 GPU 的能力( CUDA 核心和 GPU 内存)，在推理场景中，我们可以假设 CUDA 核心和 GPU 内存的数量是成比例的。</li>
+<li>通过<strong>将度量单位从“ GPU 数量”更改为“ MiB 中 GPU 内存的数量”</strong>，利用扩展资源来表达设备共享请求，单位为 : Gi。</li>
+<li>用户对共享GPU的诉求是用于模型开发和预测场景。在这种情况下，<strong>用户请求的 GPU 资源上限不超过一个，即应用的资源上限为单个 GPU</strong>。</li>
+<li>不需要改变任何 Kubernetes 的原生代码，只需要利用扩展的资源、调度扩展器和设备插件机制。</li>
+</ul>
+<h1 id="整体设计"><a href="#整体设计" class="headerlink" title="整体设计"></a>整体设计</h1><p>定义两个新的扩展资源:</p>
+<ul>
+<li><p>GPU -mem，对应 GPU 内存;</p>
+</li>
+<li><p>GPU -count，对应 GPU 设备的数量。</p>
+</li>
+</ul>
+<img src="/2023/10/24/08/arch.jpg" class="" title="img">
+
+<h2 id="核心组件"><a href="#核心组件" class="headerlink" title="核心组件"></a>核心组件</h2><p><strong>gpushare-scheduler-extender：</strong> 它使用 Kubernetes 调度器 extender 扩展机制，在全局调度器筛选和绑定时，负责确定节点上单个GPU 设备是否能够提供足够的 GPU Memory，并在绑定时将 GPU 分配结果记录到 Pod Spec Annotation中，供后续筛选使用。</p>
+<p><strong>gpushare-device-plugin：</strong>它使用 Device Plugin机制，根据 Pod Spec Annotation上记录的 GPU Share Scheduler Extender 的决定负责分配 GPU 设备。</p>
+<h1 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h1><img src="/2023/10/24/08/filter.jpg" class="" title="img">
+
+<h2 id="设备资源上报"><a href="#设备资源上报" class="headerlink" title="设备资源上报"></a>设备资源上报</h2><p>Gpushare-device-plugin 插件使用 nvml 库查询 GPU 设备个数和设备的 GPU 内存。节点的 GPU 总内存( 个数 * memory)通过listanwatch() 报告给 Kubelet ; Kubelet 将这些报告给 Kubernetes API Server。</p>
+<p>如果节点有 2 个 GPU，每个 GPU 有 16276 MiB，则该节点的 GPU 内存为16276 * 2 = 32552。则一共上报两种 “扩展资源”：</p>
+<p> <code>aliyun.com/gpu-count: 2</code>和<code>aliyun.com/gpu-mem: 31 </code></p>
+<h2 id="调度"><a href="#调度" class="headerlink" title="调度"></a>调度</h2><p>Gpushare-scheduler-extender 将分配信息记录到 pod 注释中，并在调度器进行过滤时根据这些信息确定每个 GPU 是否有足够的GPU -mem。</p>
+<h3 id="Filter"><a href="#Filter" class="headerlink" title="Filter"></a>Filter</h3><p>Kubernetes 调度器完成所有默认过滤器后，通过 http 调用 GPU 共享调度器扩展器的 filter 方法。这是因为默认调度器计算扩展的资源，并且只能确定资源总量是否有满足需求的空闲资源。具体确定是否在单个设备上满足需求; 因此，有必要通过 gpushare-scheduler-extender检查单个设备是否有可用的资源。</p>
+<p>如下图所示。Kubernetes 集群中有3个节点，2个 GPU 设备，当用户申请 GPU -mem=8138时，默认调度器扫描所有节点，发现 N1的剩余资源为(16276 * 2 - 16276 - 12207 = 4069)，因此资源需求不满足，因此 N1 节点被过滤掉。</p>
+<p>N2 和 N3 节点剩余资源为 8138 MiB。它们都满足默认调度器的要求。此时，默认调度器委托 gpushare-scheduler-extender 进行二次过滤。</p>
+<h3 id="Priority"><a href="#Priority" class="headerlink" title="Priority"></a>Priority</h3><p>在二次过滤时，gpushare-scheduler-extender 需要判断单个 GPU 设备是否满足资源需求。在检查 N2 节点时，发现该节点虽然有8138MiB的可用资源，但分布在两个设备上:GPU0 和 GPU1只有4069MiB的可用资源。不能满足单个设备 8138 MiB的要求。</p>
+<p>虽然 N3 节点共有8138MiB可用资源，但这些可用资源都属于GPU0，满足单设备需求。因此，精确的调度可以通过过滤GPU共享调度扩展器来实现。</p>
+<h3 id="Bind"><a href="#Bind" class="headerlink" title="Bind"></a>Bind</h3><p>当调度器找到满足需求的节点时，它委托 gpushare-scheduler-extender 绑定节点和 pod。在这里，扩展程序需要做两件事:</p>
+<ul>
+<li>根据 binpack 规则在节点中找到 GPU 设备，记录 GPU 设备ID，并在 pod 注释中保存为<code>ALIYUN_GPU_ID</code>。它还将 pod 应用的 GPU内存保存为 pod 注释中的 <code>ALIYUN_COM_GPU_MEM_POD</code>和<code>ALIYUN_COM_GPU_MEM_ASSUME_TIME</code>。如果绑定时未找到图形处理器，则不进行绑定。默认调度程序将在过期超时后重新调度。</li>
+</ul>
+<blockquote>
+<p>注意: 还有一个名为<code>ALIYUN_COM_GPU_MEM_ASSIGNED</code> 的pod注释，初始化为false。它表示在调度期间假定该pod与GPU设备在一起，但在运行时没有分配。</p>
+</blockquote>
+<ul>
+<li>将 pod 和 node 绑定关系上报给 kube-apiserver </li>
+</ul>
+<p>例如，用户想要请求一个gpu-mem:8138 的 pod，选择节点N1:首先分析不同gpu的可用资源，分别是GPU0(12207)、GPU1(8138)、GPU2(4069)和GPU3(16276)。GPU2(4069)的剩余资源不令人满意，因此丢弃设备;在满足要求的其他三个gpu中，选择剩余资源最少的GPU1(8138)。</p>
+<img src="/2023/10/24/08/bind.jpg" class="" title="img">
+
+<h2 id="在节点上运行容器"><a href="#在节点上运行容器" class="headerlink" title="在节点上运行容器"></a>在节点上运行容器</h2><p>在创建容器之前，在 Kubelet 中调用 gpushare-device-plugin 中的 Allocate 函数( Allocate 的参数是 GPU 内存请求量) :</p>
+<p>从Kubernetes API Server 获取所有 pending状态和申请gpu共享的pod，该节点中GPU内存请求量由assumedTimestamp排序</p>
+<img src="/2023/10/24/08/sequence.jpg" class="" title="img">
+
+]]></content>
+      <categories>
+        <category>gpushare</category>
+      </categories>
+      <tags>
+        <tag>gpu</tag>
+        <tag>gpushare</tag>
+      </tags>
+  </entry>
 </search>
