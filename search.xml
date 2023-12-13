@@ -1864,15 +1864,21 @@
 <p>要安装和管理这么多的组件，对于运维人员来说压力不小。基于此，NVIDIA开源了一款叫 <a href="https://github.com/NVIDIA/gpu-operator">NVIDIA GPU Operator</a> 的工具，该工具基于 <a href="https://github.com/operator-framework">Operator Framework</a> 实现，用于自动化管理上面我们提到的这些组件。</p>
 <p>在之前的文章中，作者分别介绍了NVIDIA GPU Operator所涉及的每一个组件并且演示了如何手动部署这些组件，在本篇文章中将介绍详细介绍NVIDIA GPU Operator的工作原理。</p>
 <h1 id="组件介绍"><a href="#组件介绍" class="headerlink" title="组件介绍"></a>组件介绍</h1><p>从前面的文章中，我们知道NVIDIA GPU Operator总共包含如下的几个组件：</p>
-<img src="/2023/12/13/04/image-20231213105109748.png" class="" title="image-20231213105109748">
+<img src="/2023/12/13/04/gpu-operator%E6%80%BB%E7%BB%93-2460579.png" class="" title="gpu-operator总结">
 
 <ul>
-<li><a href="https://github.com/kubernetes-sigs/node-feature-discovery"><strong>NFD(Node Feature Discovery)</strong></a>：用于给节点打上某些标签，这些标签包括cpu id、内核版本、操作系统版本等标签。</li>
-<li><a href="https://gitlab.com/nvidia/container-images/driver"><strong>NVIDIA Driver</strong></a>：基于容器的方式在节点上安装NVIDIA GPU驱动，在k8s集群中以DaemonSet方式部署，只有节点拥有标签“nvidia.com/gpu.present=true”时，DaemonSet控制的Pod才会在该节点上运行。</li>
-<li><a href="https://github.com/NVIDIA/nvidia-container-toolkit"><strong>NVIDIA Container Toolkit</strong></a>：能够实现在容器中使用GPU设备，在k8s集群中以DaemonSet方式部署，只有节点拥有标签“nvidia.com/gpu.present=true”时，DaemonSet控制的Pod才会在该节点上运行。</li>
-<li><a href="https://github.com/NVIDIA/k8s-device-plugin"><strong>NVIDIA Device Plugin</strong></a>：NVIDIA Device Plugin用于实现将GPU设备以Kubernetes扩展资源的方式供用户使用，在k8s集群中以DaemonSet方式部署，只有节点拥有标签“nvidia.com/gpu.present=true”时，DaemonSet控制的Pod才会在该节点上运行。</li>
-<li><a href="https://github.com/NVIDIA/dcgm-exporter"><strong>DCGM Exporter</strong></a>：周期性的收集节点GPU设备的状态（当前温度、总的显存、已使用显存、使用率等），然后结合Prometheus和Grafana将这些指标用丰富的仪表盘展示给用户。在k8s集群中以DaemonSet方式部署，只有节点拥有标签“nvidia.com/gpu.present=true”时，DaemonSet控制的Pod才会在该节点上运行。</li>
-<li><a href="https://github.com/NVIDIA/gpu-feature-discovery"><strong>GFD(GPU Feature Discovery)</strong></a>：用于收集节点的GPU设备属性（GPU驱动版本、GPU型号等），并将这些属性以节点标签的方式透出。在k8s集群中以DaemonSet方式部署，只有节点拥有标签“nvidia.com/gpu.present=true”时，DaemonSet控制的Pod才会在该节点上运行。</li>
+<li><p><a href="https://github.com/kubernetes-sigs/node-feature-discovery"><strong>NFD(Node Feature Discovery)</strong></a>：用于给节点打上某些标签，这些标签包括cpu id、内核版本、操作系统版本等标签。</p>
+</li>
+<li><p><a href="https://gitlab.com/nvidia/container-images/driver"><strong>NVIDIA Driver</strong></a>：基于容器的方式在节点上安装NVIDIA GPU驱动，在k8s集群中以DaemonSet方式部署，只有节点拥有标签“nvidia.com/gpu.present=true”时，DaemonSet控制的Pod才会在该节点上运行。</p>
+</li>
+<li><p><a href="https://github.com/NVIDIA/nvidia-container-toolkit"><strong>NVIDIA Container Toolkit</strong></a>：能够实现在容器中使用GPU设备，在k8s集群中以DaemonSet方式部署，只有节点拥有标签“nvidia.com/gpu.present=true”时，DaemonSet控制的Pod才会在该节点上运行。</p>
+</li>
+<li><p><a href="https://github.com/NVIDIA/k8s-device-plugin"><strong>NVIDIA Device Plugin</strong></a>：NVIDIA Device Plugin用于实现将GPU设备以Kubernetes扩展资源的方式供用户使用，在k8s集群中以DaemonSet方式部署，只有节点拥有标签“nvidia.com/gpu.present=true”时，DaemonSet控制的Pod才会在该节点上运行。</p>
+</li>
+<li><p><a href="https://github.com/NVIDIA/dcgm-exporter"><strong>DCGM Exporter</strong></a>：周期性的收集节点GPU设备的状态（当前温度、总的显存、已使用显存、使用率等），然后结合Prometheus和Grafana将这些指标用丰富的仪表盘展示给用户。在k8s集群中以DaemonSet方式部署，只有节点拥有标签“nvidia.com/gpu.present=true”时，DaemonSet控制的Pod才会在该节点上运行。</p>
+</li>
+<li><p><a href="https://github.com/NVIDIA/gpu-feature-discovery"><strong>GFD(GPU Feature Discovery)</strong></a>：用于收集节点的GPU设备属性（GPU驱动版本、GPU型号等），并将这些属性以节点标签的方式透出。在k8s集群中以DaemonSet方式部署，只有节点拥有标签“nvidia.com/gpu.present=true”时，DaemonSet控制的Pod才会在该节点上运行。</p>
+</li>
 </ul>
 <ul>
 <li><strong>NVIDIA MIG Manager</strong>：</li>
