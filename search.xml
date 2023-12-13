@@ -1799,19 +1799,18 @@
 <li><p>GPU -count，对应 GPU 设备的数量。</p>
 </li>
 </ul>
-<img src="/2023/10/24/08/arch.jpg" class="" title="img">
-
+<p>​    <img src="/2023/10/24/08/arch.jpg" class="" title="img"></p>
 <h2 id="核心组件"><a href="#核心组件" class="headerlink" title="核心组件"></a>核心组件</h2><p><strong>gpushare-scheduler-extender：</strong> 它使用 Kubernetes 调度器 extender 扩展机制，在全局调度器筛选和绑定时，负责确定节点上单个GPU 设备是否能够提供足够的 GPU Memory，并在绑定时将 GPU 分配结果记录到 Pod Spec Annotation中，供后续筛选使用。</p>
 <p><strong>gpushare-device-plugin：</strong>它使用 Device Plugin机制，根据 Pod Spec Annotation上记录的 GPU Share Scheduler Extender 的决定负责分配 GPU 设备。</p>
-<h1 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h1><img src="/2023/10/24/08/filter.jpg" class="" title="img">
-
-<h2 id="设备资源上报"><a href="#设备资源上报" class="headerlink" title="设备资源上报"></a>设备资源上报</h2><p>Gpushare-device-plugin 插件使用 nvml 库查询 GPU 设备个数和设备的 GPU 内存。节点的 GPU 总内存( 个数 * memory)通过listanwatch() 报告给 Kubelet ; Kubelet 将这些报告给 Kubernetes API Server。</p>
+<h1 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h1><h2 id="设备资源上报"><a href="#设备资源上报" class="headerlink" title="设备资源上报"></a>设备资源上报</h2><p>Gpushare-device-plugin 插件使用 nvml 库查询 GPU 设备个数和设备的 GPU 内存。节点的 GPU 总内存( 个数 * memory)通过listanwatch() 报告给 Kubelet ; Kubelet 将这些报告给 Kubernetes API Server。</p>
 <p>如果节点有 2 个 GPU，每个 GPU 有 16276 MiB，则该节点的 GPU 内存为16276 * 2 = 32552。则一共上报两种 “扩展资源”：</p>
 <p> <code>aliyun.com/gpu-count: 2</code>和<code>aliyun.com/gpu-mem: 31 </code></p>
 <h2 id="调度"><a href="#调度" class="headerlink" title="调度"></a>调度</h2><p>Gpushare-scheduler-extender 将分配信息记录到 pod 注释中，并在调度器进行过滤时根据这些信息确定每个 GPU 是否有足够的GPU -mem。</p>
 <h3 id="Filter"><a href="#Filter" class="headerlink" title="Filter"></a>Filter</h3><p>Kubernetes 调度器完成所有默认过滤器后，通过 http 调用 GPU 共享调度器扩展器的 filter 方法。这是因为默认调度器计算扩展的资源，并且只能确定资源总量是否有满足需求的空闲资源。具体确定是否在单个设备上满足需求; 因此，有必要通过 gpushare-scheduler-extender检查单个设备是否有可用的资源。</p>
 <p>如下图所示。Kubernetes 集群中有3个节点，2个 GPU 设备，当用户申请 GPU -mem=8138时，默认调度器扫描所有节点，发现 N1的剩余资源为(16276 * 2 - 16276 - 12207 = 4069)，因此资源需求不满足，因此 N1 节点被过滤掉。</p>
 <p>N2 和 N3 节点剩余资源为 8138 MiB。它们都满足默认调度器的要求。此时，默认调度器委托 gpushare-scheduler-extender 进行二次过滤。</p>
+<img src="/2023/10/24/08/filter.jpg" class="" title="img">
+
 <h3 id="Priority"><a href="#Priority" class="headerlink" title="Priority"></a>Priority</h3><p>在二次过滤时，gpushare-scheduler-extender 需要判断单个 GPU 设备是否满足资源需求。在检查 N2 节点时，发现该节点虽然有8138MiB的可用资源，但分布在两个设备上:GPU0 和 GPU1只有4069MiB的可用资源。不能满足单个设备 8138 MiB的要求。</p>
 <p>虽然 N3 节点共有8138MiB可用资源，但这些可用资源都属于GPU0，满足单设备需求。因此，精确的调度可以通过过滤GPU共享调度扩展器来实现。</p>
 <h3 id="Bind"><a href="#Bind" class="headerlink" title="Bind"></a>Bind</h3><p>当调度器找到满足需求的节点时，它委托 gpushare-scheduler-extender 绑定节点和 pod。在这里，扩展程序需要做两件事:</p>
@@ -1838,6 +1837,23 @@
       <tags>
         <tag>gpu</tag>
         <tag>gpushare</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>NVIDIA/gpu-operator原理分析</title>
+    <url>/2023/12/13/45/</url>
+    <content><![CDATA[]]></content>
+  </entry>
+  <entry>
+    <title>NVIDIA/gpu-operator分析一: NVIDIA驱动安装</title>
+    <url>/2023/12/11/31/</url>
+    <content><![CDATA[]]></content>
+      <categories>
+        <category>gpu-operator</category>
+      </categories>
+      <tags>
+        <tag>nvidia-driver</tag>
+        <tag>gpu-operator</tag>
       </tags>
   </entry>
 </search>
