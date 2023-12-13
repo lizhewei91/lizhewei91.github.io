@@ -17,23 +17,23 @@
   <meta http-equiv="window-target" content="_top" />
   
   
-  <title>NVIDIA/gpu-operator分析:原理分析 | lizhewei&#39;s Blog</title>
+  <title>NVIDIA/gpu-operator分析: 原理解析 | lizhewei&#39;s Blog</title>
   <meta name="description" content="背景我们知道，如果在Kubernetes中支持GPU设备调度，需要做如下的工作：  节点上安装nvidia驱动 节点上安装nvidia-docker 集群部署gpu device plugin，用于为调度到该节点的pod分配GPU设备。  除此之外，如果你需要监控集群GPU资源使用情况，你可能还需要安装 DCGM exporter 结合 Prometheus 输出 GPU 资源监控信息。 要安装和">
 <meta property="og:type" content="article">
-<meta property="og:title" content="NVIDIA&#x2F;gpu-operator分析:原理分析">
-<meta property="og:url" content="http://lizhewei91.github.io/2023/12/13/34/index.html">
+<meta property="og:title" content="NVIDIA&#x2F;gpu-operator分析: 原理解析">
+<meta property="og:url" content="http://lizhewei91.github.io/2023/12/13/04/index.html">
 <meta property="og:site_name" content="lizhewei&#39;Blog">
 <meta property="og:description" content="背景我们知道，如果在Kubernetes中支持GPU设备调度，需要做如下的工作：  节点上安装nvidia驱动 节点上安装nvidia-docker 集群部署gpu device plugin，用于为调度到该节点的pod分配GPU设备。  除此之外，如果你需要监控集群GPU资源使用情况，你可能还需要安装 DCGM exporter 结合 Prometheus 输出 GPU 资源监控信息。 要安装和">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://lizhewei91.github.io/2023/12/13/34/image-20231213105109748.png">
-<meta property="article:published_time" content="2023-12-13T08:22:34.000Z">
-<meta property="article:modified_time" content="2023-12-13T08:25:02.457Z">
+<meta property="og:image" content="http://lizhewei91.github.io/2023/12/13/04/image-20231213105109748.png">
+<meta property="article:published_time" content="2023-12-13T08:31:04.000Z">
+<meta property="article:modified_time" content="2023-12-13T08:34:58.471Z">
 <meta property="article:author" content="lizhewei">
 <meta property="article:tag" content="gpu-operator">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://lizhewei91.github.io/2023/12/13/34/image-20231213105109748.png">
+<meta name="twitter:image" content="http://lizhewei91.github.io/2023/12/13/04/image-20231213105109748.png">
   <!-- Canonical links -->
-  <link rel="canonical" href="http://lizhewei91.github.io/2023/12/13/34/index.html">
+  <link rel="canonical" href="http://lizhewei91.github.io/2023/12/13/04/index.html">
   
     <link rel="alternate" href="/atom.xml" title="lizhewei&#39;Blog" type="application/atom+xml">
   
@@ -214,14 +214,14 @@
   
 <main class="main" role="main">
   <div class="content">
-  <article id="post-NVIDIA-gpu-operator分析-原理分析" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+  <article id="post-NVIDIA-gpu-operator分析-原理解析" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
     
     <div class="article-header">
       
         
   
     <h1 class="article-title" itemprop="name">
-      NVIDIA/gpu-operator分析:原理分析
+      NVIDIA/gpu-operator分析: 原理解析
     </h1>
   
 
@@ -229,8 +229,8 @@
       <div class="article-meta">
         <span class="article-date">
     <i class="icon icon-calendar-check"></i>
-	<a href="/2023/12/13/34/" class="article-date">
-	  <time datetime="2023-12-13T08:22:34.000Z" itemprop="datePublished">2023-12-13</time>
+	<a href="/2023/12/13/04/" class="article-date">
+	  <time datetime="2023-12-13T08:31:04.000Z" itemprop="datePublished">2023-12-13</time>
 	</a>
 </span>
         
@@ -248,13 +248,13 @@
 
         
 
-        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2023/12/13/34/#comments" class="article-comment-link">评论</a></span>
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2023/12/13/04/#comments" class="article-comment-link">评论</a></span>
         
 	
 		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 1.8k(字)</span>
 	
 	
-		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 9(分)</span>
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 8(分)</span>
 	
 
       </div>
@@ -271,7 +271,7 @@
 <p>要安装和管理这么多的组件，对于运维人员来说压力不小。基于此，NVIDIA开源了一款叫 <a target="_blank" rel="noopener" href="https://github.com/NVIDIA/gpu-operator">NVIDIA GPU Operator</a> 的工具，该工具基于 <a target="_blank" rel="noopener" href="https://github.com/operator-framework">Operator Framework</a> 实现，用于自动化管理上面我们提到的这些组件。</p>
 <p>在之前的文章中，作者分别介绍了NVIDIA GPU Operator所涉及的每一个组件并且演示了如何手动部署这些组件，在本篇文章中将介绍详细介绍NVIDIA GPU Operator的工作原理。</p>
 <h1 id="组件介绍"><a href="#组件介绍" class="headerlink" title="组件介绍"></a>组件介绍</h1><p>从前面的文章中，我们知道NVIDIA GPU Operator总共包含如下的几个组件：</p>
-<img src="/2023/12/13/34/image-20231213105109748.png" class="" title="image-20231213105109748">
+<img src="/2023/12/13/04/image-20231213105109748.png" class="" title="image-20231213105109748">
 
 <ul>
 <li>**<a target="_blank" rel="noopener" href="https://github.com/kubernetes-sigs/node-feature-discovery">NFD(Node Feature Discovery)</a>**：用于给节点打上某些标签，这些标签包括cpu id、内核版本、操作系统版本等标签。</li>
@@ -297,7 +297,7 @@
 <p>可以看到在 CR 的 spec 部分保存了各组件的配置信息，这些配置信息来源于 helm chart 的 values.yaml。</p>
 <p>另外，出了保存各组件的配置信息，在 status 部分，还有一个字段state保存 gpu-operator 状态。</p>
 <h3 id="nvidiadrivers-nvidia-com"><a href="#nvidiadrivers-nvidia-com" class="headerlink" title="nvidiadrivers.nvidia.com"></a>nvidiadrivers.nvidia.com</h3><p>您可以创建一个或多个NVIDIA驱动程序自定义资源实例，通过 nodeSelector 以指定要在特定节点上配置的NVIDIA GPU驱动程序类型和驱动程序版本。<a target="_blank" rel="noopener" href="https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/gpu-driver-configuration.html">nvidiadrivers.nvidia.com文档</a></p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">nvidia.com/v1alpha1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">NVIDIADriver</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">demo-gold</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">driverType:</span> <span class="string">gpu</span></span><br><span class="line">  <span class="attr">env:</span> []</span><br><span class="line">  <span class="attr">image:</span> <span class="string">driver</span></span><br><span class="line">  <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">  <span class="attr">imagePullSecrets:</span> []</span><br><span class="line">  <span class="attr">manager:</span> &#123;&#125;</span><br><span class="line">  <span class="attr">nodeSelector:</span></span><br><span class="line">    <span class="attr">driver.config:</span> <span class="string">&quot;gold&quot;</span></span><br><span class="line">  <span class="attr">repository:</span> <span class="string">nvcr.io/nvidia</span></span><br><span class="line">  <span class="attr">version:</span> <span class="string">&quot;535.104.12&quot;</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">nvidia.com/v1alpha1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">NVIDIADriver</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">demo-silver</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">driverType:</span> <span class="string">gpu</span></span><br><span class="line">  <span class="attr">env:</span> []</span><br><span class="line">  <span class="attr">image:</span> <span class="string">driver</span></span><br><span class="line">  <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">  <span class="attr">imagePullSecrets:</span> []</span><br><span class="line">  <span class="attr">manager:</span> &#123;&#125;</span><br><span class="line">  <span class="attr">nodeSelector:</span></span><br><span class="line">    <span class="attr">driver.config:</span> <span class="string">&quot;silver&quot;</span></span><br><span class="line">  <span class="attr">repository:</span> <span class="string">nvcr.io/nvidia</span></span><br><span class="line">  <span class="attr">version:</span> <span class="string">&quot;470.141.10&quot;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">nvidia.com/v1alpha1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">NVIDIADriver</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">demo-gold</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">driverType:</span> <span class="string">gpu</span></span><br><span class="line">  <span class="attr">env:</span> []</span><br><span class="line">  <span class="attr">image:</span> <span class="string">driver</span></span><br><span class="line">  <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">  <span class="attr">imagePullSecrets:</span> []</span><br><span class="line">  <span class="attr">manager:</span> &#123;&#125;</span><br><span class="line">  <span class="attr">nodeSelector:</span></span><br><span class="line">    <span class="attr">driver.config:</span> <span class="string">&quot;gold&quot;</span></span><br><span class="line">  <span class="attr">repository:</span> <span class="string">nvcr.io/nvidia</span></span><br><span class="line">  <span class="attr">version:</span> <span class="string">&quot;535.104.12&quot;</span></span><br></pre></td></tr></table></figure>
 
 <h3 id="nodefeatures-nfd-k8s-sigs-io"><a href="#nodefeatures-nfd-k8s-sigs-io" class="headerlink" title="nodefeatures.nfd.k8s-sigs.io"></a>nodefeatures.nfd.k8s-sigs.io</h3><p>// TODO</p>
 <h3 id="nodefeaturerules-nfd-k8s-sigs-io"><a href="#nodefeaturerules-nfd-k8s-sigs-io" class="headerlink" title="nodefeaturerules.nfd.k8s-sigs.io"></a>nodefeaturerules.nfd.k8s-sigs.io</h3><p>// TODO</p>
@@ -310,7 +310,7 @@
     
     <li class="post-copyright-link hidden-xs">
       <strong>本文链接：</strong>
-      <a href="http://lizhewei91.github.io/2023/12/13/34/" title="NVIDIA/gpu-operator分析:原理分析" target="_blank" rel="external">http://lizhewei91.github.io/2023/12/13/34/</a>
+      <a href="http://lizhewei91.github.io/2023/12/13/04/" title="NVIDIA/gpu-operator分析: 原理解析" target="_blank" rel="external">http://lizhewei91.github.io/2023/12/13/04/</a>
     </li>
     
     <li class="post-copyright-license">
