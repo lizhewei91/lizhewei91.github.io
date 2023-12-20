@@ -1840,18 +1840,6 @@
       </tags>
   </entry>
   <entry>
-    <title>NVIDIA/gpu-operator分析一: NVIDIA驱动安装</title>
-    <url>/2023/12/11/31/</url>
-    <content><![CDATA[]]></content>
-      <categories>
-        <category>gpu-operator</category>
-      </categories>
-      <tags>
-        <tag>nvidia-driver</tag>
-        <tag>gpu-operator</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>NVIDIA/gpu-operator分析: 原理解析</title>
     <url>/2023/12/13/04/</url>
     <content><![CDATA[<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>我们知道，如果在Kubernetes中支持GPU设备调度，需要做如下的工作：</p>
