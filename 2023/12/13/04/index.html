@@ -33,7 +33,7 @@
 <meta property="og:image" content="http://lizhewei91.github.io/2023/12/13/04/NVIDIADriver.png">
 <meta property="og:image" content="http://lizhewei91.github.io/2023/12/13/04/upgrade-controller-state-machine.png">
 <meta property="article:published_time" content="2023-12-13T08:31:04.000Z">
-<meta property="article:modified_time" content="2023-12-20T04:09:47.646Z">
+<meta property="article:modified_time" content="2023-12-20T04:14:38.548Z">
 <meta property="article:author" content="lizhewei">
 <meta property="article:tag" content="gpu-operator">
 <meta name="twitter:card" content="summary">
@@ -218,6 +218,15 @@
 
   
   
+  <aside class="sidebar sidebar-toc collapse   in  " id="collapseToc" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    <nav id="toc" class="article-toc">
+      <h3 class="toc-title">文章目录</h3>
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%83%8C%E6%99%AF"><span class="toc-number">1.</span> <span class="toc-text">背景</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%84%E4%BB%B6%E4%BB%8B%E7%BB%8D"><span class="toc-number">2.</span> <span class="toc-text">组件介绍</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%BA%90%E7%A0%81%E4%BB%8B%E7%BB%8D"><span class="toc-number">3.</span> <span class="toc-text">源码介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E6%8F%90%E8%AF%B4%E6%98%8E"><span class="toc-number">3.1.</span> <span class="toc-text">前提说明</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NVIDIA-GPU-operator-%E7%9A%84-CRDs"><span class="toc-number">3.2.</span> <span class="toc-text">NVIDIA GPU operator 的 CRDs</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#clusterpolicies-nvidia-com"><span class="toc-number">3.2.1.</span> <span class="toc-text">clusterpolicies.nvidia.com</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#nvidiadrivers-nvidia-com"><span class="toc-number">3.2.2.</span> <span class="toc-text">nvidiadrivers.nvidia.com</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#nodefeatures-nfd-k8s-sigs-io"><span class="toc-number">3.2.3.</span> <span class="toc-text">nodefeatures.nfd.k8s-sigs.io</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#nodefeaturerules-nfd-k8s-sigs-io"><span class="toc-number">3.2.4.</span> <span class="toc-text">nodefeaturerules.nfd.k8s-sigs.io</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ClusterPolicy-Controller-%E5%88%86%E6%9E%90"><span class="toc-number">3.3.</span> <span class="toc-text">ClusterPolicy-Controller 分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ClusterPolicy-Controller-%E9%80%BB%E8%BE%91%E5%9B%BE"><span class="toc-number">3.3.1.</span> <span class="toc-text">ClusterPolicy-Controller 逻辑图</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ClusterPolicy-Controller-%E6%95%B4%E4%BD%93%E6%B5%81%E7%A8%8B%E5%9B%BE"><span class="toc-number">3.3.2.</span> <span class="toc-text">ClusterPolicy-Controller 整体流程图</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ClusterPolicy-Controller-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90"><span class="toc-number">3.3.3.</span> <span class="toc-text">ClusterPolicy-Controller 源码分析</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NVIDIADriver-Controller-%E5%88%86%E6%9E%90"><span class="toc-number">3.4.</span> <span class="toc-text">NVIDIADriver-Controller 分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ClusterPolicyCRD-%E4%B8%8E-NVIDIADriverCRD-%E5%AF%B9%E6%AF%94"><span class="toc-number">3.4.1.</span> <span class="toc-text">ClusterPolicyCRD 与 NVIDIADriverCRD  对比</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#NVIDIADriver-Controller-%E9%80%BB%E8%BE%91%E5%9B%BE"><span class="toc-number">3.4.2.</span> <span class="toc-text">NVIDIADriver-Controller 逻辑图</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#NVIDIADriver-Controller-%E6%95%B4%E4%BD%93%E6%B5%81%E7%A8%8B%E5%9B%BE"><span class="toc-number">3.4.3.</span> <span class="toc-text">NVIDIADriver-Controller 整体流程图</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Upgrade-Controller-%E5%88%86%E6%9E%90"><span class="toc-number">3.5.</span> <span class="toc-text">Upgrade-Controller 分析</span></a></li></ol></li></ol>
+    </nav>
+  </div>
+</aside>
+
 <main class="main" role="main">
   <div class="content">
   <article id="post-NVIDIA-gpu-operator分析-原理解析" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
@@ -451,6 +460,14 @@
       <a href="/2023/12/11/31/" title="NVIDIA/gpu-operator分析一: NVIDIA驱动安装"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
     </li>
     
+    
+    <li class="toggle-toc">
+      <a class="toggle-btn " data-toggle="collapse" href="#collapseToc" aria-expanded="false" title="文章目录" role="button">    <span>[&nbsp;</span><span>文章目录</span>
+        <i class="text-collapsed icon icon-anchor"></i>
+        <i class="text-in icon icon-close"></i>
+        <span>]</span>
+      </a>
+    </li>
     
   </ul>
   
