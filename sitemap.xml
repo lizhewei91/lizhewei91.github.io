@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://lizhewei91.github.io/2024/08/21/34/</loc>
+    
+    <lastmod>2024-08-21</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>http://lizhewei91.github.io/2024/08/21/02/</loc>
     
     <lastmod>2024-08-21</lastmod>
@@ -131,15 +140,6 @@
     <loc>http://lizhewei91.github.io/2023/07/25/55/</loc>
     
     <lastmod>2023-07-25</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/2023/07/17/39/</loc>
-    
-    <lastmod>2023-07-17</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -288,14 +288,14 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/</loc>
+    <loc>http://lizhewei91.github.io/tags/jwt/</loc>
     <lastmod>2024-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/jwt/</loc>
+    <loc>http://lizhewei91.github.io/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/</loc>
     <lastmod>2024-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -442,13 +442,6 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/%E5%88%9B%E5%BB%BApod%E6%B5%81%E7%A8%8B/</loc>
-    <lastmod>2024-08-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://lizhewei91.github.io/tags/device-manager/</loc>
     <lastmod>2024-08-21</lastmod>
     <changefreq>weekly</changefreq>
@@ -457,6 +450,13 @@
   
   <url>
     <loc>http://lizhewei91.github.io/tags/node-%E8%8A%82%E7%82%B9%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/%E5%88%9B%E5%BB%BApod%E6%B5%81%E7%A8%8B/</loc>
     <lastmod>2024-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -506,6 +506,20 @@
   
   <url>
     <loc>http://lizhewei91.github.io/tags/kubebuilder/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/kube-schduler/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/extender/</loc>
     <lastmod>2024-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>

@@ -6,7 +6,7 @@
   <link href="http://lizhewei91.github.io/atom.xml" rel="self"/>
   
   <link href="http://lizhewei91.github.io/"/>
-  <updated>2024-08-21T03:25:43.133Z</updated>
+  <updated>2024-08-21T03:34:25.375Z</updated>
   <id>http://lizhewei91.github.io/</id>
   
   <author>
@@ -15,6 +15,25 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>使用scheduler-extender扩展调度器</title>
+    <link href="http://lizhewei91.github.io/2024/08/21/34/"/>
+    <id>http://lizhewei91.github.io/2024/08/21/34/</id>
+    <published>2024-08-21T03:32:34.000Z</published>
+    <updated>2024-08-21T03:34:25.375Z</updated>
+    
+    
+    
+    
+    <category term="kube-scheduler" scheme="http://lizhewei91.github.io/categories/kube-scheduler/"/>
+    
+    
+    <category term="kube-schduler" scheme="http://lizhewei91.github.io/tags/kube-schduler/"/>
+    
+    <category term="extender" scheme="http://lizhewei91.github.io/tags/extender/"/>
+    
+  </entry>
   
   <entry>
     <title>kube-scheduler使用总结</title>
@@ -364,19 +383,6 @@
     <category term="operator" scheme="http://lizhewei91.github.io/tags/operator/"/>
     
     <category term="code-generator" scheme="http://lizhewei91.github.io/tags/code-generator/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>kube-scheduler</title>
-    <link href="http://lizhewei91.github.io/2023/07/17/39/"/>
-    <id>http://lizhewei91.github.io/2023/07/17/39/</id>
-    <published>2023-07-17T08:45:39.000Z</published>
-    <updated>2023-07-17T08:45:39.423Z</updated>
-    
-    
-    
-    
     
   </entry>
   
