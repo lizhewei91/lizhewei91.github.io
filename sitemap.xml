@@ -2,6 +2,42 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://lizhewei91.github.io/2024/08/21/02/</loc>
+    
+    <lastmod>2024-08-21</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/2024/01/15/50/</loc>
+    
+    <lastmod>2024-01-15</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/2024/01/02/22/</loc>
+    
+    <lastmod>2024-01-02</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/2023/12/20/53/</loc>
+    
+    <lastmod>2023-12-20</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>http://lizhewei91.github.io/2023/12/13/04/</loc>
     
     <lastmod>2023-12-20</lastmod>
@@ -119,6 +155,33 @@
   </url>
   
   <url>
+    <loc>http://lizhewei91.github.io/2023/03/10/19/</loc>
+    
+    <lastmod>2023-06-01</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/2023/01/06/46/</loc>
+    
+    <lastmod>2023-06-01</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/2022/11/28/56/</loc>
+    
+    <lastmod>2023-06-01</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>http://lizhewei91.github.io/2023/02/10/25/</loc>
     
     <lastmod>2023-06-01</lastmod>
@@ -129,15 +192,6 @@
   
   <url>
     <loc>http://lizhewei91.github.io/2023/02/27/09/</loc>
-    
-    <lastmod>2023-06-01</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/2023/03/10/19/</loc>
     
     <lastmod>2023-06-01</lastmod>
     
@@ -173,15 +227,6 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/2023/01/06/46/</loc>
-    
-    <lastmod>2023-06-01</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>http://lizhewei91.github.io/2023/01/11/14/</loc>
     
     <lastmod>2023-06-01</lastmod>
@@ -192,15 +237,6 @@
   
   <url>
     <loc>http://lizhewei91.github.io/categories/index.html</loc>
-    
-    <lastmod>2023-06-01</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/2022/11/28/56/</loc>
     
     <lastmod>2023-06-01</lastmod>
     
@@ -238,225 +274,267 @@
 
   <url>
     <loc>http://lizhewei91.github.io/</loc>
-    <lastmod>2023-12-20</lastmod>
+    <lastmod>2024-08-21</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/device-plugins/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/pprof/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/golang/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/kubelet/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/nvidia/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/gpu/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/kubevirt-gpu-device-plugin/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/device-manager/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/kubectl-plugins/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/krew/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/reloader/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/configMap/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/secret/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/buildx/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/manifest/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/kubeadm/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/node-%E8%8A%82%E7%82%B9%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/%E5%88%9B%E5%BB%BApod%E6%B5%81%E7%A8%8B/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://lizhewei91.github.io/tags/gin/</loc>
-    <lastmod>2023-12-20</lastmod>
+    <lastmod>2024-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/operator/</loc>
-    <lastmod>2023-12-20</lastmod>
+    <lastmod>2024-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/jwt/</loc>
-    <lastmod>2023-12-20</lastmod>
+    <lastmod>2024-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/code-generator/</loc>
-    <lastmod>2023-12-20</lastmod>
+    <loc>http://lizhewei91.github.io/tags/nvidia-time-slicing/</loc>
+    <lastmod>2024-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/k8s-swagger-ui/</loc>
-    <lastmod>2023-12-20</lastmod>
+    <loc>http://lizhewei91.github.io/tags/nvidia-gpu-share/</loc>
+    <lastmod>2024-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/kubebuilder/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/webhook/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/nexus/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/docker-repositories/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/gpushare/</loc>
-    <lastmod>2023-12-20</lastmod>
+    <loc>http://lizhewei91.github.io/tags/nvidia-gpu-operator/</loc>
+    <lastmod>2024-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/tags/gpu-operator/</loc>
-    <lastmod>2023-12-20</lastmod>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/gpu/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/device-plugins/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/buildx/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/manifest/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/pprof/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/golang/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/reloader/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/configMap/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/secret/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/kube-scheduler%E4%BD%BF%E7%94%A8/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/kubeadm/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/%E9%83%A8%E7%BD%B2k8s%E9%9B%86%E7%BE%A4/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/kubectl-plugins/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/krew/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/kubelet/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/%E5%88%9B%E5%BB%BApod%E6%B5%81%E7%A8%8B/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/device-manager/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/node-%E8%8A%82%E7%82%B9%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/kubevirt-gpu-device-plugin/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/nexus/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/docker-repositories/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/nvidia/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/operator/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/code-generator/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/kubebuilder/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/k8s-swagger-ui/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/gpushare/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/NUMA/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/webhook/</loc>
+    <lastmod>2024-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
@@ -464,99 +542,127 @@
 
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/device-plugins/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/categories/pprof/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/categories/kubelet/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/categories/reloader/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/categories/%E9%95%9C%E5%83%8F/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/categories/kubectl-%E6%8F%92%E4%BB%B6/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/categories/operator/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://lizhewei91.github.io/categories/gin/</loc>
-    <lastmod>2023-12-20</lastmod>
+    <lastmod>2024-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/k8s-swagger-ui/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/categories/webhook/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/categories/kubeadm/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/categories/nexus/</loc>
-    <lastmod>2023-12-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/categories/gpushare/</loc>
-    <lastmod>2023-12-20</lastmod>
+    <loc>http://lizhewei91.github.io/categories/nvidia-time-slicing/</loc>
+    <lastmod>2024-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>http://lizhewei91.github.io/categories/gpu-operator/</loc>
-    <lastmod>2023-12-20</lastmod>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/categories/device-plugins/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/categories/%E9%95%9C%E5%83%8F/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/categories/pprof/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/categories/reloader/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/categories/kube-scheduler/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/categories/%E9%83%A8%E7%BD%B2k8s%E9%9B%86%E7%BE%A4/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/categories/kubeadm/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/categories/kubectl-%E6%8F%92%E4%BB%B6/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/categories/kubelet/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/categories/nexus/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/categories/operator/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/categories/k8s-swagger-ui/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/categories/gpushare/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/categories/NUMA/</loc>
+    <lastmod>2024-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/categories/webhook/</loc>
+    <lastmod>2024-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
