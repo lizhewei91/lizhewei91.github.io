@@ -6,7 +6,7 @@
   <link href="http://lizhewei91.github.io/atom.xml" rel="self"/>
   
   <link href="http://lizhewei91.github.io/"/>
-  <updated>2024-08-22T07:09:58.894Z</updated>
+  <updated>2024-08-22T07:15:26.992Z</updated>
   <id>http://lizhewei91.github.io/</id>
   
   <author>
@@ -15,6 +15,19 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>从0到1开发一个调度器scheduler-extender</title>
+    <link href="http://lizhewei91.github.io/2024/08/22/26/"/>
+    <id>http://lizhewei91.github.io/2024/08/22/26/</id>
+    <published>2024-08-22T07:15:26.000Z</published>
+    <updated>2024-08-22T07:15:26.992Z</updated>
+    
+    
+    
+    
+    
+  </entry>
   
   <entry>
     <title>kube-scheduler调度框架</title>
@@ -509,32 +522,6 @@
     <category term="configMap" scheme="http://lizhewei91.github.io/tags/configMap/"/>
     
     <category term="secret" scheme="http://lizhewei91.github.io/tags/secret/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>用插件扩展 kubectl</title>
-    <link href="http://lizhewei91.github.io/2023/02/10/25/"/>
-    <id>http://lizhewei91.github.io/2023/02/10/25/</id>
-    <published>2023-02-10T06:48:25.000Z</published>
-    <updated>2023-06-01T09:10:18.925Z</updated>
-    
-    <content type="html"><![CDATA[<h1 id="krew"><a href="#krew" class="headerlink" title="krew"></a>krew</h1><h2 id="准备开始"><a href="#准备开始" class="headerlink" title="准备开始"></a>准备开始</h2><ol><li>你需要安装一个可用的 <code>kubectl</code> 可执行文件。</li></ol><h2 id="安装-krew"><a href="#安装-krew" class="headerlink" title="安装 krew"></a>安装 krew</h2><p>官方文档：<a href="https://krew.sigs.k8s.io/docs/user-guide/">https://krew.sigs.k8s.io/docs/user-guide/</a></p><p>安装 krew 插件管理器。Krew 是一个由 Kubernetes SIG CLI 社区维护的插件管理器。</p><ol><li><p>Make sure that <code>git</code> is installed.</p></li><li><p>Run this command to download and install <code>krew</code>:</p></li></ol><figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">(</span><br><span class="line">  <span class="built_in">set</span> -x; <span class="built_in">cd</span> <span class="string">&quot;<span class="subst">$(mktemp -d)</span>&quot;</span> &amp;&amp;</span><br><span class="line">  OS=<span class="string">&quot;<span class="subst">$(uname | tr &#x27;[:upper:]&#x27; &#x27;[:lower:]&#x27;)</span>&quot;</span> &amp;&amp;</span><br><span class="line">  ARCH=<span class="string">&quot;<span class="subst">$(uname -m | sed -e &#x27;s/x86_64/amd64/&#x27; -e &#x27;s/\(arm\)\(64\)\?.*/\1\2/&#x27; -e &#x27;s/aarch64$/arm64/&#x27;)</span>&quot;</span> &amp;&amp;</span><br><span class="line">  KREW=<span class="string">&quot;krew-<span class="variable">$&#123;OS&#125;</span>_<span class="variable">$&#123;ARCH&#125;</span>&quot;</span> &amp;&amp;</span><br><span class="line">  curl -fsSLO <span class="string">&quot;https://github.com/kubernetes-sigs/krew/releases/latest/download/<span class="variable">$&#123;KREW&#125;</span>.tar.gz&quot;</span> &amp;&amp;</span><br><span class="line">  tar zxvf <span class="string">&quot;<span class="variable">$&#123;KREW&#125;</span>.tar.gz&quot;</span> &amp;&amp;</span><br><span class="line">  ./<span class="string">&quot;<span class="variable">$&#123;KREW&#125;</span>&quot;</span> install krew</span><br><span class="line">)</span><br></pre></td></tr></table></figure><ol start="3"><li>Add the <code>$HOME/.krew/bin</code> directory to your PATH environment variable. To do this, update your <code>.bashrc</code> or <code>.zshrc</code> file and append the following line:</li></ol><figure class="highlight sh"><table><tr><td class="code"><pre><span class="line"><span class="built_in">export</span> PATH=<span class="string">&quot;<span class="variable">$&#123;KREW_ROOT:-<span class="variable">$HOME</span>/.krew&#125;</span>/bin:<span class="variable">$PATH</span>&quot;</span></span><br></pre></td></tr></table></figure><p>and restart your shell.</p><ol start="4"><li>Run <code>kubectl krew</code> to check the installation.</li></ol><h2 id="编写-kubectl-插件"><a href="#编写-kubectl-插件" class="headerlink" title="编写 kubectl 插件"></a>编写 kubectl 插件</h2><p>你可以用任何编程语言或脚本编写插件，允许你编写命令行命令。</p><p>不需要安装插件或预加载，插件可执行程序从 <code>kubectl</code> 二进制文件接收继承的环境， 插件根据其名称确定它希望实现的命令路径。 例如，名为 <code>kubectl-foo</code> 的插件提供了命令 <code>kubectl foo</code>。 必须将插件的可执行文件安装在 <code>PATH</code> 中的某个位置。</p><h3 id="示例插件"><a href="#示例插件" class="headerlink" title="示例插件"></a>示例插件</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 可选的参数处理</span></span><br><span class="line"><span class="keyword">if</span> [[ <span class="string">&quot;<span class="variable">$1</span>&quot;</span> == <span class="string">&quot;version&quot;</span> ]]</span><br><span class="line"><span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;1.0.0&quot;</span></span><br><span class="line">    <span class="built_in">exit</span> 0</span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 可选的参数处理</span></span><br><span class="line"><span class="keyword">if</span> [[ <span class="string">&quot;<span class="variable">$1</span>&quot;</span> == <span class="string">&quot;config&quot;</span> ]]</span><br><span class="line"><span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="variable">$KUBECONFIG</span></span><br><span class="line">    <span class="built_in">exit</span> 0</span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;I am a plugin named kubectl-foo&quot;</span></span><br></pre></td></tr></table></figure><h3 id="使用插件"><a href="#使用插件" class="headerlink" title="使用插件"></a>使用插件</h3><p>要使用某插件，先要使其可执行：</p><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ sudo <span class="built_in">chmod</span> +x ./kubectl-foo</span><br></pre></td></tr></table></figure><p>并将它放在你的 <code>PATH</code> 中的任何地方：</p><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ sudo <span class="built_in">mv</span> ./kubectl-foo /usr/local/bin</span><br></pre></td></tr></table></figure><p>你现在可以调用你的插件作为 <code>kubectl</code> 命令：</p><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ kubectl foo</span><br><span class="line"></span><br><span class="line">I am a plugin named kubectl-foo</span><br></pre></td></tr></table></figure><p>所有参数和标记按原样传递给可执行文件：</p><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ kubectl foo version</span><br><span class="line"></span><br><span class="line">1.0.0</span><br></pre></td></tr></table></figure><p>所有环境变量也按原样传递给可执行文件：</p><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ KUBECONFIG=/etc/kube/config kubectl foo config</span><br><span class="line"></span><br><span class="line">/etc/kube/config</span><br></pre></td></tr></table></figure><p>此外，传递给插件的第一个参数总是调用它的位置的绝对路径（在上面的例子中，<code>$0</code> 将等于 <code>/usr/local/bin/kubectl-foo</code>）。</p><h3 id="查看插件列表"><a href="#查看插件列表" class="headerlink" title="查看插件列表"></a>查看插件列表</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ kubectl plugin list</span><br><span class="line"></span><br><span class="line">The following compatible plugins are available:</span><br><span class="line"></span><br><span class="line">/root/.krew/bin/kubectl-krew</span><br><span class="line">/usr/local/bin/kubectl-foo           // kubectl-foo 为新添加的插件</span><br></pre></td></tr></table></figure><h2 id="分发-kubectl-插件"><a href="#分发-kubectl-插件" class="headerlink" title="分发 kubectl 插件"></a>分发 kubectl 插件</h2><p>参考：<a href="https://kubernetes.io/zh-cn/docs/tasks/extend-kubectl/kubectl-plugins/#%E5%88%86%E5%8F%91-kubectl-%E6%8F%92%E4%BB%B6">分发kubectl插件</a></p><h2 id="krew-相关命令"><a href="#krew-相关命令" class="headerlink" title="krew 相关命令"></a>krew 相关命令</h2><ol><li>升级</li></ol><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ kubectl krew update</span><br></pre></td></tr></table></figure><ol start="2"><li>查看可用插件列表</li></ol><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ kubectl krew search</span><br><span class="line"></span><br><span class="line">NAME             DESCRIPTION                                         INSTALLED</span><br><span class="line">access-matrix    Show an RBAC access matrix <span class="keyword">for</span> server resources     no</span><br><span class="line">advise-psp       Suggests PodSecurityPolicies <span class="keyword">for</span> cluster.           no</span><br><span class="line">auth-proxy       Authentication proxy to a pod or service            no</span><br><span class="line">...</span><br></pre></td></tr></table></figure><ol start="3"><li>关键字搜索</li></ol><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ kubectl krew search pod</span><br><span class="line"></span><br><span class="line">NAME                DESCRIPTION                                         INSTALLED</span><br><span class="line">evict-pod           Evicts the given pod                                no</span><br><span class="line">pod-dive            Shows a pod<span class="string">&#x27;s workload tree and info inside a node  no</span></span><br><span class="line"><span class="string">pod-logs            Display a list of pods to get logs from             no</span></span><br><span class="line"><span class="string">pod-shell           Display a list of pods to execute a shell in        no</span></span><br></pre></td></tr></table></figure><ol start="4"><li>查看插件详情</li></ol><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ kubectl krew info tree</span><br><span class="line"></span><br><span class="line">NAME: tree</span><br><span class="line">VERSION: v0.4.0</span><br><span class="line">DESCRIPTION:</span><br><span class="line">  This plugin shows sub-resources of a specified Kubernetes API object <span class="keyword">in</span> a</span><br><span class="line">  tree view <span class="keyword">in</span> the command-line. The parent-child relationship is discovered</span><br><span class="line">  using ownerReferences on the child object.</span><br></pre></td></tr></table></figure>]]></content>
-    
-    
-      
-      
-    <summary type="html">&lt;h1 id=&quot;krew&quot;&gt;&lt;a href=&quot;#krew&quot; class=&quot;headerlink&quot; title=&quot;krew&quot;&gt;&lt;/a&gt;krew&lt;/h1&gt;&lt;h2 id=&quot;准备开始&quot;&gt;&lt;a href=&quot;#准备开始&quot; class=&quot;headerlink&quot; title=&quot;准备开始&quot;&gt;&lt;/a</summary>
-      
-    
-    
-    
-    <category term="kubectl 插件" scheme="http://lizhewei91.github.io/categories/kubectl-%E6%8F%92%E4%BB%B6/"/>
-    
-    
-    <category term="kubectl-plugins" scheme="http://lizhewei91.github.io/tags/kubectl-plugins/"/>
-    
-    <category term="krew" scheme="http://lizhewei91.github.io/tags/krew/"/>
     
   </entry>
   
