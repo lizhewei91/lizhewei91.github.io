@@ -1,3 +1,4 @@
+http://lizhewei91.github.io/2024/08/21/42/
 http://lizhewei91.github.io/2024/08/21/34/
 http://lizhewei91.github.io/2024/08/21/02/
 http://lizhewei91.github.io/2024/01/15/50/
@@ -68,6 +69,10 @@ http://lizhewei91.github.io/tags/k8s-swagger-ui/
 http://lizhewei91.github.io/tags/gpushare/
 http://lizhewei91.github.io/tags/NUMA/
 http://lizhewei91.github.io/tags/webhook/
+http://lizhewei91.github.io/tags/scheduler-framework/
+http://lizhewei91.github.io/tags/scheduler-extender/
+http://lizhewei91.github.io/tags/multiple-schedulers/
+http://lizhewei91.github.io/tags/kube-scheduler%E6%89%A9%E5%B1%95/
 http://lizhewei91.github.io/categories/gin/
 http://lizhewei91.github.io/categories/nvidia-time-slicing/
 http://lizhewei91.github.io/categories/gpu-operator/
