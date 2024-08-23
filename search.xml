@@ -100,6 +100,19 @@
       </tags>
   </entry>
   <entry>
+    <title>NVIDIA/gpu-operator使用总结（一）:time-slicing实现GPU共享</title>
+    <url>/2023/12/20/53/</url>
+    <content><![CDATA[]]></content>
+      <categories>
+        <category>nvidia/time-slicing</category>
+      </categories>
+      <tags>
+        <tag>nvidia/time-slicing</tag>
+        <tag>nvidia/gpu-share</tag>
+        <tag>nvidia/gpu-operator</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Gin实战-使用JWT认证</title>
     <url>/2023/07/25/13/</url>
     <content><![CDATA[<h1 id="什么是-JWT"><a href="#什么是-JWT" class="headerlink" title="什么是 JWT?"></a>什么是 JWT?</h1><p>JWT全称JSON Web Token是一种跨域认证解决方案，属于一个开放的标准，它规定了一种Token 实现方式，目前多用于前后端分离项目和 OAuth2.0 业务场景下。</p>
@@ -122,19 +135,6 @@
       <tags>
         <tag>gin</tag>
         <tag>jwt</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>NVIDIA/gpu-operator使用总结（一）:time-slicing实现GPU共享</title>
-    <url>/2023/12/20/53/</url>
-    <content><![CDATA[]]></content>
-      <categories>
-        <category>nvidia/time-slicing</category>
-      </categories>
-      <tags>
-        <tag>nvidia/time-slicing</tag>
-        <tag>nvidia/gpu-share</tag>
-        <tag>nvidia/gpu-operator</tag>
       </tags>
   </entry>
   <entry>
@@ -266,10 +266,83 @@
 <img src="/2023/12/13/04/upgrade-controller-state-machine.png" class="" title="_images&#x2F;upgrade-controller-state-machine.png">
 ]]></content>
       <categories>
-        <category>gpu-operator</category>
+        <category>gpu</category>
       </categories>
       <tags>
         <tag>gpu-operator</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>如何构建多CPU架构容器镜像</title>
+    <url>/2023/02/27/09/</url>
+    <content><![CDATA[<p>构建多架构镜像的方法有两种：</p>
+<ul>
+<li>manifest</li>
+<li>docker buildx</li>
+</ul>
+<h1 id="buildx"><a href="#buildx" class="headerlink" title="buildx"></a>buildx</h1><p>首先 docker 版本要在 19.03 以上（含），启动 docker buildx，<code>export DOCKER_CLI_EXPERIMENTAL=enabled</code></p>
+<p>build-demo示例链接：<a href="https://github.com/lizhewei91/buildx-demo">https://github.com/lizhewei91/buildx-demo</a></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">[root@build-cloud-product-clone-4 buildx-demo]# tree</span><br><span class="line">.</span><br><span class="line">├── bin</span><br><span class="line">│   └── buildx-demo</span><br><span class="line">├── Dockfile.buildx</span><br><span class="line">├── go.mod</span><br><span class="line">├── main.go</span><br><span class="line">└── Makefile</span><br></pre></td></tr></table></figure>
+
+<h2 id="Dockerfile-buildx-示例"><a href="#Dockerfile-buildx-示例" class="headerlink" title="Dockerfile.buildx 示例"></a>Dockerfile.buildx 示例</h2><figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line"><span class="keyword">ARG</span> BASE_IMAGE</span><br><span class="line"><span class="keyword">ARG</span> BASE_IMAGE_VERSION</span><br><span class="line"><span class="keyword">FROM</span> --platform=$&#123;TARGETPLATFORM&#125; $&#123;BASE_IMAGE&#125;:$&#123;BASE_IMAGE_VERSION&#125; AS builder</span><br><span class="line"><span class="keyword">WORKDIR</span><span class="language-bash"> /go/src/buildx-demo</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> . .</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">FROM</span> --platform=$&#123;TARGETPLATFORM&#125; alpine:<span class="number">3.17</span>.<span class="number">2</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> --from=builder /go/src/buildx-demo/bin/buildx-demo /usr/bin/buildx-demo</span></span><br><span class="line"><span class="keyword">CMD</span><span class="language-bash"> [<span class="string">&quot;/usr/bin/buildx-demo&quot;</span>]</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="Makefile示例"><a href="#Makefile示例" class="headerlink" title="Makefile示例"></a>Makefile示例</h2><figure class="highlight makefile"><table><tr><td class="code"><pre><span class="line">TARGET_PLATFORMS ?= linux/amd64,linux/arm64</span><br><span class="line">BASE_IMAGE ?= golang</span><br><span class="line">BASE_IMAGE_VERSION ?= alpine3.17</span><br><span class="line">IMAGE_REPO ?= hub.easystack.cn/multi/buildx-demo</span><br><span class="line">IMAGE_VERSION ?= v0.0.1</span><br><span class="line">DOCKER_HUB_REPO ?= hub.easystack.cn</span><br><span class="line">DOCKER_HUB_USERNAME ?= xxx</span><br><span class="line">DOCKER_HUB_PASSWORD ?= xxx</span><br><span class="line"></span><br><span class="line"><span class="meta"><span class="keyword">.PHONY</span>: all</span></span><br><span class="line"><span class="section">all: docker-hub-login build images</span></span><br><span class="line"></span><br><span class="line"><span class="section">docker-hub-login:</span></span><br><span class="line">        docker logout</span><br><span class="line">        docker login $&#123;DOCKER_HUB_REPO&#125; -u $&#123;DOCKER_HUB_USERNAME&#125; -p $&#123;DOCKER_HUB_PASSWORD&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">build:</span></span><br><span class="line">        go build -o /go/src/buildx-demo/bin/buildx-demo main.go</span><br><span class="line"></span><br><span class="line"><span class="section">images:</span></span><br><span class="line">        docker buildx build \</span><br><span class="line">                --build-arg BASE_IMAGE=<span class="variable">$(BASE_IMAGE)</span> \</span><br><span class="line">                --build-arg BASE_IMAGE_VERSION=<span class="variable">$(BASE_IMAGE_VERSION)</span> \</span><br><span class="line">                --platform <span class="variable">$(TARGET_PLATFORMS)</span> \</span><br><span class="line">                -t <span class="variable">$(IMAGE_REPO)</span>:<span class="variable">$(IMAGE_VERSION)</span> \</span><br><span class="line">                -f ./Dockfile.buildx --push .</span><br></pre></td></tr></table></figure>
+
+<h2 id="验证镜像"><a href="#验证镜像" class="headerlink" title="验证镜像"></a>验证镜像</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">// 拉去镜像到本地</span><br><span class="line">$ docker pull hub.easystack.cn/multi/buildx-demo:v0.0.1</span><br><span class="line"></span><br><span class="line">// 查看镜像信息</span><br><span class="line">$ docker manifest inspect hub.easystack.cn/multi/buildx-demo:v0.0.1</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">   <span class="string">&quot;schemaVersion&quot;</span>: 2,</span><br><span class="line">   <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.distribution.manifest.list.v2+json&quot;</span>,</span><br><span class="line">   <span class="string">&quot;manifests&quot;</span>: [</span><br><span class="line">      &#123;</span><br><span class="line">         <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.distribution.manifest.v2+json&quot;</span>,</span><br><span class="line">         <span class="string">&quot;size&quot;</span>: 701,</span><br><span class="line">         <span class="string">&quot;digest&quot;</span>: <span class="string">&quot;sha256:7d95c40e65abaa83c9d1a2e462026070f43f7ceaacba57f3c6a70fb840bcd196&quot;</span>,</span><br><span class="line">         <span class="string">&quot;platform&quot;</span>: &#123;</span><br><span class="line">            <span class="string">&quot;architecture&quot;</span>: <span class="string">&quot;amd64&quot;</span>,</span><br><span class="line">            <span class="string">&quot;os&quot;</span>: <span class="string">&quot;linux&quot;</span></span><br><span class="line">         &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      &#123;</span><br><span class="line">         <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.distribution.manifest.v2+json&quot;</span>,</span><br><span class="line">         <span class="string">&quot;size&quot;</span>: 701,</span><br><span class="line">         <span class="string">&quot;digest&quot;</span>: <span class="string">&quot;sha256:ff6b7d6df4241220f9c1f665864e7f009620a8c39edecf3b8463a62d01c6f228&quot;</span>,</span><br><span class="line">         <span class="string">&quot;platform&quot;</span>: &#123;</span><br><span class="line">            <span class="string">&quot;architecture&quot;</span>: <span class="string">&quot;arm64&quot;</span>,</span><br><span class="line">            <span class="string">&quot;os&quot;</span>: <span class="string">&quot;linux&quot;</span></span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">   ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="manifest"><a href="#manifest" class="headerlink" title="manifest"></a>manifest</h1><h2 id="manifest是什么，干什么用？"><a href="#manifest是什么，干什么用？" class="headerlink" title="manifest是什么，干什么用？"></a>manifest是什么，干什么用？</h2><p>manifest是一个文件，这个文件包含了有关于镜像信息，如层、大小和摘要。docker manifest命令还向用户提供附加信息，比如构建镜像的操作系统和体系结构。而manifest list是一个镜像清单列表，用于存放多个不同os/arch的镜像信息。我们可以创建一个manifest list来指向两个镜像(一个linux 64位和一个指向arm64位的镜像)，然后对用户提供一个唯一的镜像名称。<strong>从Docker registry v2.3和Docker 1.10 开始，Docker hub就可以pull multi architecture Docker镜像了。</strong></p>
+<p><strong>一个镜像的manifest文件信息如下：</strong></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">[root@localhost ~]# docker manifest inspect java</span><br><span class="line">&#123;</span><br><span class="line">        <span class="string">&quot;schemaVersion&quot;</span>: <span class="number">2</span>,</span><br><span class="line">        <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.distribution.manifest.v2+json&quot;</span>,</span><br><span class="line">        <span class="string">&quot;config&quot;</span>: &#123;</span><br><span class="line">                <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.container.image.v1+json&quot;</span>,</span><br><span class="line">                <span class="string">&quot;size&quot;</span>: <span class="number">4733</span>,</span><br><span class="line">                <span class="string">&quot;digest&quot;</span>: <span class="string">&quot;sha256:d23bdf5b1b1b1afce5f1d0fd33e7ed8afbc084b594b9ccf742a5b27080d8a4a8&quot;</span></span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">&quot;layers&quot;</span>: [ #---镜像层的摘要信息</span><br><span class="line">                &#123;</span><br><span class="line">                        <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.image.rootfs.diff.tar.gzip&quot;</span>,</span><br><span class="line">                        <span class="string">&quot;size&quot;</span>: <span class="number">51361210</span>,</span><br><span class="line">                        <span class="string">&quot;digest&quot;</span>: <span class="string">&quot;sha256:5040bd2983909aa8896b9932438c3f1479d25ae837a5f6220242a264d0221f2d&quot;</span></span><br><span class="line">                &#125;,</span><br><span class="line">...................</span><br><span class="line">        ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>一个manifest list的例子如下：</strong></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">   <span class="string">&quot;schemaVersion&quot;</span>: <span class="number">2</span>,</span><br><span class="line">   <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.distribution.manifest.list.v2+json&quot;</span>,</span><br><span class="line">   <span class="string">&quot;manifests&quot;</span>: [</span><br><span class="line">      &#123;</span><br><span class="line">         <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.distribution.manifest.v2+json&quot;</span>,</span><br><span class="line">         <span class="string">&quot;size&quot;</span>: <span class="number">1357</span>,</span><br><span class="line">         <span class="string">&quot;digest&quot;</span>: <span class="string">&quot;sha256:9b47044b1e79b965a8e1653e7f9c04b5f63e00b9161bedd5baef69bb8b4c4834&quot;</span>,</span><br><span class="line">         <span class="string">&quot;platform&quot;</span>: &#123;</span><br><span class="line">            <span class="string">&quot;architecture&quot;</span>: <span class="string">&quot;amd64&quot;</span>,</span><br><span class="line">            <span class="string">&quot;os&quot;</span>: <span class="string">&quot;linux&quot;</span></span><br><span class="line">         &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      &#123;</span><br><span class="line">         <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.distribution.manifest.v2+json&quot;</span>,</span><br><span class="line">         <span class="string">&quot;size&quot;</span>: <span class="number">1357</span>,</span><br><span class="line">         <span class="string">&quot;digest&quot;</span>: <span class="string">&quot;sha256:8aecae775e1f81d3889929ef15647187b414c833b0798d060bfd778bee668ced&quot;</span>,</span><br><span class="line">         <span class="string">&quot;platform&quot;</span>: &#123;</span><br><span class="line">            <span class="string">&quot;architecture&quot;</span>: <span class="string">&quot;arm64&quot;</span>,</span><br><span class="line">            <span class="string">&quot;os&quot;</span>: <span class="string">&quot;linux&quot;</span>,</span><br><span class="line">            <span class="string">&quot;variant&quot;</span>: <span class="string">&quot;v8&quot;</span></span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">   ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>注意：manifest的功能目前仅仅作用于docker 官方的镜像仓库。</strong></p>
+<p>总结：简单的说manifest list就是多个manifest的一个集合，通过列表方式来管理。</p>
+<h2 id="manifest-list处理流程："><a href="#manifest-list处理流程：" class="headerlink" title="manifest list处理流程："></a>manifest list处理流程：</h2><img src="/2023/02/27/09/1676966412440-973b407a-131f-48d2-a414-1d2e0efec236.png" class="" title="img">
+
+<img src="/2023/02/27/09/1676966412789-274aaf7c-7f07-43c8-9479-171a5fc0a048.png" class="" title="img">
+
+<h2 id="开启docker子命令manifest功能："><a href="#开启docker子命令manifest功能：" class="headerlink" title="开启docker子命令manifest功能："></a>开启docker子命令manifest功能：</h2><p>manifest是做为docker客户端的子命令存在，不过这个子命令目前处在实验性中一般没有开启。我们需要手动开始这个子命令的功能。开启过程如下：</p>
+<h3 id="编辑config-json"><a href="#编辑config-json" class="headerlink" title="编辑config.json"></a>编辑config.json</h3><p>docker 的默认配置文件config.json是在$HOME目录下的.docker目录下。编辑config.json文件，若目录和文件不存在手动创建。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ vim ~/.docker/config.json</span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;experimental&quot;</span>: <span class="string">&quot;enabled&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="编辑daemon-json"><a href="#编辑daemon-json" class="headerlink" title="编辑daemon.json"></a>编辑daemon.json</h3><p>编辑daemon.json，若目录和文件不存在手动创建</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ vim /etc/docker/daemon.json</span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;experimental&quot;</span>: <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="重启docker"><a href="#重启docker" class="headerlink" title="重启docker"></a>重启docker</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ systemctl daemon-reload</span><br><span class="line">$ systemctl restart docker</span><br><span class="line">$ docker manifest --<span class="built_in">help</span>    <span class="comment">#----查看manifest帮助信息</span></span><br></pre></td></tr></table></figure>
+
+<p>开启docker的实验性功能后docker pull可以拉取指定平台镜像如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker pull --platform arm64  镜像 --platform：该参数是用于拉取指定平台的镜像，也是实验性功能，在上面步骤中开启后就会出现。通 过该参数可以手动指定需要的CPU平台镜像，而不用自动去识别。</span><br></pre></td></tr></table></figure>
+
+<h2 id="使用manifest创建多CPU架构的镜像："><a href="#使用manifest创建多CPU架构的镜像：" class="headerlink" title="使用manifest创建多CPU架构的镜像："></a>使用manifest创建多CPU架构的镜像：</h2><p>查看一个镜像的manifest文件信息</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest inspect nginx</span><br></pre></td></tr></table></figure>
+
+<p>查看一个镜像的manifest文件的详细信息，包括cpu平台架构等信息</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest inspect --verbose nginx</span><br></pre></td></tr></table></figure>
+
+<h3 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h3><p>这里准备好了两个不同CPU架构的镜像如下：<br>这里的镜像是自己在docker hub上创建的仓库<br>xxx/public_docker:nginx-arm64<br>xxx/public_docker:nginx-x86<br><strong>必须将上面两个镜像推到docker hub上面</strong></p>
+<h3 id="创建一个manifest-list列表："><a href="#创建一个manifest-list列表：" class="headerlink" title="创建一个manifest list列表："></a>创建一个manifest list列表：</h3><p>创建一个自定义命名的镜像名的manifest list，然后用该列表关联仓库里面的两个不同架构的镜像</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest create xxx/public_docker:nginx-v1 xxx/public_docker:nginx-arm64 xxx/public_docker:nginx-x86</span><br></pre></td></tr></table></figure>
+
+<h3 id="docker-manifest-annotate-注释manifest-list"><a href="#docker-manifest-annotate-注释manifest-list" class="headerlink" title="docker manifest annotate 注释manifest list"></a>docker manifest annotate 注释manifest list</h3><p>我们按照上述方法创建出来的 manifest list 中并没有说明其中的 manifest 是什么操作系统和平台的，<code>docker manifest annotate</code> 命令用于注释创建出来的 manifest list。例如注释某个 manifest 是 <code>linxu</code>系统 <code>arm64</code> 平台的。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest annotate xxx/public_docker:nginx-v1 xxx/public_docker:nginx-x86 –os linux –<span class="built_in">arch</span> amd64</span><br><span class="line">$ docker manifest annotate xxx/public_docker:nginx-v1 xxx/public_docker:nginx-arm64 –os linux –<span class="built_in">arch</span> arm64</span><br></pre></td></tr></table></figure>
+
+<h3 id="将创建好的manifest-list-推到仓库中："><a href="#将创建好的manifest-list-推到仓库中：" class="headerlink" title="将创建好的manifest list 推到仓库中："></a>将创建好的manifest list 推到仓库中：</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest push xxx/public_docker:nginx-v1</span><br></pre></td></tr></table></figure>
+
+<h3 id="查看仓库中创建好的manifest-list："><a href="#查看仓库中创建好的manifest-list：" class="headerlink" title="查看仓库中创建好的manifest list："></a>查看仓库中创建好的manifest list：</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest inspect xxx/public_docker:nginx-v1</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>镜像</category>
+      </categories>
+      <tags>
+        <tag>buildx</tag>
+        <tag>manifest</tag>
       </tags>
   </entry>
   <entry>
@@ -363,79 +436,6 @@
       <tags>
         <tag>gpu</tag>
         <tag>device-plugins</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>如何构建多CPU架构容器镜像</title>
-    <url>/2023/02/27/09/</url>
-    <content><![CDATA[<p>构建多架构镜像的方法有两种：</p>
-<ul>
-<li>manifest</li>
-<li>docker buildx</li>
-</ul>
-<h1 id="buildx"><a href="#buildx" class="headerlink" title="buildx"></a>buildx</h1><p>首先 docker 版本要在 19.03 以上（含），启动 docker buildx，<code>export DOCKER_CLI_EXPERIMENTAL=enabled</code></p>
-<p>build-demo示例链接：<a href="https://github.com/lizhewei91/buildx-demo">https://github.com/lizhewei91/buildx-demo</a></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">[root@build-cloud-product-clone-4 buildx-demo]# tree</span><br><span class="line">.</span><br><span class="line">├── bin</span><br><span class="line">│   └── buildx-demo</span><br><span class="line">├── Dockfile.buildx</span><br><span class="line">├── go.mod</span><br><span class="line">├── main.go</span><br><span class="line">└── Makefile</span><br></pre></td></tr></table></figure>
-
-<h2 id="Dockerfile-buildx-示例"><a href="#Dockerfile-buildx-示例" class="headerlink" title="Dockerfile.buildx 示例"></a>Dockerfile.buildx 示例</h2><figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line"><span class="keyword">ARG</span> BASE_IMAGE</span><br><span class="line"><span class="keyword">ARG</span> BASE_IMAGE_VERSION</span><br><span class="line"><span class="keyword">FROM</span> --platform=$&#123;TARGETPLATFORM&#125; $&#123;BASE_IMAGE&#125;:$&#123;BASE_IMAGE_VERSION&#125; AS builder</span><br><span class="line"><span class="keyword">WORKDIR</span><span class="language-bash"> /go/src/buildx-demo</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> . .</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">FROM</span> --platform=$&#123;TARGETPLATFORM&#125; alpine:<span class="number">3.17</span>.<span class="number">2</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> --from=builder /go/src/buildx-demo/bin/buildx-demo /usr/bin/buildx-demo</span></span><br><span class="line"><span class="keyword">CMD</span><span class="language-bash"> [<span class="string">&quot;/usr/bin/buildx-demo&quot;</span>]</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="Makefile示例"><a href="#Makefile示例" class="headerlink" title="Makefile示例"></a>Makefile示例</h2><figure class="highlight makefile"><table><tr><td class="code"><pre><span class="line">TARGET_PLATFORMS ?= linux/amd64,linux/arm64</span><br><span class="line">BASE_IMAGE ?= golang</span><br><span class="line">BASE_IMAGE_VERSION ?= alpine3.17</span><br><span class="line">IMAGE_REPO ?= hub.easystack.cn/multi/buildx-demo</span><br><span class="line">IMAGE_VERSION ?= v0.0.1</span><br><span class="line">DOCKER_HUB_REPO ?= hub.easystack.cn</span><br><span class="line">DOCKER_HUB_USERNAME ?= xxx</span><br><span class="line">DOCKER_HUB_PASSWORD ?= xxx</span><br><span class="line"></span><br><span class="line"><span class="meta"><span class="keyword">.PHONY</span>: all</span></span><br><span class="line"><span class="section">all: docker-hub-login build images</span></span><br><span class="line"></span><br><span class="line"><span class="section">docker-hub-login:</span></span><br><span class="line">        docker logout</span><br><span class="line">        docker login $&#123;DOCKER_HUB_REPO&#125; -u $&#123;DOCKER_HUB_USERNAME&#125; -p $&#123;DOCKER_HUB_PASSWORD&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">build:</span></span><br><span class="line">        go build -o /go/src/buildx-demo/bin/buildx-demo main.go</span><br><span class="line"></span><br><span class="line"><span class="section">images:</span></span><br><span class="line">        docker buildx build \</span><br><span class="line">                --build-arg BASE_IMAGE=<span class="variable">$(BASE_IMAGE)</span> \</span><br><span class="line">                --build-arg BASE_IMAGE_VERSION=<span class="variable">$(BASE_IMAGE_VERSION)</span> \</span><br><span class="line">                --platform <span class="variable">$(TARGET_PLATFORMS)</span> \</span><br><span class="line">                -t <span class="variable">$(IMAGE_REPO)</span>:<span class="variable">$(IMAGE_VERSION)</span> \</span><br><span class="line">                -f ./Dockfile.buildx --push .</span><br></pre></td></tr></table></figure>
-
-<h2 id="验证镜像"><a href="#验证镜像" class="headerlink" title="验证镜像"></a>验证镜像</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">// 拉去镜像到本地</span><br><span class="line">$ docker pull hub.easystack.cn/multi/buildx-demo:v0.0.1</span><br><span class="line"></span><br><span class="line">// 查看镜像信息</span><br><span class="line">$ docker manifest inspect hub.easystack.cn/multi/buildx-demo:v0.0.1</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">   <span class="string">&quot;schemaVersion&quot;</span>: 2,</span><br><span class="line">   <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.distribution.manifest.list.v2+json&quot;</span>,</span><br><span class="line">   <span class="string">&quot;manifests&quot;</span>: [</span><br><span class="line">      &#123;</span><br><span class="line">         <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.distribution.manifest.v2+json&quot;</span>,</span><br><span class="line">         <span class="string">&quot;size&quot;</span>: 701,</span><br><span class="line">         <span class="string">&quot;digest&quot;</span>: <span class="string">&quot;sha256:7d95c40e65abaa83c9d1a2e462026070f43f7ceaacba57f3c6a70fb840bcd196&quot;</span>,</span><br><span class="line">         <span class="string">&quot;platform&quot;</span>: &#123;</span><br><span class="line">            <span class="string">&quot;architecture&quot;</span>: <span class="string">&quot;amd64&quot;</span>,</span><br><span class="line">            <span class="string">&quot;os&quot;</span>: <span class="string">&quot;linux&quot;</span></span><br><span class="line">         &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      &#123;</span><br><span class="line">         <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.distribution.manifest.v2+json&quot;</span>,</span><br><span class="line">         <span class="string">&quot;size&quot;</span>: 701,</span><br><span class="line">         <span class="string">&quot;digest&quot;</span>: <span class="string">&quot;sha256:ff6b7d6df4241220f9c1f665864e7f009620a8c39edecf3b8463a62d01c6f228&quot;</span>,</span><br><span class="line">         <span class="string">&quot;platform&quot;</span>: &#123;</span><br><span class="line">            <span class="string">&quot;architecture&quot;</span>: <span class="string">&quot;arm64&quot;</span>,</span><br><span class="line">            <span class="string">&quot;os&quot;</span>: <span class="string">&quot;linux&quot;</span></span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">   ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h1 id="manifest"><a href="#manifest" class="headerlink" title="manifest"></a>manifest</h1><h2 id="manifest是什么，干什么用？"><a href="#manifest是什么，干什么用？" class="headerlink" title="manifest是什么，干什么用？"></a>manifest是什么，干什么用？</h2><p>manifest是一个文件，这个文件包含了有关于镜像信息，如层、大小和摘要。docker manifest命令还向用户提供附加信息，比如构建镜像的操作系统和体系结构。而manifest list是一个镜像清单列表，用于存放多个不同os/arch的镜像信息。我们可以创建一个manifest list来指向两个镜像(一个linux 64位和一个指向arm64位的镜像)，然后对用户提供一个唯一的镜像名称。<strong>从Docker registry v2.3和Docker 1.10 开始，Docker hub就可以pull multi architecture Docker镜像了。</strong></p>
-<p><strong>一个镜像的manifest文件信息如下：</strong></p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">[root@localhost ~]# docker manifest inspect java</span><br><span class="line">&#123;</span><br><span class="line">        <span class="string">&quot;schemaVersion&quot;</span>: <span class="number">2</span>,</span><br><span class="line">        <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.distribution.manifest.v2+json&quot;</span>,</span><br><span class="line">        <span class="string">&quot;config&quot;</span>: &#123;</span><br><span class="line">                <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.container.image.v1+json&quot;</span>,</span><br><span class="line">                <span class="string">&quot;size&quot;</span>: <span class="number">4733</span>,</span><br><span class="line">                <span class="string">&quot;digest&quot;</span>: <span class="string">&quot;sha256:d23bdf5b1b1b1afce5f1d0fd33e7ed8afbc084b594b9ccf742a5b27080d8a4a8&quot;</span></span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">&quot;layers&quot;</span>: [ #---镜像层的摘要信息</span><br><span class="line">                &#123;</span><br><span class="line">                        <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.image.rootfs.diff.tar.gzip&quot;</span>,</span><br><span class="line">                        <span class="string">&quot;size&quot;</span>: <span class="number">51361210</span>,</span><br><span class="line">                        <span class="string">&quot;digest&quot;</span>: <span class="string">&quot;sha256:5040bd2983909aa8896b9932438c3f1479d25ae837a5f6220242a264d0221f2d&quot;</span></span><br><span class="line">                &#125;,</span><br><span class="line">...................</span><br><span class="line">        ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><strong>一个manifest list的例子如下：</strong></p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">   <span class="string">&quot;schemaVersion&quot;</span>: <span class="number">2</span>,</span><br><span class="line">   <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.distribution.manifest.list.v2+json&quot;</span>,</span><br><span class="line">   <span class="string">&quot;manifests&quot;</span>: [</span><br><span class="line">      &#123;</span><br><span class="line">         <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.distribution.manifest.v2+json&quot;</span>,</span><br><span class="line">         <span class="string">&quot;size&quot;</span>: <span class="number">1357</span>,</span><br><span class="line">         <span class="string">&quot;digest&quot;</span>: <span class="string">&quot;sha256:9b47044b1e79b965a8e1653e7f9c04b5f63e00b9161bedd5baef69bb8b4c4834&quot;</span>,</span><br><span class="line">         <span class="string">&quot;platform&quot;</span>: &#123;</span><br><span class="line">            <span class="string">&quot;architecture&quot;</span>: <span class="string">&quot;amd64&quot;</span>,</span><br><span class="line">            <span class="string">&quot;os&quot;</span>: <span class="string">&quot;linux&quot;</span></span><br><span class="line">         &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      &#123;</span><br><span class="line">         <span class="string">&quot;mediaType&quot;</span>: <span class="string">&quot;application/vnd.docker.distribution.manifest.v2+json&quot;</span>,</span><br><span class="line">         <span class="string">&quot;size&quot;</span>: <span class="number">1357</span>,</span><br><span class="line">         <span class="string">&quot;digest&quot;</span>: <span class="string">&quot;sha256:8aecae775e1f81d3889929ef15647187b414c833b0798d060bfd778bee668ced&quot;</span>,</span><br><span class="line">         <span class="string">&quot;platform&quot;</span>: &#123;</span><br><span class="line">            <span class="string">&quot;architecture&quot;</span>: <span class="string">&quot;arm64&quot;</span>,</span><br><span class="line">            <span class="string">&quot;os&quot;</span>: <span class="string">&quot;linux&quot;</span>,</span><br><span class="line">            <span class="string">&quot;variant&quot;</span>: <span class="string">&quot;v8&quot;</span></span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">   ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p><strong>注意：manifest的功能目前仅仅作用于docker 官方的镜像仓库。</strong></p>
-<p>总结：简单的说manifest list就是多个manifest的一个集合，通过列表方式来管理。</p>
-<h2 id="manifest-list处理流程："><a href="#manifest-list处理流程：" class="headerlink" title="manifest list处理流程："></a>manifest list处理流程：</h2><img src="/2023/02/27/09/1676966412440-973b407a-131f-48d2-a414-1d2e0efec236.png" class="" title="img">
-
-<img src="/2023/02/27/09/1676966412789-274aaf7c-7f07-43c8-9479-171a5fc0a048.png" class="" title="img">
-
-<h2 id="开启docker子命令manifest功能："><a href="#开启docker子命令manifest功能：" class="headerlink" title="开启docker子命令manifest功能："></a>开启docker子命令manifest功能：</h2><p>manifest是做为docker客户端的子命令存在，不过这个子命令目前处在实验性中一般没有开启。我们需要手动开始这个子命令的功能。开启过程如下：</p>
-<h3 id="编辑config-json"><a href="#编辑config-json" class="headerlink" title="编辑config.json"></a>编辑config.json</h3><p>docker 的默认配置文件config.json是在$HOME目录下的.docker目录下。编辑config.json文件，若目录和文件不存在手动创建。</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ vim ~/.docker/config.json</span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;experimental&quot;</span>: <span class="string">&quot;enabled&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="编辑daemon-json"><a href="#编辑daemon-json" class="headerlink" title="编辑daemon.json"></a>编辑daemon.json</h3><p>编辑daemon.json，若目录和文件不存在手动创建</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ vim /etc/docker/daemon.json</span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;experimental&quot;</span>: <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="重启docker"><a href="#重启docker" class="headerlink" title="重启docker"></a>重启docker</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ systemctl daemon-reload</span><br><span class="line">$ systemctl restart docker</span><br><span class="line">$ docker manifest --<span class="built_in">help</span>    <span class="comment">#----查看manifest帮助信息</span></span><br></pre></td></tr></table></figure>
-
-<p>开启docker的实验性功能后docker pull可以拉取指定平台镜像如下：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker pull --platform arm64  镜像 --platform：该参数是用于拉取指定平台的镜像，也是实验性功能，在上面步骤中开启后就会出现。通 过该参数可以手动指定需要的CPU平台镜像，而不用自动去识别。</span><br></pre></td></tr></table></figure>
-
-<h2 id="使用manifest创建多CPU架构的镜像："><a href="#使用manifest创建多CPU架构的镜像：" class="headerlink" title="使用manifest创建多CPU架构的镜像："></a>使用manifest创建多CPU架构的镜像：</h2><p>查看一个镜像的manifest文件信息</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest inspect nginx</span><br></pre></td></tr></table></figure>
-
-<p>查看一个镜像的manifest文件的详细信息，包括cpu平台架构等信息</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest inspect --verbose nginx</span><br></pre></td></tr></table></figure>
-
-<h3 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h3><p>这里准备好了两个不同CPU架构的镜像如下：<br>这里的镜像是自己在docker hub上创建的仓库<br>xxx/public_docker:nginx-arm64<br>xxx/public_docker:nginx-x86<br><strong>必须将上面两个镜像推到docker hub上面</strong></p>
-<h3 id="创建一个manifest-list列表："><a href="#创建一个manifest-list列表：" class="headerlink" title="创建一个manifest list列表："></a>创建一个manifest list列表：</h3><p>创建一个自定义命名的镜像名的manifest list，然后用该列表关联仓库里面的两个不同架构的镜像</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest create xxx/public_docker:nginx-v1 xxx/public_docker:nginx-arm64 xxx/public_docker:nginx-x86</span><br></pre></td></tr></table></figure>
-
-<h3 id="docker-manifest-annotate-注释manifest-list"><a href="#docker-manifest-annotate-注释manifest-list" class="headerlink" title="docker manifest annotate 注释manifest list"></a>docker manifest annotate 注释manifest list</h3><p>我们按照上述方法创建出来的 manifest list 中并没有说明其中的 manifest 是什么操作系统和平台的，<code>docker manifest annotate</code> 命令用于注释创建出来的 manifest list。例如注释某个 manifest 是 <code>linxu</code>系统 <code>arm64</code> 平台的。</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest annotate xxx/public_docker:nginx-v1 xxx/public_docker:nginx-x86 –os linux –<span class="built_in">arch</span> amd64</span><br><span class="line">$ docker manifest annotate xxx/public_docker:nginx-v1 xxx/public_docker:nginx-arm64 –os linux –<span class="built_in">arch</span> arm64</span><br></pre></td></tr></table></figure>
-
-<h3 id="将创建好的manifest-list-推到仓库中："><a href="#将创建好的manifest-list-推到仓库中：" class="headerlink" title="将创建好的manifest list 推到仓库中："></a>将创建好的manifest list 推到仓库中：</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest push xxx/public_docker:nginx-v1</span><br></pre></td></tr></table></figure>
-
-<h3 id="查看仓库中创建好的manifest-list："><a href="#查看仓库中创建好的manifest-list：" class="headerlink" title="查看仓库中创建好的manifest list："></a>查看仓库中创建好的manifest list：</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ docker manifest inspect xxx/public_docker:nginx-v1</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>镜像</category>
-      </categories>
-      <tags>
-        <tag>buildx</tag>
-        <tag>manifest</tag>
       </tags>
   </entry>
   <entry>
@@ -1276,18 +1276,6 @@
       </tags>
   </entry>
   <entry>
-    <title>kubeadm部署k8s集群</title>
-    <url>/2024/01/15/50/</url>
-    <content><![CDATA[]]></content>
-      <categories>
-        <category>部署k8s集群</category>
-      </categories>
-      <tags>
-        <tag>kubeadm</tag>
-        <tag>部署k8s集群</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>利用 kubeadm 部署高可用 k8s 集群</title>
     <url>/2023/09/25/51/</url>
     <content><![CDATA[<h1 id="高可用拓扑"><a href="#高可用拓扑" class="headerlink" title="高可用拓扑"></a>高可用拓扑</h1><p>可以设置 HA 集群：</p>
@@ -1499,6 +1487,18 @@
       </categories>
       <tags>
         <tag>kubeadm</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>kubeadm部署k8s集群</title>
+    <url>/2024/01/15/50/</url>
+    <content><![CDATA[]]></content>
+      <categories>
+        <category>部署k8s集群</category>
+      </categories>
+      <tags>
+        <tag>kubeadm</tag>
+        <tag>部署k8s集群</tag>
       </tags>
   </entry>
   <entry>
@@ -1810,6 +1810,38 @@
       </tags>
   </entry>
   <entry>
+    <title>nexus 使用总结</title>
+    <url>/2023/09/07/32/</url>
+    <content><![CDATA[<h1 id="部署-nexus-服务"><a href="#部署-nexus-服务" class="headerlink" title="部署 nexus 服务"></a>部署 nexus 服务</h1><p>创建docker-compose.yml文件：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&quot;3&quot;</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="comment"># 服务名称</span></span><br><span class="line">  <span class="attr">nexus3:</span></span><br><span class="line">    <span class="comment"># 镜像</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">sonatype/nexus3:3.59.0</span></span><br><span class="line">    <span class="comment"># 容器名称</span></span><br><span class="line">    <span class="attr">container_name:</span> <span class="string">nexus3-lzw-test</span></span><br><span class="line">    <span class="comment"># 重启策略</span></span><br><span class="line">    <span class="attr">restart:</span> <span class="string">on-failure</span></span><br><span class="line">    <span class="comment"># 端口映射</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="comment"># web 服务使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;8081:8081&quot;</span></span><br><span class="line">      <span class="comment"># http 仓库使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;8082:8082&quot;</span></span><br><span class="line">      <span class="comment"># 代理仓库使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5000:5000&quot;</span></span><br><span class="line">    <span class="comment"># 挂载数据卷</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="comment"># 将主机的/opt/neuxus3/data目录挂载映射到容器的/nexus-data目录</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">/opt/nexus3/data:/nexus-data</span></span><br><span class="line">    <span class="comment"># 设置环境变量</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="comment"># 配置nexus3服务的内存，避免小规格机器崩掉</span></span><br><span class="line">      <span class="attr">INSTALL4J_ADD_VM_PARAMS:</span> <span class="string">&quot;-Xms512m -Xmx512m -XX:MaxDirectMemorySize=512m -Djava.util.prefs.userRoot=/nexus-data/javaprefs&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p> 创建启动脚本start.sh</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">仓库数据挂载位置</span></span><br><span class="line">mkdir -p &quot;/opt/nexus3/data&quot;</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">目录权限</span></span><br><span class="line">chmod -R 777 &quot;/opt/nexus3/data&quot;</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">启动</span></span><br><span class="line">if [ &quot;$1&quot; == &quot;backend&quot; ]; then</span><br><span class="line">    docker-compose up -d</span><br><span class="line">else</span><br><span class="line">  docker-compose up</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
+
+<p>启动 nexus3，启动会比较慢，需要一段时间才能启动成功</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">方式一、前台启动，查看启动日志调试用</span></span><br><span class="line">sudo sh ./start.sh</span><br><span class="line"><span class="meta prompt_"> </span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">方式二、后台启动</span></span><br><span class="line">sudo sh ./start.sh backend</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/09/07/32/image-20230911155849960.png" class="" title="image-20230911155849960">
+
+<p>访问 http://<ip>:8081或<a href="http://localhost:8081（本地），查看仓库页面">http://localhost:8081（本地），查看仓库页面</a></p>
+<img src="/2023/09/07/32/image-20230911155929241.png" class="" title="image-20230911155929241">
+
+<p>点击右上角“Sign in”，用户名为“admin”，在映射的主机目录/opt/nexus3/data/admin.password文件中查看登录密码</p>
+<img src="/2023/09/07/32/5711b837e3314244a5928be6f168c8f9.png" class="" title="img">
+
+<img src="/2023/09/07/32/c354c1d40b9c4e939ac0b7e9c1edbe40.png" class="" title="img">
+
+<p>登录后会有引导窗口，跟着知道重新配置密码，开启匿名访问即可。</p>
+]]></content>
+      <categories>
+        <category>nexus</category>
+      </categories>
+      <tags>
+        <tag>nexus</tag>
+        <tag>docker-repositories</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>NVIDIA/kubevirt-gpu-device-plugin源码分析</title>
     <url>/2023/01/10/32/</url>
     <content><![CDATA[<p>NVIDIA K8s Device Plugin为Kubevirt虚拟机分配gpu和vgpu，该篇文章基于NVIDIA/kubevirt-gpu-device-plugin:v1.2.1，<a href="https://github.com/NVIDIA/kubevirt-gpu-device-plugin/tree/v1.2.1">https://github.com/NVIDIA/kubevirt-gpu-device-plugin/tree/v1.2.1</a></p>
@@ -1869,38 +1901,6 @@
         <tag>gpu</tag>
         <tag>device-plugins</tag>
         <tag>kubevirt-gpu-device-plugin</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>nexus 使用总结</title>
-    <url>/2023/09/07/32/</url>
-    <content><![CDATA[<h1 id="部署-nexus-服务"><a href="#部署-nexus-服务" class="headerlink" title="部署 nexus 服务"></a>部署 nexus 服务</h1><p>创建docker-compose.yml文件：</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&quot;3&quot;</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="comment"># 服务名称</span></span><br><span class="line">  <span class="attr">nexus3:</span></span><br><span class="line">    <span class="comment"># 镜像</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">sonatype/nexus3:3.59.0</span></span><br><span class="line">    <span class="comment"># 容器名称</span></span><br><span class="line">    <span class="attr">container_name:</span> <span class="string">nexus3-lzw-test</span></span><br><span class="line">    <span class="comment"># 重启策略</span></span><br><span class="line">    <span class="attr">restart:</span> <span class="string">on-failure</span></span><br><span class="line">    <span class="comment"># 端口映射</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="comment"># web 服务使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;8081:8081&quot;</span></span><br><span class="line">      <span class="comment"># http 仓库使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;8082:8082&quot;</span></span><br><span class="line">      <span class="comment"># 代理仓库使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5000:5000&quot;</span></span><br><span class="line">    <span class="comment"># 挂载数据卷</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="comment"># 将主机的/opt/neuxus3/data目录挂载映射到容器的/nexus-data目录</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">/opt/nexus3/data:/nexus-data</span></span><br><span class="line">    <span class="comment"># 设置环境变量</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="comment"># 配置nexus3服务的内存，避免小规格机器崩掉</span></span><br><span class="line">      <span class="attr">INSTALL4J_ADD_VM_PARAMS:</span> <span class="string">&quot;-Xms512m -Xmx512m -XX:MaxDirectMemorySize=512m -Djava.util.prefs.userRoot=/nexus-data/javaprefs&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p> 创建启动脚本start.sh</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">仓库数据挂载位置</span></span><br><span class="line">mkdir -p &quot;/opt/nexus3/data&quot;</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">目录权限</span></span><br><span class="line">chmod -R 777 &quot;/opt/nexus3/data&quot;</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">启动</span></span><br><span class="line">if [ &quot;$1&quot; == &quot;backend&quot; ]; then</span><br><span class="line">    docker-compose up -d</span><br><span class="line">else</span><br><span class="line">  docker-compose up</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
-
-<p>启动 nexus3，启动会比较慢，需要一段时间才能启动成功</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">方式一、前台启动，查看启动日志调试用</span></span><br><span class="line">sudo sh ./start.sh</span><br><span class="line"><span class="meta prompt_"> </span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">方式二、后台启动</span></span><br><span class="line">sudo sh ./start.sh backend</span><br></pre></td></tr></table></figure>
-
-<img src="/2023/09/07/32/image-20230911155849960.png" class="" title="image-20230911155849960">
-
-<p>访问 http://<ip>:8081或<a href="http://localhost:8081（本地），查看仓库页面">http://localhost:8081（本地），查看仓库页面</a></p>
-<img src="/2023/09/07/32/image-20230911155929241.png" class="" title="image-20230911155929241">
-
-<p>点击右上角“Sign in”，用户名为“admin”，在映射的主机目录/opt/nexus3/data/admin.password文件中查看登录密码</p>
-<img src="/2023/09/07/32/5711b837e3314244a5928be6f168c8f9.png" class="" title="img">
-
-<img src="/2023/09/07/32/c354c1d40b9c4e939ac0b7e9c1edbe40.png" class="" title="img">
-
-<p>登录后会有引导窗口，跟着知道重新配置密码，开启匿名访问即可。</p>
-]]></content>
-      <categories>
-        <category>nexus</category>
-      </categories>
-      <tags>
-        <tag>nexus</tag>
-        <tag>docker-repositories</tag>
       </tags>
   </entry>
   <entry>
@@ -2330,6 +2330,41 @@
       </tags>
   </entry>
   <entry>
+    <title>使用swagger-ui可视化Kubernetes-API文档</title>
+    <url>/2023/08/25/41/</url>
+    <content><![CDATA[<p>在工作中，你可能需要基于 Kubernetes 提供的 API 进行开发，比如开发适合自己的控制台，Kubernetes 官方提供的 API 文档，有两个问题：</p>
+<ol>
+<li>非常的不直观，这个问题其实还好，自己克服一下也不是大问题</li>
+<li>只有 K8S api-server 的接口，这个就难办了，假如有新的 CRD 资源，比如 kubevirt ，又要去找 kubevirt 的 api 文档，关键是找不着</li>
+</ol>
+<h2 id="如何部署-swagger-ui"><a href="#如何部署-swagger-ui" class="headerlink" title="如何部署 swagger-ui"></a>如何部署 swagger-ui</h2><p>打开两个 ssh 连接到你的 K8S 集群中。</p>
+<p>进入第一个窗口，执行如下命令建立一个反向代理</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl proxy --port=8080</span><br></pre></td></tr></table></figure>
+
+<p>进入第二个窗口，执行如下命令建立获取 k8s的 api 文档信息，输出到一个 <code>k8s-swagger.json</code> 文件中</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl localhost:8080/openapi/v2 &gt; k8s-swagger.json</span><br></pre></td></tr></table></figure>
+
+<p>获取到后，第一个窗口就可以关闭了。</p>
+<p>然后任选一个窗口，执行如下命令运行一个容器</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">docker run \</span><br><span class="line">    --rm \</span><br><span class="line">    -d \</span><br><span class="line">    -p 80:8080 \</span><br><span class="line">    -e SWAGGER_JSON=/k8s-swagger.json \</span><br><span class="line">    -v $(pwd)/k8s-swagger.json:/k8s-swagger.json \</span><br><span class="line">    swaggerapi/swagger-ui</span><br></pre></td></tr></table></figure>
+
+<h2 id="使用-swagger-ui"><a href="#使用-swagger-ui" class="headerlink" title="使用 swagger-ui"></a>使用 swagger-ui</h2><p>此时，你在浏览器上输入 <code>http://ip</code> 就可以看到一个经过可视化的 api 文档界面，其中包括安装在集群上的所有自定义资源的模型和路径！</p>
+<img src="/2023/08/25/41/50a5136b19764f23861be47fcaf4758d~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp" class="" title="img">
+
+<p>里面的 api 非常多，你用得上的，用不上的，这里都有。 不仅有 api-server 的 API ，其他所有你另外安装的 CRD 资源也都有。</p>
+<p>比如我自己安装的 VirtualMachineInstance 资源，根据关键字，立马就找到 KubeVirt 创建虚拟机的 API</p>
+<img src="/2023/08/25/41/c1ea7c9fa54f4ba785dec6ab083dff1d~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp" class="" title="img">
+
+<p>点击上面的 <code>Try it out</code> 可以修改请求体的参数，请生成一个 curl 命令，方便你进行调试。</p>
+]]></content>
+      <categories>
+        <category>k8s-swagger-ui</category>
+      </categories>
+      <tags>
+        <tag>k8s-swagger-ui</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>使用 kubebuilder 开发一个 operator 应用</title>
     <url>/2023/09/01/10/</url>
     <content><![CDATA[<h1 id="Kubebuilder-介绍"><a href="#Kubebuilder-介绍" class="headerlink" title="Kubebuilder 介绍"></a>Kubebuilder 介绍</h1><p><a href="https://github.com/kubernetes-sigs/kubebuilder">Kubebuilder</a> 是一个使用 CRDs 构建 K8s API 的 SDK，主要是：</p>
@@ -2484,41 +2519,6 @@
         <tag>operator</tag>
         <tag>code-generator</tag>
         <tag>kubebuilder</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>使用swagger-ui可视化Kubernetes-API文档</title>
-    <url>/2023/08/25/41/</url>
-    <content><![CDATA[<p>在工作中，你可能需要基于 Kubernetes 提供的 API 进行开发，比如开发适合自己的控制台，Kubernetes 官方提供的 API 文档，有两个问题：</p>
-<ol>
-<li>非常的不直观，这个问题其实还好，自己克服一下也不是大问题</li>
-<li>只有 K8S api-server 的接口，这个就难办了，假如有新的 CRD 资源，比如 kubevirt ，又要去找 kubevirt 的 api 文档，关键是找不着</li>
-</ol>
-<h2 id="如何部署-swagger-ui"><a href="#如何部署-swagger-ui" class="headerlink" title="如何部署 swagger-ui"></a>如何部署 swagger-ui</h2><p>打开两个 ssh 连接到你的 K8S 集群中。</p>
-<p>进入第一个窗口，执行如下命令建立一个反向代理</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl proxy --port=8080</span><br></pre></td></tr></table></figure>
-
-<p>进入第二个窗口，执行如下命令建立获取 k8s的 api 文档信息，输出到一个 <code>k8s-swagger.json</code> 文件中</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl localhost:8080/openapi/v2 &gt; k8s-swagger.json</span><br></pre></td></tr></table></figure>
-
-<p>获取到后，第一个窗口就可以关闭了。</p>
-<p>然后任选一个窗口，执行如下命令运行一个容器</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">docker run \</span><br><span class="line">    --rm \</span><br><span class="line">    -d \</span><br><span class="line">    -p 80:8080 \</span><br><span class="line">    -e SWAGGER_JSON=/k8s-swagger.json \</span><br><span class="line">    -v $(pwd)/k8s-swagger.json:/k8s-swagger.json \</span><br><span class="line">    swaggerapi/swagger-ui</span><br></pre></td></tr></table></figure>
-
-<h2 id="使用-swagger-ui"><a href="#使用-swagger-ui" class="headerlink" title="使用 swagger-ui"></a>使用 swagger-ui</h2><p>此时，你在浏览器上输入 <code>http://ip</code> 就可以看到一个经过可视化的 api 文档界面，其中包括安装在集群上的所有自定义资源的模型和路径！</p>
-<img src="/2023/08/25/41/50a5136b19764f23861be47fcaf4758d~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp" class="" title="img">
-
-<p>里面的 api 非常多，你用得上的，用不上的，这里都有。 不仅有 api-server 的 API ，其他所有你另外安装的 CRD 资源也都有。</p>
-<p>比如我自己安装的 VirtualMachineInstance 资源，根据关键字，立马就找到 KubeVirt 创建虚拟机的 API</p>
-<img src="/2023/08/25/41/c1ea7c9fa54f4ba785dec6ab083dff1d~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp" class="" title="img">
-
-<p>点击上面的 <code>Try it out</code> 可以修改请求体的参数，请生成一个 curl 命令，方便你进行调试。</p>
-]]></content>
-      <categories>
-        <category>k8s-swagger-ui</category>
-      </categories>
-      <tags>
-        <tag>k8s-swagger-ui</tag>
       </tags>
   </entry>
   <entry>
