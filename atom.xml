@@ -91,9 +91,9 @@
     <category term="kube-scheduler" scheme="http://lizhewei91.github.io/categories/kube-scheduler/"/>
     
     
-    <category term="kube-scheduler" scheme="http://lizhewei91.github.io/tags/kube-scheduler/"/>
-    
     <category term="scheduler-extender" scheme="http://lizhewei91.github.io/tags/scheduler-extender/"/>
+    
+    <category term="kube-scheduler" scheme="http://lizhewei91.github.io/tags/kube-scheduler/"/>
     
   </entry>
   
