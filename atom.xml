@@ -292,11 +292,11 @@
     <category term="operator" scheme="http://lizhewei91.github.io/categories/operator/"/>
     
     
-    <category term="kubebuilder" scheme="http://lizhewei91.github.io/tags/kubebuilder/"/>
-    
     <category term="operator" scheme="http://lizhewei91.github.io/tags/operator/"/>
     
     <category term="code-generator" scheme="http://lizhewei91.github.io/tags/code-generator/"/>
+    
+    <category term="kubebuilder" scheme="http://lizhewei91.github.io/tags/kubebuilder/"/>
     
   </entry>
   
