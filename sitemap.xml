@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://lizhewei91.github.io/2024/08/22/26/</loc>
+    <loc>http://lizhewei91.github.io/2024/08/21/42/</loc>
     
     <lastmod>2024-08-23</lastmod>
     
@@ -11,9 +11,9 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/2024/08/21/42/</loc>
+    <loc>http://lizhewei91.github.io/2024/08/22/26/</loc>
     
-    <lastmod>2024-08-22</lastmod>
+    <lastmod>2024-08-23</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -367,13 +367,6 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/kube-scheduler%E4%BD%BF%E7%94%A8/</loc>
-    <lastmod>2024-08-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://lizhewei91.github.io/tags/pprof/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
@@ -416,6 +409,20 @@
   </url>
   
   <url>
+    <loc>http://lizhewei91.github.io/tags/kubeadm/</loc>
+    <lastmod>2024-08-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/%E9%83%A8%E7%BD%B2k8s%E9%9B%86%E7%BE%A4/</loc>
+    <lastmod>2024-08-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
     <loc>http://lizhewei91.github.io/tags/scheduler-framework/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
@@ -444,14 +451,7 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/kubeadm/</loc>
-    <lastmod>2024-08-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/%E9%83%A8%E7%BD%B2k8s%E9%9B%86%E7%BE%A4/</loc>
+    <loc>http://lizhewei91.github.io/tags/kube-scheduler%E4%BD%BF%E7%94%A8/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -500,6 +500,13 @@
   </url>
   
   <url>
+    <loc>http://lizhewei91.github.io/tags/kubevirt-gpu-device-plugin/</loc>
+    <lastmod>2024-08-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
     <loc>http://lizhewei91.github.io/tags/nexus/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
@@ -514,13 +521,6 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/kubevirt-gpu-device-plugin/</loc>
-    <lastmod>2024-08-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://lizhewei91.github.io/tags/nvidia/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
@@ -528,7 +528,7 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/kubebuilder/</loc>
+    <loc>http://lizhewei91.github.io/tags/kube-scheduler/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -549,14 +549,7 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/kube-scheduler/</loc>
-    <lastmod>2024-08-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/k8s-swagger-ui/</loc>
+    <loc>http://lizhewei91.github.io/tags/kubebuilder/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -564,6 +557,13 @@
   
   <url>
     <loc>http://lizhewei91.github.io/tags/gpushare/</loc>
+    <lastmod>2024-08-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/k8s-swagger-ui/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -621,13 +621,6 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/kube-scheduler/</loc>
-    <lastmod>2024-08-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://lizhewei91.github.io/categories/pprof/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
@@ -649,7 +642,7 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/kubectl-%E6%8F%92%E4%BB%B6/</loc>
+    <loc>http://lizhewei91.github.io/categories/kube-scheduler/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -657,6 +650,13 @@
   
   <url>
     <loc>http://lizhewei91.github.io/categories/kubeadm/</loc>
+    <lastmod>2024-08-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/categories/kubectl-%E6%8F%92%E4%BB%B6/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -684,14 +684,14 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/k8s-swagger-ui/</loc>
+    <loc>http://lizhewei91.github.io/categories/gpushare/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/gpushare/</loc>
+    <loc>http://lizhewei91.github.io/categories/k8s-swagger-ui/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
