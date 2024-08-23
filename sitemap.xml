@@ -65,15 +65,6 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/2023/12/20/53/</loc>
-    
-    <lastmod>2023-12-20</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>http://lizhewei91.github.io/2022/11/29/16/</loc>
     
     <lastmod>2023-10-17</lastmod>
@@ -304,27 +295,6 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/nvidia-time-slicing/</loc>
-    <lastmod>2024-08-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/nvidia-gpu-share/</loc>
-    <lastmod>2024-08-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/nvidia-gpu-operator/</loc>
-    <lastmod>2024-08-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://lizhewei91.github.io/tags/jwt/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
@@ -339,20 +309,6 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/buildx/</loc>
-    <lastmod>2024-08-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/manifest/</loc>
-    <lastmod>2024-08-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://lizhewei91.github.io/tags/gpu/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
@@ -361,6 +317,20 @@
   
   <url>
     <loc>http://lizhewei91.github.io/tags/device-plugins/</loc>
+    <lastmod>2024-08-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/buildx/</loc>
+    <lastmod>2024-08-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/manifest/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -486,7 +456,7 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/%E5%88%9B%E5%BB%BApod%E6%B5%81%E7%A8%8B/</loc>
+    <loc>http://lizhewei91.github.io/tags/node-%E8%8A%82%E7%82%B9%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -500,7 +470,14 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/node-%E8%8A%82%E7%82%B9%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D/</loc>
+    <loc>http://lizhewei91.github.io/tags/%E5%88%9B%E5%BB%BApod%E6%B5%81%E7%A8%8B/</loc>
+    <lastmod>2024-08-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/kubevirt-gpu-device-plugin/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -515,13 +492,6 @@
   
   <url>
     <loc>http://lizhewei91.github.io/tags/docker-repositories/</loc>
-    <lastmod>2024-08-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/kubevirt-gpu-device-plugin/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -549,14 +519,14 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/k8s-swagger-ui/</loc>
+    <loc>http://lizhewei91.github.io/tags/kubebuilder/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/kubebuilder/</loc>
+    <loc>http://lizhewei91.github.io/tags/k8s-swagger-ui/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -593,13 +563,6 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/nvidia-time-slicing/</loc>
-    <lastmod>2024-08-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://lizhewei91.github.io/categories/gpu/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
@@ -607,14 +570,14 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/%E9%95%9C%E5%83%8F/</loc>
+    <loc>http://lizhewei91.github.io/categories/device-plugins/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/device-plugins/</loc>
+    <loc>http://lizhewei91.github.io/categories/%E9%95%9C%E5%83%8F/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -642,14 +605,14 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/kubeadm/</loc>
+    <loc>http://lizhewei91.github.io/categories/%E9%83%A8%E7%BD%B2k8s%E9%9B%86%E7%BE%A4/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/%E9%83%A8%E7%BD%B2k8s%E9%9B%86%E7%BE%A4/</loc>
+    <loc>http://lizhewei91.github.io/categories/kubeadm/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
