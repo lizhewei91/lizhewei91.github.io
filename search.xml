@@ -813,468 +813,6 @@
       </tags>
   </entry>
   <entry>
-    <title>kube-scheduler使用总结</title>
-    <url>/2024/08/21/02/</url>
-    <content><![CDATA[<h1 id="kube-scheduler定义"><a href="#kube-scheduler定义" class="headerlink" title="kube-scheduler定义"></a>kube-scheduler定义</h1><p>在 kubernetes 中，调度是指将 Pod 放置到合适的节点上，以便对应节点上kubelet 能够运行这些 Pod。</p>
-<h1 id="资源调度"><a href="#资源调度" class="headerlink" title="资源调度"></a>资源调度</h1><p>在 Kubernetes 中资源又可分为 <code>API资源</code> 与 <code>计算资源</code>，API 资源主要包括 Pod、Service、Deployment 等，计算资源主要包括 CPU、Memory 及 GPU 等。</p>
-<p>Kubernetes的计算资源分为两种属性。</p>
-<p>1、<strong>可压缩资源</strong>（CPU循环，Disk I/O带宽），当可压缩资源不足时，降低这些资源的使用量而不去杀掉Pod。</p>
-<p>2、<strong>不可压缩资源</strong>（内存、硬盘空间），当不可压缩资源不足时，一般来说不杀掉Pod就没法回收。</p>
-<p><strong>注：由于 Pod 可以由多个 Container 组成，所以 CPU 和内存资源的限额，是要配置在每个 Container 的定义上的。这样，Pod 整体的资源配置，就由这些 Container 的配置值累加得到。</strong></p>
-<p>当 Kubernetes 集群中计算资源不足时（如 Pod 占用资源过多），Kubernetes 提供了资源限制的机制，其核心如下：</p>
-<ul>
-<li>限制 Pod 资源占用率；</li>
-<li>为 Pod 划分等级(QoS)，当资源不足时先杀死等级低的 Pod 来释放资源；</li>
-</ul>
-<h2 id="Pod-资源配置参数"><a href="#Pod-资源配置参数" class="headerlink" title="Pod 资源配置参数"></a>Pod 资源配置参数</h2><h3 id="Pod的资源类型"><a href="#Pod的资源类型" class="headerlink" title="Pod的资源类型"></a>Pod的资源类型</h3><ul>
-<li><strong>cpu</strong></li>
-<li><strong>memory</strong></li>
-<li><strong>ephemeral-storage</strong></li>
-<li><strong>extended-resource：nvidia.com/gpu</strong></li>
-</ul>
-<h3 id="Requests-和-Limits-对调度的影响"><a href="#Requests-和-Limits-对调度的影响" class="headerlink" title="Requests 和 Limits 对调度的影响"></a>Requests 和 Limits 对调度的影响</h3><p>K8S 在 pod resources 里面提供了两种填写方式：第一种是 request，第二种是 limit。</p>
-<p>它其实是为用户提供了对 Pod 一种弹性能力的定义。比如说我们可以对 request 填 2 个 CPU，对 limit 填 4 个 CPU，这样代表了我希望是有 2 个 CPU 的保底能力，但其实在闲置的时候，可以使用 4 个 GPU。</p>
-<p><strong>在调度的时候，kube-scheduler 只会按照 requests 的值进行计算。而在真正设置 Cgroups 限制的时候，kubelet 则会按照 limits 的值来进行设置</strong>。</p>
-<h2 id="QoS-资源服务质量控制"><a href="#QoS-资源服务质量控制" class="headerlink" title="QoS 资源服务质量控制"></a>QoS 资源服务质量控制</h2><h3 id="Pod-QoS-特点"><a href="#Pod-QoS-特点" class="headerlink" title="Pod QoS 特点"></a>Pod QoS 特点</h3><img src="/2024/08/21/02/1617952440612-5e6be91c-2df1-4b7a-a86d-39435672e6c9.png" class="" title="img">
-
-
-
-<p>在 Kubernetes 中资源不足时，根据 QoS 等级杀死 Pod 会有以下特点：</p>
-<ul>
-<li><strong>BestEffort Pod：</strong> 优先级最低，在 Kubernetes 资源不足时候会将此 Pod 先杀掉。</li>
-<li><strong>Burstable Pod：</strong> 优先级居中，如果整个系统内存资源不足，且已经杀完全部 BestEffort 等级的 Pod 时可能被杀掉。</li>
-<li><strong>Guaranteed Pod：</strong> 优先级最高，一般情况下不会被杀掉，除非资源不足且系统 BestEffort 和 Burstable 的 Pod 都不存在的情况下，才可能被杀掉。</li>
-</ul>
-<h3 id="Pod-是如何分-QoS-等级"><a href="#Pod-是如何分-QoS-等级" class="headerlink" title="Pod 是如何分 QoS 等级"></a>Pod 是如何分 QoS 等级</h3><h4 id="Guaranteed-（等级-最高）"><a href="#Guaranteed-（等级-最高）" class="headerlink" title="Guaranteed （等级-最高）"></a>Guaranteed （等级-最高）</h4><p><strong>如果 Pod 中所有容器都定义了 Limits 和 Requests，并且全部容器的 Limits 值 = Requests 值（值不能为0）</strong>，那么该 Pod 的 QoS 级别就是 Guaranteed。</p>
-<blockquote>
-<p>注意：这种情况下容器可以只设置 Limits 值即可，引入在只设置 Limits 不设置 Requests 情况下，Requests 值默认等于 Limits 的值。</p>
-</blockquote>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">demo-Guaranteed-pod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">example-container1</span></span><br><span class="line">  <span class="attr">resources:</span></span><br><span class="line">    <span class="attr">limits:</span></span><br><span class="line">      <span class="attr">cpu:</span> <span class="string">10m</span></span><br><span class="line">      <span class="attr">memory:</span> <span class="string">512Mi</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">example-container2</span></span><br><span class="line">  <span class="attr">resources:</span></span><br><span class="line">    <span class="attr">limits:</span></span><br><span class="line">      <span class="attr">cpu:</span> <span class="string">100m</span></span><br><span class="line">      <span class="attr">memory:</span> <span class="string">100Mi</span></span><br></pre></td></tr></table></figure>
-
-<h4 id="BestEffort（等级-最低）"><a href="#BestEffort（等级-最低）" class="headerlink" title="BestEffort（等级-最低）"></a>BestEffort（等级-最低）</h4><p><strong>如果 Pod 中所有容器都未定义 Requests 和 Limits 值</strong>，该 Pod 的 Qos 即为 BestEffort。</p>
-<p>Pod 中的所有容器都未定义 Requests 和 Limits：</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">demo-ns</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">demo-besteffort-pod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">example-container1</span></span><br><span class="line">    <span class="attr">resources:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">example-container2</span></span><br><span class="line">    <span class="attr">resources:</span></span><br></pre></td></tr></table></figure>
-
-<h4 id="Burstable（等级-中等）"><a href="#Burstable（等级-中等）" class="headerlink" title="Burstable（等级-中等）"></a>Burstable（等级-中等）</h4><p><strong>当一个 Pod 既不是 Guaranteed 级别，也不说 BestEffort 级别时候，该 Pod 的 QoS 级别就是 Burstable</strong>。例如，Pod 中全部或者部分容器 Requests 和 Limits 都定义，且 Requests 小于 Limits 值，或者 Pod 中一部分容器未定义 Requests 和 Limits 资源时。</p>
-<ul>
-<li>Pod 中只要有一个容器的 Requests 和 Limits 的设置的值不相同：</li>
-</ul>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">demo-ns</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">demo-Burstable-pod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">example-container1</span></span><br><span class="line">    <span class="attr">resources:</span></span><br><span class="line">      <span class="attr">limits:</span></span><br><span class="line">        <span class="attr">cpu:</span> <span class="string">100m</span></span><br><span class="line">        <span class="attr">memory:</span> <span class="string">512Mi</span></span><br><span class="line">      <span class="attr">requests:</span></span><br><span class="line">        <span class="attr">cpu:</span> <span class="number">100</span></span><br><span class="line">        <span class="attr">memory:</span> <span class="string">512Mi</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">example-container2</span></span><br><span class="line">    <span class="attr">resources:</span></span><br><span class="line">      <span class="attr">limits:</span></span><br><span class="line">        <span class="attr">cpu:</span> <span class="string">200m</span></span><br><span class="line">        <span class="attr">memory:</span> <span class="string">256Mi</span></span><br><span class="line">      <span class="attr">requests:</span></span><br><span class="line">        <span class="attr">cpu:</span> <span class="string">100m</span></span><br><span class="line">        <span class="attr">memory:</span> <span class="string">128Mi</span></span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>Pod 都存在 Limits，但是 Limits 中限制的类型不同：</li>
-</ul>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">example-container1</span></span><br><span class="line">    <span class="attr">resources:</span></span><br><span class="line">      <span class="attr">limits:</span></span><br><span class="line">        <span class="attr">memory:</span> <span class="string">512Mi</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">example-container2</span></span><br><span class="line">    <span class="attr">resources:</span></span><br><span class="line">      <span class="attr">limits:</span></span><br><span class="line">        <span class="attr">cpu:</span> <span class="string">200m</span></span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>Pod 中两个容器只有一个 Limits ，另一个都没有设置：</li>
-</ul>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">example-container1</span></span><br><span class="line">    <span class="attr">resources:</span></span><br><span class="line">      <span class="attr">limits:</span></span><br><span class="line">        <span class="attr">cpu:</span> <span class="string">100m</span></span><br><span class="line">        <span class="attr">memory:</span> <span class="string">512Mi</span></span><br><span class="line">      <span class="attr">requests:</span></span><br><span class="line">        <span class="attr">cpu:</span> <span class="number">100</span></span><br><span class="line">        <span class="attr">memory:</span> <span class="string">512Mi</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">example-container2</span></span><br><span class="line">    <span class="attr">resources:</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="不同QoS表现"><a href="#不同QoS表现" class="headerlink" title="不同QoS表现"></a>不同QoS表现</h3><h4 id="调度表现不同"><a href="#调度表现不同" class="headerlink" title="调度表现不同"></a>调度表现不同</h4><p>调度器只会使用 request 进行调度，也就是说不管你配了多大的 limit，它都不会进行调度使用。</p>
-<h4 id="底层表现不同"><a href="#底层表现不同" class="headerlink" title="底层表现不同"></a>底层表现不同</h4><ul>
-<li>CPU按照request划分权重, <code>--cpu-manager-policy=static</code>时，guaranteed会整数绑核</li>
-</ul>
-<p>当我们开启了 <strong>kubelet 的一个特性，叫 cpu-manager-policy=static 的时候</strong>，我们 Guaranteed Qos，如果<strong>它的 request 是一个整数的话，比如说配了 2，它会对 Guaranteed Pod 进行绑核</strong>。具体的像下面这个例子，它分配 CPU0 和 CPU1 给 Guaranteed Pod。</p>
-<p>非整数的 Guaranteed/Burstable/BestEffort，它们的 CPU 会放在一块，组成一个 CPU share pool，比如说像上面这个例子，这台节点假如说有 8 个核，已经分配了 2 个核给整数的 Guaranteed 绑核，那么<strong>剩下的 6 个核 CPU2~CPU7，它会被非整数的 Guaranteed/Burstable/BestEffort 共享</strong>，然后它们会根据不同的权重划分时间片来使用 6 个核的 CPU。</p>
-<ul>
-<li>Memory 按照 QoS 划分 OOMScore</li>
-</ul>
-<p>​       Guaranteed ：-998</p>
-<p>​       Burstable：2-999</p>
-<p>​       BestEffort : 1000</p>
-<p>OOMScore 得分越高的话，在物理机出现 OOM 的时候会优先被 kill 掉。</p>
-<ul>
-<li>Eviction（）<br>优先驱逐BestEffort</li>
-</ul>
-<h2 id="LimitRange"><a href="#LimitRange" class="headerlink" title="LimitRange"></a>LimitRange</h2><p>默认情况下， Kubernetes 集群上的容器运行使用的<a href="https://kubernetes.io/zh-cn/docs/concepts/configuration/manage-resources-containers/">计算资源</a>没有限制。 使用 Kubernetes <a href="https://kubernetes.io/zh-cn/docs/concepts/policy/resource-quotas/">资源配额</a>， 管理员（也称为 集群操作者）可以在一个指定的<a href="https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/namespaces/">命名空间</a>内限制集群资源的使用与创建。 <strong>在命名空间中，一个 <a href="https://kubernetes.io/zh-cn/docs/concepts/workloads/pods/">Pod</a> 最多能够使用命名空间的资源配额所定义的 CPU 和内存用量。 作为集群操作者或命名空间级的管理员，你可能也会担心如何确保一个 Pod 不会垄断命名空间内所有可用的资源</strong>。</p>
-<p><strong>Kubernetes 官方文档地址:</strong>  <a href="https://kubernetes.io/docs/concepts/policy/limit-range/">LimitRanges 介绍</a></p>
-<h2 id="ResourcesQuota"><a href="#ResourcesQuota" class="headerlink" title="ResourcesQuota"></a>ResourcesQuota</h2><p>资源配额，通过 <code>ResourceQuota</code> 对象来定义，<strong>对每个命名空间的资源消耗总量提供限制。 它可以限制命名空间中某种类型的对象的总数目上限，也可以限制命名空间中的 Pod 可以使用的计算资源的总上限</strong>。</p>
-<p><strong>Kubernetes 官方文档地址:</strong>  <a href="https://kubernetes.io/zh/docs/concepts/policy/resource-quotas/">ResourceQuota 介绍</a></p>
-<h1 id="关系调度"><a href="#关系调度" class="headerlink" title="关系调度"></a>关系调度</h1><h2 id="默认的scheduler的调度过程"><a href="#默认的scheduler的调度过程" class="headerlink" title="默认的scheduler的调度过程"></a>默认的scheduler的调度过程</h2><p>1、预选策略：从所有节点当中选择基本符合选择条件的节点。 </p>
-<p>2、优选函数：在众多符合基本条件的节点中使用优选函数，计算节点各自的得分，通过比较进行排序。 </p>
-<p>3、从最高得分的节点中随机选择出一个作为Pod运行的节点。可以通过自己的预设来影响预选、优选过程，从而实现符合我们期望的调度结果。</p>
-<h2 id="影响调度方式"><a href="#影响调度方式" class="headerlink" title="影响调度方式"></a>影响调度方式</h2><p>1、节点选择器：nodeSelector，甚至可以设置nodename来选择节点本身。  </p>
-<p>2、亲和性调度：nodeAffinity（节点亲和性）、podAffinity（Pod亲和性）、podAntiAffinity（Pod的反亲和性）   </p>
-<p>3、污点和容忍度：Taint、toleration</p>
-<table>
-<thead>
-<tr>
-<th>策略名称</th>
-<th>匹配目标</th>
-<th>支持的操作符</th>
-<th>支持拓扑域</th>
-<th>设计目标</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>nodeAffinity</td>
-<td>主机标签</td>
-<td>In，NotIn，Exists，DoesNotExist，Gt，Lt</td>
-<td>不支持</td>
-<td>决定Pod可以部署在哪些主机上</td>
-</tr>
-<tr>
-<td>podAffinity</td>
-<td>Pod标签</td>
-<td>In，NotIn，Exists，DoesNotExist</td>
-<td>支持</td>
-<td>决定Pod可以和哪些Pod部署在同一拓扑域</td>
-</tr>
-<tr>
-<td>podAntiAffinity</td>
-<td>Pod标签</td>
-<td>In，NotIn，Exists，DoesNotExist</td>
-<td>支持</td>
-<td>决定Pod不可以和哪些Pod部署在同一拓扑域</td>
-</tr>
-</tbody></table>
-<h2 id="匹配表达式"><a href="#匹配表达式" class="headerlink" title="匹配表达式"></a>匹配表达式</h2><p>  亲和性策略（Affinity）能够提供比NodeSelector或者Taints更灵活丰富的调度方式，例如：丰富的匹配表达式（In, NotIn, Exists, DoesNotExist. Gt, and Lt）这里的匹配逻辑是label在某个列表中，可选的操作符有：</p>
-<ul>
-<li>In: label的值在某个列表中</li>
-<li>NotIn：label的值不在某个列表中</li>
-<li>Exists：某个label存在</li>
-<li>DoesNotExist：某个label不存在</li>
-<li>Gt：label的值大于某个值（字符串比较）</li>
-<li>Lt：label的值小于某个值（字符串比较）</li>
-</ul>
-<h2 id="Pod与Node关系调度"><a href="#Pod与Node关系调度" class="headerlink" title="Pod与Node关系调度"></a>Pod与Node关系调度</h2><h3 id="nodeSelector：定向调度"><a href="#nodeSelector：定向调度" class="headerlink" title="nodeSelector：定向调度"></a>nodeSelector：定向调度</h3><p><strong>定义：可以通过 nodeSelector，将 pod 定向调度到带有指定标签的 Node 节点上 。</strong> </p>
-<p>（1）、首先通过 <code>kubectl label </code>给 Node 节点打上标签</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl label nodes &lt;node-name&gt; &lt;label-key&gt;=&lt;label-value&gt;</span><br></pre></td></tr></table></figure>
-
-<p>删除label，在key后面加一个“-”</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl label nodes &lt;node-name&gt; &lt;label-key&gt;-</span><br></pre></td></tr></table></figure>
-
-<p>（2）、在 Pod 定义中加上 nodeSelector 的设置</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nginx-deployment</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">nginx</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">nginx</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">nginx</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">nginx:latest</span></span><br><span class="line">      <span class="attr">nodeSelector:</span></span><br><span class="line">        <span class="attr">key-1:</span> <span class="string">value-1</span></span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p> 需要注意的是， <strong>如果我们指定了Pod的nodeSelector条件， 且在集群中不存在包含相应标签的Node， 则即使在集群中还有其他可供使用的Node， 这个Pod也无法被成功调度。</strong>  </p>
-</blockquote>
-<h3 id="nodeAffinity：Node亲和性调度"><a href="#nodeAffinity：Node亲和性调度" class="headerlink" title="nodeAffinity：Node亲和性调度"></a>nodeAffinity：Node亲和性调度</h3><p>节点亲和性概念上类似于 <code>nodeSelector</code>， 它使你可以根据节点上的标签来约束 Pod 可以调度到哪些节点上。 节点亲和性有两种：</p>
-<ul>
-<li><p><code>requiredDuringSchedulingIgnoredDuringExecution</code>： <strong>硬亲和性 （预选）必须满足亲和性</strong></p>
-<ul>
-<li>matchExpressions 匹配表达式</li>
-</ul>
-</li>
-<li><ul>
-<li>matchFields 匹配字段，Node属性（比如：metadate.name）</li>
-</ul>
-</li>
-<li><p><code>preferredDuringSchedulingIgnoredDuringExecution</code>：<strong>软亲和性（优选） 能满足最好，不满足也没关系</strong></p>
-</li>
-<li><ul>
-<li>preference 优先级 </li>
-</ul>
-</li>
-<li><ul>
-<li><ul>
-<li>matchExpressions</li>
-<li>matchFields</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><ul>
-<li>weight 权重1-100范围内</li>
-</ul>
-</li>
-</ul>
-<blockquote>
-<p>在上述类型中，<code>IgnoredDuringExecution</code> 意味着如果节点标签在 Kubernetes 调度 Pod 后发生了变更，Pod 仍将继续运行。</p>
-</blockquote>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">with-node-affinity</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">affinity:</span></span><br><span class="line">    <span class="attr">nodeAffinity:</span></span><br><span class="line">      <span class="attr">requiredDuringSchedulingIgnoredDuringExecution:</span></span><br><span class="line">        <span class="attr">nodeSelectorTerms:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">matchExpressions:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">key:</span> <span class="string">topology.kubernetes.io/zone</span></span><br><span class="line">            <span class="attr">operator:</span> <span class="string">In</span></span><br><span class="line">            <span class="attr">values:</span></span><br><span class="line">            <span class="bullet">-</span> <span class="string">antarctica-east1</span></span><br><span class="line">            <span class="bullet">-</span> <span class="string">antarctica-west1</span></span><br><span class="line">      <span class="attr">preferredDuringSchedulingIgnoredDuringExecution:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">weight:</span> <span class="number">1</span></span><br><span class="line">        <span class="attr">preference:</span></span><br><span class="line">          <span class="attr">matchExpressions:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">key:</span> <span class="string">another-node-label-key</span></span><br><span class="line">            <span class="attr">operator:</span> <span class="string">In</span></span><br><span class="line">            <span class="attr">values:</span></span><br><span class="line">            <span class="bullet">-</span> <span class="string">another-node-label-value</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">with-node-affinity</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">registry.k8s.io/pause:2.0</span></span><br></pre></td></tr></table></figure>
-
-<p>在这一示例中，所应用的规则如下：</p>
-<ul>
-<li>节点<strong>必须</strong>包含一个键名为 <code>topology.kubernetes.io/zone</code> 的标签， 并且该标签的取值<strong>必须</strong>为 <code>antarctica-east1</code> 或 <code>antarctica-west1</code>。</li>
-<li>节点<strong>最好</strong>具有一个键名为 <code>another-node-label-key</code> 且取值为 <code>another-node-label-value</code> 的标签。</li>
-</ul>
-<p><strong>节点亲和性权重</strong></p>
-<p>你可以为 <code>preferredDuringSchedulingIgnoredDuringExecution</code> 亲和性类型的每个实例设置 <code>weight</code> 字段，其取值范围是 1 到 100。 当调度器找到能够满足 Pod 的其他调度请求的节点时，调度器会遍历节点满足的所有的偏好性规则， 并将对应表达式的 <code>weight</code> 值加和。</p>
-<p>最终的加和值会添加到该节点的其他优先级函数的评分之上。 在调度器为 Pod 作出调度决定时，总分最高的节点的优先级也最高。</p>
-<p>例如，考虑下面的 Pod 规约：</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">with-affinity-preferred-weight</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">affinity:</span></span><br><span class="line">    <span class="attr">nodeAffinity:</span></span><br><span class="line">      <span class="attr">requiredDuringSchedulingIgnoredDuringExecution:</span></span><br><span class="line">        <span class="attr">nodeSelectorTerms:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">matchExpressions:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">key:</span> <span class="string">kubernetes.io/os</span></span><br><span class="line">            <span class="attr">operator:</span> <span class="string">In</span></span><br><span class="line">            <span class="attr">values:</span></span><br><span class="line">            <span class="bullet">-</span> <span class="string">linux</span></span><br><span class="line">      <span class="attr">preferredDuringSchedulingIgnoredDuringExecution:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">weight:</span> <span class="number">1</span></span><br><span class="line">        <span class="attr">preference:</span></span><br><span class="line">          <span class="attr">matchExpressions:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">key:</span> <span class="string">label-1</span></span><br><span class="line">            <span class="attr">operator:</span> <span class="string">In</span></span><br><span class="line">            <span class="attr">values:</span></span><br><span class="line">            <span class="bullet">-</span> <span class="string">key-1</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">weight:</span> <span class="number">50</span></span><br><span class="line">        <span class="attr">preference:</span></span><br><span class="line">          <span class="attr">matchExpressions:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">key:</span> <span class="string">label-2</span></span><br><span class="line">            <span class="attr">operator:</span> <span class="string">In</span></span><br><span class="line">            <span class="attr">values:</span></span><br><span class="line">            <span class="bullet">-</span> <span class="string">key-2</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">with-node-affinity</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">registry.k8s.io/pause:2.0</span></span><br></pre></td></tr></table></figure>
-
-<p>如果存在两个候选节点，都满足 <code>preferredDuringSchedulingIgnoredDuringExecution</code> 规则， 其中一个节点具有标签 <code>label-1:key-1</code>，另一个节点具有标签 <code>label-2:key-2</code>， 调度器会考察各个节点的 <code>weight</code> 取值，并将该权重值添加到节点的其他得分值之上。</p>
-<h3 id="nodeAffinity-总结"><a href="#nodeAffinity-总结" class="headerlink" title="nodeAffinity 总结"></a>nodeAffinity 总结</h3><ul>
-<li>同时指定<code>nodeSelector</code> and <code>nodeAffinity</code>，pod 必须都满足</li>
-<li><code>nodeAffinity </code>有多个 <code>nodeSelectorTerms</code> ，pod 只需满足一个</li>
-<li><code>nodeSelectorTerms </code>多 个<code>matchExpressions</code> ，pod 必须都满足</li>
-<li>由于 <code>IgnoredDuringExecution</code>，所以改变 labels 不会影响已经运行 pod</li>
-</ul>
-<h2 id="Pod-和-Pod-关系调度"><a href="#Pod-和-Pod-关系调度" class="headerlink" title="Pod 和 Pod 关系调度"></a>Pod 和 Pod 关系调度</h2><h3 id="podAffinity-Pod亲和性调度"><a href="#podAffinity-Pod亲和性调度" class="headerlink" title="podAffinity : Pod亲和性调度"></a>podAffinity : Pod亲和性调度</h3><ul>
-<li><p>必须跟某些Pod调度到一起</p>
-<p> requiredDuringSchedulingIgnoredDuringExecution</p>
-</li>
-<li><p>优先和某些Pod调度到一起</p>
-<p> preferredDuringSchedulingIgnoredDuringExecution</p>
-</li>
-<li><p>topologyKey: 拓扑域</p>
-</li>
-</ul>
-<p>​      kuberbetes topologyKey 官方文档：<a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/pod-topology-spread-constraints/">topologyKey</a></p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nginx-test-affinity</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">default</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">nginx</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">nginx</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">nginx</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">nginx:latest</span></span><br><span class="line">        <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">      <span class="attr">affinity:</span></span><br><span class="line">        <span class="attr">podAffinity:</span></span><br><span class="line">          <span class="attr">requiredDuringSchedulingIgnoredDuringExecution:</span>  <span class="string">（预选）必须跟某些pod调度到一起</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">labelSelector:</span></span><br><span class="line">              <span class="attr">matchExpressions:</span></span><br><span class="line">              <span class="bullet">-</span> <span class="attr">key:</span> <span class="string">app</span></span><br><span class="line">                <span class="attr">operator:</span> <span class="string">In</span></span><br><span class="line">                <span class="attr">values:</span></span><br><span class="line">                <span class="bullet">-</span> <span class="string">nginx</span></span><br><span class="line">            <span class="attr">topologyKey:</span> <span class="string">kubernetes.io/hostname</span>                      <span class="string">//</span> <span class="string">通过node的label的key值确定一组node组</span></span><br><span class="line">          <span class="attr">preferredDuringSchedulingIgnoredDuringExecution:</span>  <span class="string">（优选）</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">weight:</span> <span class="number">100</span></span><br><span class="line">            <span class="attr">podAffinityTerm:</span></span><br><span class="line">              <span class="attr">labelSelector:</span></span><br><span class="line">                <span class="attr">matchExpressions:</span></span><br><span class="line">                <span class="bullet">-</span> <span class="attr">key:</span> <span class="string">app</span></span><br><span class="line">                  <span class="attr">operator:</span> <span class="string">In</span></span><br><span class="line">                  <span class="attr">values:</span></span><br><span class="line">                  <span class="bullet">-</span> <span class="string">nginx</span></span><br><span class="line">              <span class="attr">topologyKey:</span> <span class="string">kubernetes.io/hostname</span></span><br></pre></td></tr></table></figure>
-
-<p>如果在创建之前，删除Node节点kubernetes.io/hostname的标签，创建的pod会因为没有匹配的node节点出现pending。</p>
-<h3 id="podAntiAffinity：Pod反亲和性"><a href="#podAntiAffinity：Pod反亲和性" class="headerlink" title="podAntiAffinity：Pod反亲和性"></a>podAntiAffinity：Pod反亲和性</h3><ul>
-<li><p>禁止跟某些Pod调度到一起</p>
-<p> requiredDuringSchedulingIgnoredDuringExecution</p>
-</li>
-<li><p>优先不和某些Pod调度到一起</p>
-<p> preferredDuringSchedulingIgnoredDuringExecution</p>
-</li>
-</ul>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">test-podantiaffinity</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">default</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">nginx</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">nginx</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">nginx</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">nginx:latest</span></span><br><span class="line">        <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">      <span class="attr">affinity:</span></span><br><span class="line">        <span class="attr">podAntiAffinity:</span></span><br><span class="line">          <span class="attr">requiredDuringSchedulingIgnoredDuringExecution:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">labelSelector:</span></span><br><span class="line">              <span class="attr">matchExpressions:</span></span><br><span class="line">              <span class="bullet">-</span> <span class="attr">key:</span> <span class="string">app</span></span><br><span class="line">                <span class="attr">operator:</span> <span class="string">In</span></span><br><span class="line">                <span class="attr">values:</span></span><br><span class="line">                <span class="bullet">-</span> <span class="string">nginx</span></span><br><span class="line">            <span class="attr">topologyKey:</span> <span class="string">kubernetes.io/hostname</span></span><br><span class="line">          <span class="attr">preferredDuringSchedulingIgnoredDuringExecution:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">weight:</span> <span class="number">100</span></span><br><span class="line">            <span class="attr">podAffinityTerm:</span></span><br><span class="line">              <span class="attr">labelSelector:</span></span><br><span class="line">                <span class="attr">matchExpressions:</span></span><br><span class="line">                <span class="bullet">-</span> <span class="attr">key:</span> <span class="string">app</span></span><br><span class="line">                  <span class="attr">operator:</span> <span class="string">In</span></span><br><span class="line">                  <span class="attr">values:</span></span><br><span class="line">                  <span class="bullet">-</span> <span class="string">nginx</span></span><br><span class="line">              <span class="attr">topologyKey:</span> <span class="string">kubernetes.io/hostname</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="nodeName"><a href="#nodeName" class="headerlink" title="nodeName"></a>nodeName</h2><p><code>nodeName</code> 是比亲和性或者 <code>nodeSelector</code> 更为直接的形式。<code>nodeName</code> 是 Pod 规约中的一个字段。如果 <code>nodeName</code> 字段不为空，调度器会忽略该 Pod， 而指定节点上的 kubelet 会尝试将 Pod 放到该节点上。 使用 <strong><code>nodeName</code> 规则的优先级会高于使用 <code>nodeSelector</code> 或亲和性与非亲和性的规则。</strong></p>
-<h2 id="Taints-amp-Tolerations"><a href="#Taints-amp-Tolerations" class="headerlink" title="Taints &amp; Tolerations"></a>Taints &amp; Tolerations</h2><h3 id="Node-添加-Taints"><a href="#Node-添加-Taints" class="headerlink" title="Node 添加 Taints"></a>Node 添加 Taints</h3><p>可以通过给 Node 打一些标记，来限制 Pod 调度到某些 Node 上。Kubernetes 把这些标记称之为 Taints，它的字面意思是污点</p>
-<h4 id="yaml方式"><a href="#yaml方式" class="headerlink" title="yaml方式"></a>yaml方式</h4><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Node</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="number">192.168</span><span class="number">.0</span><span class="number">.128</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">taints:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">key:</span> <span class="string">&quot;k1&quot;</span></span><br><span class="line">    <span class="attr">value:</span> <span class="string">&quot;value1&quot;</span></span><br><span class="line">    <span class="attr">effect:</span> <span class="string">&quot;NoSchedule&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>taints 内容包括 key、value、effect：</p>
-<ul>
-<li>key 就是配置的键值</li>
-<li>value 就是内容</li>
-<li>effect 是标记了这个 taints 行为是什么</li>
-</ul>
-<h4 id="kubectl命令行"><a href="#kubectl命令行" class="headerlink" title="kubectl命令行"></a>kubectl命令行</h4><p>可以使用<code>kubectl taint</code>为一个节点（node）添加污点（taint）,例如:</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl taint node &lt;node节点名称&gt; key1=value1:NoSchedule</span><br></pre></td></tr></table></figure>
-
-<h4 id="查看污点"><a href="#查看污点" class="headerlink" title="查看污点"></a>查看污点</h4><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl get node &lt;node节点名称&gt; -o json | jq .spec.taints</span><br><span class="line"></span><br><span class="line">kubectl describe nodes &lt;node节点名称&gt;</span><br></pre></td></tr></table></figure>
-
-<h4 id="删除污点"><a href="#删除污点" class="headerlink" title="删除污点"></a>删除污点</h4><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">去除指定key及其effect：</span><br><span class="line">kubectl taint nodes &lt;node-name&gt; key1:NoSchedule-     <span class="comment">#(这里的key不用指定value)</span></span><br><span class="line"></span><br><span class="line">去除指定key所有的effect: </span><br><span class="line">kubectl taint nodes &lt;node_name&gt; key- </span><br></pre></td></tr></table></figure>
-
-<p>目前 Kubernetes 里面有三个 taints 行为：</p>
-<ol>
-<li><strong>NoSchedule</strong> 禁止新的 Pod 调度上来；</li>
-<li><strong>PreferNoSchedul</strong> 尽量不调度到这台；</li>
-<li><strong>NoExecute</strong> 会 evict 没有对应 toleration 的 Pods，并且也不会调度新的上来。这个策略是非常严格的，大家在使用的时候要小心一点。</li>
-</ol>
-<h3 id="Pod-添加-Tolerations"><a href="#Pod-添加-Tolerations" class="headerlink" title="Pod 添加 Tolerations"></a>Pod 添加 Tolerations</h3><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">pod-taints-tolerations</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">redis</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">tolerations:</span>   <span class="comment">#设置容忍性</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">key:</span> <span class="string">&quot;key1&quot;</span></span><br><span class="line">    <span class="attr">operator:</span> <span class="string">&quot;Equal&quot;</span>      <span class="comment">#如果操作符为Exists，那么value属性可省略,如果不指定operator，则默认为Equal(=)</span></span><br><span class="line">    <span class="attr">value:</span> <span class="string">&quot;value1&quot;</span>        <span class="comment">#意思是这个Pod要容忍的有污点的Node的key是test Equal kafka03,效果是NoSchedule，</span></span><br><span class="line">    <span class="attr">effect:</span> <span class="string">&quot;NoSchedule&quot;</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">pod-tains-tolerations</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">redis</span></span><br></pre></td></tr></table></figure>
-
-<p>Pod的Toleration声明中的key和effect需要与Taint的设置保持一致， 并且满足以下条件之一。</p>
-<ul>
-<li>operator的值是Exists（无须指定value） 。</li>
-<li>operator的值是Equal并且value相等。</li>
-<li>如果不指定operator， 则默认值为Equal。</li>
-</ul>
-<p>另外， 有如下两个特例。</p>
-<ul>
-<li>空的key配合Exists操作符能够匹配所有的键和值。</li>
-<li>空的effect匹配所有的effect  </li>
-</ul>
-]]></content>
-      <categories>
-        <category>kube-scheduler</category>
-      </categories>
-      <tags>
-        <tag>kube-scheduler使用</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>kube-scheduler调度框架</title>
-    <url>/2024/08/21/42/</url>
-    <content><![CDATA[<h1 id="自定义调度器"><a href="#自定义调度器" class="headerlink" title="自定义调度器"></a>自定义调度器</h1><p>一般来说，我们有 4 种扩展 Kubernetes 调度器的方法。</p>
-<ul>
-<li>default-scheduler recoding: 直接在Kubernetes默认scheduler基础上进行添加，然后重新编译kube-scheduler</li>
-<li>standalone: 实现一个与kube-scheduler平行的custom scheduler，单独或者和默认kube-scheduler一起运行在集群中，使用<code>.spec.scheduler.name</code>来区分使用哪一个调度器。</li>
-<li>scheduler extender: 实现一个”scheduler extender”，kube-scheduler会调用它(http/https)作为默认调度算法(预选&amp;优选&amp;bind)的补充，只支持在 Filter、Prioritize、Preempt 和 Bind 的扩展 </li>
-</ul>
-<ul>
-<li>scheduler framework: 实现scheduler framework plugins，重新编译kube-scheduler，类似于第一种方案，但是更加标准化，插件化</li>
-</ul>
-<p>default-scheduler recoding 以及 standalone方案都属于侵入式的方案，不太优雅；而 scheduler extender 以及 scheduler framework 属于非侵入式的方案，目前，比较推荐使用 scheduler-framework 和 scheduler-extender 两种方式。</p>
-<h1 id="Scheduler-Extender"><a href="#Scheduler-Extender" class="headerlink" title="Scheduler Extender"></a>Scheduler Extender</h1><h2 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h2><p>社区最初提供的方案是通过 Extender 的形式来扩展 scheduler。Extender 是外部服务，支持 **Filter、Prioritize、Preempt 和 Bind 的扩展 **，scheduler 运行到相应阶段时，通过调用 Extender 注册的 webhook 来运行扩展的逻辑，影响调度流程中各阶段的决策结果。</p>
-<p>以 Filter 阶段举例，执行过程会经过 2 个阶段:</p>
-<p>1、scheduler 会先执行内置的 Filter 策略，如果执行失败的话，会直接标识 Pod 调度失败。</p>
-<p>2、如何内置的 Filter 策略执行成功的话，scheduler 通过 Http 调用 Extender 注册的 webhook, 将调度所需要的 Pod 和 Node 的信息发送到到 Extender，根据返回 filter 结果，作为最终结果。</p>
-<img src="/2024/08/21/42/extender.png" class="" title="extender">
-
-
-
-<p>我们可以发现 Extender 存在以下问题:</p>
-<p>1、调用 Extender 的接口是 HTTP 请求，受到网络环境的影响，性能远低于本地的函数调用。同时每次调用都需要将 Pod 和 Node 的信息进行 marshaling 和 unmarshalling 的操作，会进一步降低性能。</p>
-<p>2、用户可以扩展的点比较有限，位置比较固定，无法支持灵活的扩展，例如只能在执行完默认的 Filter 策略后才能调用。</p>
-<p>基于以上介绍，Extender 的方式在集群规模较小，调度效率要求不高的情况下，是一个灵活可用的扩展方案，但是在正常生产环境的大型集群中，Extender 无法支持高吞吐量，性能较差。</p>
-<h2 id="参考项目"><a href="#参考项目" class="headerlink" title="参考项目"></a>参考项目</h2><p><a href="https://github.com/AliyunContainerService/gpushare-scheduler-extender/tree/master">gpushare-scheduler-extender</a></p>
-<p><a href="https://lizhewei91.github.io/2023/10/24/08/">gpushare-scheduler-extender工作原理</a></p>
-<h1 id="Multiple-schedulers"><a href="#Multiple-schedulers" class="headerlink" title="Multiple schedulers"></a>Multiple schedulers</h1><h2 id="工作原理-1"><a href="#工作原理-1" class="headerlink" title="工作原理"></a>工作原理</h2><p>Scheduler 在 Kubernetes 集群中其实类似于一个特殊的 Controller，通过监听 Pod 和 Node 的信息，给 Pod 挑选最佳的节点，更新 Pod 的 spec.NodeName 的信息来将调度结果同步到节点。所以对于部分有特殊的调度需求的用户，有些开发者通过自研 Custom Scheduler 来完成以上的流程，然后通过和 default scheduler 同时部署的方式，来支持自己特殊的调度需求。</p>
-<img src="/2024/08/21/42/982345178a76967d014yy05300ca59de.jpg" class="" title="img">
-
-
-
-<p>Custom Scheduler 会存在一下问题：</p>
-<p>1、如果与 default scheduler 同时部署，因为每个调度器所看到的资源视图都是全局的，所以在调度决策中可能会在同一时刻在同一个节点资源上调度不同的 Pod，导致节点资源冲突的问题。</p>
-<p>2、有些用户将调度器所能调度的资源通过 Label 划分不同的池子，可以避免资源冲突的现象出现。但是这样又会导致整体集群资源利用率的下降。</p>
-<p>3、有些用户选择通过完全自研的方式来替换 default scheduler，这种会带来比较高的研发成本，以及 Kubernetes 版本升级后可能存在的兼容性问题。</p>
-<p>Scheduler Extender 的性能较差可是维护成本较小，Custom Scheduler 的研发和维护的成本特别高但是性能较好，这种情况是开发者面临这种两难处境。这时候 Kubernetes Scheduling Framework V2 横空出世，给我们带来鱼和熊掌可以兼得的方案。</p>
-<img src="/2024/08/21/42/d18a5075694afc42b274185771639yy8.jpg" class="" title="img">
-
-<h1 id="Scheduling-Framework"><a href="#Scheduling-Framework" class="headerlink" title="Scheduling Framework"></a>Scheduling Framework</h1><p>社区也逐渐的发现开发者所面临的困境，为了解决如上问题，使 Kube-scheduler 扩展性更好、代码更简洁，社区从 Kubernetes 1.16 版本开始, 构建了一种新的调度框架 Kubernetes Scheduling Framework 的机制。</p>
-<img src="/2024/08/21/42/scheduling-framework-extensions.png" class="" title="img">
-
-<p>用户可以编写自己的<strong>调度插件</strong>（scheduler plugins）注册到这些扩展点来实现想要的调度逻辑。 每个扩展点上一般会有<strong>多个 plugins</strong>，按注册顺序依次执行。</p>
-<h2 id="扩展点分类"><a href="#扩展点分类" class="headerlink" title="扩展点分类"></a>扩展点分类</h2><p>扩展点根据是否影响调度决策，可以分为两类。</p>
-<h3 id="影响调度决策的扩展点"><a href="#影响调度决策的扩展点" class="headerlink" title="影响调度决策的扩展点"></a>影响调度决策的扩展点</h3><p>大部分扩展点是<strong>影响调度决策</strong>的，</p>
-<ul>
-<li>后面会看到，这些函数的返回值中包括一个成功/失败字段，决定了是允许还是拒绝这个 pod 进入下一处理阶段；</li>
-<li>任何一个扩展点失败了，这个 pod 的调度就失败了；</li>
-</ul>
-<h3 id="不影响调度决策的扩展点（informational）"><a href="#不影响调度决策的扩展点（informational）" class="headerlink" title="不影响调度决策的扩展点（informational）"></a>不影响调度决策的扩展点（informational）</h3><p>少数几个扩展点是 informational 的，</p>
-<ul>
-<li>这些函数<strong>没有返回值</strong>，因此<strong>不能影响调度决策</strong>；</li>
-<li>但是，在这里面<strong>可以修改 pod/node 等信息</strong>，或者执行清理操作。</li>
-</ul>
-<h2 id="调度插件分类"><a href="#调度插件分类" class="headerlink" title="调度插件分类"></a>调度插件分类</h2><p>根据是否维护在 k8s 代码仓库本身，分为两类。</p>
-<h3 id="in-tree-plugins"><a href="#in-tree-plugins" class="headerlink" title="in-tree plugins"></a><code>in-tree</code> plugins</h3><p>维护在 k8s 代码目录 <a href="https://github.com/kubernetes/kubernetes/tree/v1.28.4/pkg/scheduler/framework/plugins"><code>pkg/scheduler/framework/plugins</code></a> 中， <strong>跟内置调度器一起编译</strong>。里面有十几个调度插件，大部分都是常用和在用的，</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ ll pkg/scheduler/framework/plugins</span><br><span class="line">defaultbinder/</span><br><span class="line">defaultpreemption/</span><br><span class="line">dynamicresources/</span><br><span class="line">feature/</span><br><span class="line">imagelocality/</span><br><span class="line">interpodaffinity/</span><br><span class="line">names/</span><br><span class="line">nodeaffinity/</span><br><span class="line">nodename/</span><br><span class="line">nodeports/</span><br><span class="line">noderesources/</span><br><span class="line">nodeunschedulable/</span><br><span class="line">nodevolumelimits/</span><br><span class="line">podtopologyspread/</span><br><span class="line">queuesort/</span><br><span class="line">schedulinggates/</span><br><span class="line">selectorspread/</span><br><span class="line">tainttoleration/</span><br><span class="line">volumebinding/</span><br><span class="line">volumerestrictions/</span><br><span class="line">volumezone/</span><br></pre></td></tr></table></figure>
-
-<p>in-tree 方式每次要添加新插件，或者修改原有插件，都需要修改 kube-scheduler 代码然后编译和 <strong>重新部署 kube-scheduler</strong>，比较重量级。</p>
-<h3 id="out-of-tree-plugins"><a href="#out-of-tree-plugins" class="headerlink" title="out-of-tree plugins"></a><code>out-of-tree</code> plugins</h3><p>out-of-tree plugins 由<strong>用户自己编写和维护</strong>，<strong>独立部署</strong>， 不需要对 k8s 做任何代码或配置改动。</p>
-<p>本质上 out-of-tree plugins 也是跟 kube-scheduler 代码一起编译的，不过 kube-scheduler 相关代码已经抽出来作为一个独立项目 <a href="https://github.com/kubernetes-sigs/scheduler-plugins">github.com/kubernetes-sigs/scheduler-plugins</a>。 用户只需要引用这个包，编写自己的调度器插件，然后以普通 pod 方式部署就行（其他部署方式也行，比如 binary 方式部署）。 编译之后是个包含<strong>默认调度器和所有 out-of-tree 插件</strong>的总调度器程序，</p>
-<ul>
-<li>它有内置调度器的功能；</li>
-<li>也包括了 out-of-tree 调度器的功能；</li>
-</ul>
-<p>用法有两种：</p>
-<ul>
-<li>跟现有调度器并行部署，只管理特定的某些 pods；</li>
-<li>取代现有调度器，因为它功能也是全的。</li>
-</ul>
-<h3 id="每个扩展点上分别有哪些内置插件"><a href="#每个扩展点上分别有哪些内置插件" class="headerlink" title="每个扩展点上分别有哪些内置插件"></a>每个扩展点上分别有哪些内置插件</h3><p>内置的调度插件，以及分别工作在哪些 extention points： <a href="https://kubernetes.io/docs/reference/scheduling/config/#scheduling-plugins">官方文档</a>。 比如，</p>
-<ul>
-<li>node selectors 和 node affinity 用到了 <strong><code>NodeAffinity</code></strong> plugin；</li>
-<li>taint/toleration 用到了 <strong><code>TaintToleration</code></strong> plugin。</li>
-</ul>
-<h2 id="Pod-调度过程"><a href="#Pod-调度过程" class="headerlink" title="Pod 调度过程"></a>Pod 调度过程</h2><p>一个 pod 的完整调度过程可以分为两个阶段：</p>
-<ol>
-<li><strong><code>scheduling cycle</code><strong>：为 pod 选择一个 node，类似于</strong>数据库查询和筛选</strong>；</li>
-<li><strong><code>binding cycle</code><strong>：落实以上选择，类似于</strong>处理各种关联的东西并将结果写到数据库</strong>。</li>
-</ol>
-<p>例如，虽然 scheduling cycle 为 pod 选择了一个 node，但是在接下来的 binding cycle 中， 在这个 node 上给这个 pod 创建 persistent volume 失败了， 那整个调度过程也是算失败的，需要回到最开始的步骤重新调度。 以上两个过程加起来称为一个 **<code>scheduling context</code>**。</p>
-<h3 id="PreEnqueue"><a href="#PreEnqueue" class="headerlink" title="PreEnqueue"></a>PreEnqueue</h3><p>这些插件在将 Pod 被添加到 ActiveQ 之前被调用，在此队列中 Pod 被标记为准备好进行调度。这一步没过就不会进入调度队列，更不会进入调度流程。</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> PreEnqueuePlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Plugin</span><br><span class="line">	<span class="comment">// PreEnqueue is called prior to adding Pods to activeQ.</span></span><br><span class="line">	PreEnqueue(ctx context.Context, p *v1.Pod) *Status</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><strong>只有当所有 PreEnqueue 插件返回 <code>Success</code> 时，Pod 才允许进入活动队列。 否则，它将被放置在内部无法调度的 Pod 列表中，并且不会获得 <code>Unschedulable</code> 状态。</strong></p>
-<p>要了解有关内部调度器队列如何工作的更多详细信息，请阅读 <a href="https://github.com/kubernetes/community/blob/f03b6d5692bd979f07dd472e7b6836b2dad0fd9b/contributors/devel/sig-scheduling/scheduler_queues.md">kube-scheduler 调度队列</a>。</p>
-<h3 id="EnqueueExtension"><a href="#EnqueueExtension" class="headerlink" title="EnqueueExtension"></a>EnqueueExtension</h3><p>EnqueueExtension 作为一个接口，插件可以在此接口之上根据集群中的变化来控制是否重新尝试调度被此插件拒绝的 Pod。 实现 PreEnqueue、PreFilter、Filter、Reserve 或 Permit 的插件应实现此接口。</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> EnqueueExtensions <span class="keyword">interface</span> &#123;</span><br><span class="line">	Plugin</span><br><span class="line">	<span class="comment">// EventsToRegister returns a series of possible events that may cause a Pod</span></span><br><span class="line">	<span class="comment">// failed by this plugin schedulable. Each event has a callback function that</span></span><br><span class="line">	<span class="comment">// filters out events to reduce useless retry of Pod&#x27;s scheduling.</span></span><br><span class="line">	<span class="comment">// The events will be registered when instantiating the internal scheduling queue,</span></span><br><span class="line">	<span class="comment">// and leveraged to build event handlers dynamically.</span></span><br><span class="line">	<span class="comment">// Note: the returned list needs to be static (not depend on configuration parameters);</span></span><br><span class="line">	<span class="comment">// otherwise it would lead to undefined behavior.</span></span><br><span class="line">	EventsToRegister() []ClusterEventWithHint</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="QueueScore"><a href="#QueueScore" class="headerlink" title="QueueScore"></a>QueueScore</h3><p>这些插件用于对调度队列中的 Pod 进行排序。 队列排序插件本质上提供 <code>Less(Pod1, Pod2)</code> 函数。 <strong>一次只能启动一个队列插件</strong>。</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> QueueSortPlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Plugin</span><br><span class="line">	<span class="comment">// Less are used to sort pods in the scheduling queue.</span></span><br><span class="line">	Less(*QueuedPodInfo, *QueuedPodInfo) <span class="type">bool</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="PreFilter"><a href="#PreFilter" class="headerlink" title="PreFilter"></a>PreFilter</h3><p>这里的插件可以对 Pod 进行预处理，或者条件检查</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> PreFilterPlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Plugin</span><br><span class="line">	<span class="comment">// PreFilter is called at the beginning of the scheduling cycle. All PreFilter</span></span><br><span class="line">	<span class="comment">// plugins must return success or the pod will be rejected. PreFilter could optionally</span></span><br><span class="line">	<span class="comment">// return a PreFilterResult to influence which nodes to evaluate downstream. This is useful</span></span><br><span class="line">	<span class="comment">// for cases where it is possible to determine the subset of nodes to process in O(1) time.</span></span><br><span class="line">	<span class="comment">// When it returns Skip status, returned PreFilterResult and other fields in status are just ignored,</span></span><br><span class="line">	<span class="comment">// and coupled Filter plugin/PreFilterExtensions() will be skipped in this scheduling cycle.</span></span><br><span class="line">	PreFilter(ctx context.Context, state *CycleState, p *v1.Pod) (*PreFilterResult, *Status)</span><br><span class="line">	<span class="comment">// PreFilterExtensions returns a PreFilterExtensions interface if the plugin implements one,</span></span><br><span class="line">	<span class="comment">// or nil if it does not. A Pre-filter plugin can provide extensions to incrementally</span></span><br><span class="line">	<span class="comment">// modify its pre-processed info. The framework guarantees that the extensions</span></span><br><span class="line">	<span class="comment">// AddPod/RemovePod will only be called after PreFilter, possibly on a cloned</span></span><br><span class="line">	<span class="comment">// CycleState, and may call those functions more than once before calling</span></span><br><span class="line">	<span class="comment">// Filter again on a specific node.</span></span><br><span class="line">	PreFilterExtensions() PreFilterExtensions</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// PreFilterExtensions is an interface that is included in plugins that allow specifying</span></span><br><span class="line"><span class="comment">// callbacks to make incremental updates to its supposedly pre-calculated</span></span><br><span class="line"><span class="comment">// state.</span></span><br><span class="line"><span class="keyword">type</span> PreFilterExtensions <span class="keyword">interface</span> &#123;</span><br><span class="line">	<span class="comment">// AddPod is called by the framework while trying to evaluate the impact</span></span><br><span class="line">	<span class="comment">// of adding podToAdd to the node while scheduling podToSchedule.</span></span><br><span class="line">	AddPod(ctx context.Context, state *CycleState, podToSchedule *v1.Pod, podInfoToAdd *PodInfo, nodeInfo *NodeInfo) *Status</span><br><span class="line">	<span class="comment">// RemovePod is called by the framework while trying to evaluate the impact</span></span><br><span class="line">	<span class="comment">// of removing podToRemove from the node while scheduling podToSchedule.</span></span><br><span class="line">	RemovePod(ctx context.Context, state *CycleState, podToSchedule *v1.Pod, podInfoToRemove *PodInfo, nodeInfo *NodeInfo) *Status</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>输入：<ul>
-<li><code>p *v1.Pod</code> 是<strong>待调度的 pod</strong>；</li>
-<li>第二个参数 <code>state</code> 可用于保存一些状态信息，然后在后面的扩展点（例如 <code>Filter()</code> 阶段）拿出来用；</li>
-</ul>
-</li>
-<li>输出：<ul>
-<li><code>*PreFilterResult </code>保存 <code>prefilter</code> 执行后，不符合要求的 node 列表，如果为 nil，表示所有 node 节点都符合要求</li>
-<li><code>*Status</code>记录每个 plugin 执行是否成功</li>
-</ul>
-</li>
-</ul>
-<p>只要所有已经注册的 <code>PreFilter</code> plugins，<strong>任何一个 plugin 返回失败，这个 pod 的调度就失败了</strong>，失败了，pod 就不会进入下一个环节；</p>
-<h3 id="Filter"><a href="#Filter" class="headerlink" title="Filter"></a>Filter</h3><p><strong>用来过滤掉不满足 Pod 调度要求的 Node</strong>。为了提升效率，<strong>针对每个 node 节点，Filter 的执行顺序可以被配置</strong>，这样用户就可以将可以过滤掉大量节点的 Filter 策略放到前边执行，从而减少后边 Filter 策略执行的次数，<strong>Node 节点执行 Filter 策略是并发执行的</strong>，所以在同一调度周期中多次调用过滤器 。</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> FilterPlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Plugin</span><br><span class="line">	<span class="comment">// Filter is called by the scheduling framework.</span></span><br><span class="line">	<span class="comment">// All FilterPlugins should return &quot;Success&quot; to declare that</span></span><br><span class="line">	<span class="comment">// the given node fits the pod. If Filter doesn&#x27;t return &quot;Success&quot;,</span></span><br><span class="line">	<span class="comment">// it will return &quot;Unschedulable&quot;, &quot;UnschedulableAndUnresolvable&quot; or &quot;Error&quot;.</span></span><br><span class="line">	<span class="comment">// For the node being evaluated, Filter plugins should look at the passed</span></span><br><span class="line">	<span class="comment">// nodeInfo reference for this particular node&#x27;s information (e.g., pods</span></span><br><span class="line">	<span class="comment">// considered to be running on the node) instead of looking it up in the</span></span><br><span class="line">	<span class="comment">// NodeInfoSnapshot because we don&#x27;t guarantee that they will be the same.</span></span><br><span class="line">	<span class="comment">// For example, during preemption, we may pass a copy of the original</span></span><br><span class="line">	<span class="comment">// nodeInfo object that has some pods removed from it to evaluate the</span></span><br><span class="line">	<span class="comment">// possibility of preempting them to schedule the target pod.</span></span><br><span class="line">	Filter(ctx context.Context, state *CycleState, pod *v1.Pod, nodeInfo *NodeInfo) *Status</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><p>输入：</p>
-<ul>
-<li><code>p *v1.Pod</code> 是<strong>待调度的 pod</strong>；</li>
-</ul>
-<ul>
-<li><code>nodeInfo</code> 是<strong>当前给定的 node</strong> 的信息，<code>Filter()</code> 程序判断这个 node 是否符合要求；</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li>输出：<ul>
-<li><code>*Status</code> 记录所有注册 <code>Filter</code> plugins 的执行状态</li>
-</ul>
-</li>
-</ul>
-<p>对于给定 node，如果<strong>所有 Filter plugins 都返回成功</strong>，这个 node 才算通过筛选， 成为<strong>备选 node 之一</strong>。</p>
-<h3 id="PostFilter"><a href="#PostFilter" class="headerlink" title="PostFilter"></a>PostFilter</h3><p>如果 Filter 阶段之后，<strong>所有 nodes 都被筛掉了</strong>，一个都没剩，才会执行这个阶段；否则不会执行这个阶段的 plugins。</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> PostFilterPlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Plugin</span><br><span class="line">	<span class="comment">// PostFilter is called by the scheduling framework.</span></span><br><span class="line">	<span class="comment">// A PostFilter plugin should return one of the following statuses:</span></span><br><span class="line">	<span class="comment">// - Unschedulable: the plugin gets executed successfully but the pod cannot be made schedulable.</span></span><br><span class="line">	<span class="comment">// - Success: the plugin gets executed successfully and the pod can be made schedulable.</span></span><br><span class="line">	<span class="comment">// - Error: the plugin aborts due to some internal error.</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// Informational plugins should be configured ahead of other ones, and always return Unschedulable status.</span></span><br><span class="line">	<span class="comment">// Optionally, a non-nil PostFilterResult may be returned along with a Success status. For example,</span></span><br><span class="line">	<span class="comment">// a preemption plugin may choose to return nominatedNodeName, so that framework can reuse that to update the</span></span><br><span class="line">	<span class="comment">// preemptor pod&#x27;s .spec.status.nominatedNodeName field.</span></span><br><span class="line">	PostFilter(ctx context.Context, state *CycleState, pod *v1.Pod, filteredNodeStatusMap NodeToStatusMap) (*PostFilterResult, *Status)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>按 plugin 顺序依次执行，<strong>任何一个插件</strong>将 node 标记为 <strong><code>Schedulable</code></strong> 就算<strong>成功</strong>，不再执行剩下的 PostFilter plugins。</p>
-<p><strong>典型例子</strong>：**<code>preemptiontoleration</code>**， <code>Filter()</code> 之后已经没有可用 node 了，在这个阶段就挑一个 pod/node，抢占它的资源。</p>
-<h3 id="PreScore"><a href="#PreScore" class="headerlink" title="PreScore"></a>PreScore</h3><p>这些插件用于执行“前置评分（pre-scoring）”工作，<strong>如果 PreScore 插件返回错误，则调度周期将终止</strong>。</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> PreScorePlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Plugin</span><br><span class="line">	<span class="comment">// PreScore is called by the scheduling framework after a list of nodes</span></span><br><span class="line">	<span class="comment">// passed the filtering phase. All prescore plugins must return success or</span></span><br><span class="line">	<span class="comment">// the pod will be rejected</span></span><br><span class="line">	<span class="comment">// When it returns Skip status, other fields in status are just ignored,</span></span><br><span class="line">	<span class="comment">// and coupled Score plugin will be skipped in this scheduling cycle.</span></span><br><span class="line">	PreScore(ctx context.Context, state *CycleState, pod *v1.Pod, nodes []*v1.Node) *Status</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="Score"><a href="#Score" class="headerlink" title="Score"></a>Score</h3><p>调度器将为每个 node 节点调用每个评分插件，得到一个分数</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> ScorePlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Plugin</span><br><span class="line">	<span class="comment">// Score is called on each filtered node. It must return success and an integer</span></span><br><span class="line">	<span class="comment">// indicating the rank of the node. All scoring plugins must return success or</span></span><br><span class="line">	<span class="comment">// the pod will be rejected.</span></span><br><span class="line">	Score(ctx context.Context, state *CycleState, p *v1.Pod, nodeName <span class="type">string</span>) (<span class="type">int64</span>, *Status)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// ScoreExtensions returns a ScoreExtensions interface if it implements one, or nil if does not.</span></span><br><span class="line">	ScoreExtensions() ScoreExtensions</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> ScoreExtensions <span class="keyword">interface</span> &#123;</span><br><span class="line">	<span class="comment">// NormalizeScore is called for all node scores produced by the same plugin&#x27;s &quot;Score&quot;</span></span><br><span class="line">	<span class="comment">// method. A successful run of NormalizeScore will update the scores list and return</span></span><br><span class="line">	<span class="comment">// a success status.</span></span><br><span class="line">	NormalizeScore(ctx context.Context, state *CycleState, p *v1.Pod, scores NodeScoreList) *Status</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="NormalizeScore"><a href="#NormalizeScore" class="headerlink" title="NormalizeScore"></a>NormalizeScore</h3><p>这些插件用于在调度器计算 Node 排名之前修改分数。 在此扩展点注册的插件被调用时会使用同一插件的 <a href="https://kubernetes.io/zh-cn/docs/concepts/scheduling-eviction/scheduling-framework/#scoring">Score</a> 结果。每个插件在每个调度周期调用一次。</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> ScoreExtensions <span class="keyword">interface</span> &#123;</span><br><span class="line">	<span class="comment">// NormalizeScore is called for all node scores produced by the same plugin&#x27;s &quot;Score&quot;</span></span><br><span class="line">	<span class="comment">// method. A successful run of NormalizeScore will update the scores list and return</span></span><br><span class="line">	<span class="comment">// a success status.</span></span><br><span class="line">	NormalizeScore(ctx context.Context, state *CycleState, p *v1.Pod, scores NodeScoreList) *Status</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>如果任何 NormalizeScore 插件返回错误，则调度阶段将终止。</p>
-<h3 id="Reserve"><a href="#Reserve" class="headerlink" title="Reserve"></a>Reserve</h3><p>Informational，维护 plugin 状态信息</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> ReservePlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">    Plugin</span><br><span class="line">    <span class="comment">// Reserve is called by the scheduling framework when the scheduler cache is</span></span><br><span class="line">    <span class="comment">// updated. If this method returns a failed Status, the scheduler will call</span></span><br><span class="line">    <span class="comment">// the Unreserve method for all enabled ReservePlugins.</span></span><br><span class="line">    Reserve(ctx , state *CycleState, p *v1.Pod, nodeName <span class="type">string</span>) *Status</span><br><span class="line">    <span class="comment">// Unreserve is called by the scheduling framework when a reserved pod was</span></span><br><span class="line">    <span class="comment">// rejected, an error occurred during reservation of subsequent plugins, or</span></span><br><span class="line">    <span class="comment">// in a later phase. The Unreserve method implementation must be idempotent</span></span><br><span class="line">    <span class="comment">// and may be called by the scheduler even if the corresponding Reserve</span></span><br><span class="line">    <span class="comment">// method for the same plugin was not called.</span></span><br><span class="line">    Unreserve(ctx , state *CycleState, p *v1.Pod, nodeName <span class="type">string</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>这里有两个方法，都是 **<code>informational</code>**，也就是不影响调度决策； 维护了 runtime state (aka “stateful plugins”) 的插件，可以通过这两个方法 <strong>接收 scheduler 传来的信息</strong>：</p>
-<ol>
-<li><p><code>Reserve</code></p>
-<p>用来避免 scheduler 等待 <code>bind</code> 操作结束期间，因 race condition 导致的错误。 只有当<strong>所有</strong> <code>Reserve</code> plugins 都成功后，才会进入下一阶段，否则 scheduling cycle 就中止了。</p>
-</li>
-<li><p><code>Unreserve</code></p>
-<p>调度失败，这个阶段回滚时执行。<code>Unreserve()</code> 必须幂等，且不能 fail。</p>
-</li>
-</ol>
-<h3 id="Permit"><a href="#Permit" class="headerlink" title="Permit"></a>Permit</h3><p>Permit 插件在每个 Pod 调度周期的最后调用，用于防止或延迟 Pod 的绑定。</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// PermitPlugin is an interface that must be implemented by &quot;Permit&quot; plugins.</span></span><br><span class="line"><span class="comment">// These plugins are called before a pod is bound to a node.</span></span><br><span class="line"><span class="keyword">type</span> PermitPlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">    Plugin</span><br><span class="line">    <span class="comment">// Permit is called before binding a pod (and before prebind plugins). Permit</span></span><br><span class="line">    <span class="comment">// plugins are used to prevent or delay the binding of a Pod. A permit plugin</span></span><br><span class="line">    <span class="comment">// must return success or wait with timeout duration, or the pod will be rejected.</span></span><br><span class="line">    <span class="comment">// The pod will also be rejected if the wait timeout or the pod is rejected while</span></span><br><span class="line">    <span class="comment">// waiting. Note that if the plugin returns &quot;wait&quot;, the framework will wait only</span></span><br><span class="line">    <span class="comment">// after running the remaining plugins given that no other plugin rejects the pod.</span></span><br><span class="line">    Permit(ctx , state *CycleState, p *v1.Pod, nodeName <span class="type">string</span>) (*Status, time.Duration)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>三种结果：</p>
-<ol>
-<li><strong>approve</strong>：所有 Permit plugins 都 appove 之后，这个 pod 就进入下面的 binding 阶段；</li>
-<li><strong>deny</strong>：任何一个 Permit plugin deny 之后，就无法进入 binding 阶段。这会触发 <code>Reserve</code> plugins 的 <code>Unreserve()</code> 方法；</li>
-<li><strong>wait</strong> (with a timeout)：如果有 Permit plugin 返回 “wait”，这个 pod 就会进入一个 internal “waiting” Pods list； 如果超时发生，<strong>等待</strong>变成<strong>拒绝</strong>，并且 Pod 将返回调度队列，这会触发 <code>Reserve</code> plugins 的 <code>Unreserve()</code> 方法；</li>
-</ol>
-<h3 id="PreBind"><a href="#PreBind" class="headerlink" title="PreBind"></a>PreBind</h3><p>Bind之前的预处理，例如给 node 上去挂载 volume</p>
-<p>例如，在将 pod 调度到一个 node 之前，先给这个 pod 在那台 node 上挂载一个 network volume。</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// PreBindPlugin is an interface that must be implemented by &quot;PreBind&quot; plugins.</span></span><br><span class="line"><span class="comment">// These plugins are called before a pod being scheduled.</span></span><br><span class="line"><span class="keyword">type</span> PreBindPlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">    Plugin</span><br><span class="line">    <span class="comment">// PreBind is called before binding a pod. All prebind plugins must return</span></span><br><span class="line">    <span class="comment">// success or the pod will be rejected and won&#x27;t be sent for binding.</span></span><br><span class="line">    PreBind(ctx , state *CycleState, p *v1.Pod, nodeName <span class="type">string</span>) *Status</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>任何一个 PreBind plugin 失败，都会导致 pod 被 reject，进入到 <code>reserve</code> plugins 的 <code>Unreserve()</code> 方法；</p>
-<h3 id="Bind"><a href="#Bind" class="headerlink" title="Bind"></a>Bind</h3><p>将 pod 关联到 node 节点</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Bind plugins are used to bind a pod to a Node.</span></span><br><span class="line"><span class="keyword">type</span> BindPlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">    Plugin</span><br><span class="line">    <span class="comment">// Bind plugins will not be called until all pre-bind plugins have completed. Each</span></span><br><span class="line">    <span class="comment">// bind plugin is called in the configured order. A bind plugin may choose whether</span></span><br><span class="line">    <span class="comment">// or not to handle the given Pod. If a bind plugin chooses to handle a Pod, the</span></span><br><span class="line">    <span class="comment">// remaining bind plugins are skipped. When a bind plugin does not handle a pod,</span></span><br><span class="line">    <span class="comment">// it must return Skip in its Status code. If a bind plugin returns an Error, the</span></span><br><span class="line">    <span class="comment">// pod is rejected and will not be bound.</span></span><br><span class="line">    Bind(ctx , state *CycleState, p *v1.Pod, nodeName <span class="type">string</span>) *Status</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>所有 plugin 按配置顺序依次执行；</li>
-<li>每个 plugin 可以选择是否要处理一个给定的 pod；</li>
-<li>如果选择处理，<strong>后面剩下的 plugins 会跳过</strong>。也就是<strong>最多只有一个 bind plugin 会执行</strong>。</li>
-</ul>
-<h3 id="PostBind"><a href="#PostBind" class="headerlink" title="PostBind"></a>PostBind</h3><p>这是一个 informational extension point，也就是无法影响调度决策（没有返回值）。</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// PostBindPlugin is an interface that must be implemented by &quot;PostBind&quot; plugins.</span></span><br><span class="line"><span class="comment">// These plugins are called after a pod is successfully bound to a node.</span></span><br><span class="line"><span class="keyword">type</span> PostBindPlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">    Plugin</span><br><span class="line">    <span class="comment">// PostBind is called after a pod is successfully bound. These plugins are informational.</span></span><br><span class="line">    <span class="comment">// A common application of this extension point is for cleaning</span></span><br><span class="line">    <span class="comment">// up. If a plugin needs to clean-up its state after a pod is scheduled and</span></span><br><span class="line">    <span class="comment">// bound, PostBind is the extension point that it should register.</span></span><br><span class="line">    PostBind(ctx , state *CycleState, p *v1.Pod, nodeName <span class="type">string</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>bind 成功的 pod 才会进入这个阶段；</li>
-<li>作为 binding cycle 的最后一个阶段，一般是用来清理一些相关资源。</li>
-</ul>
-<h2 id="参考项目："><a href="#参考项目：" class="headerlink" title="参考项目："></a>参考项目：</h2><p>1、<a href="https://github.com/kubernetes-sigs/scheduler-plugins">https://github.com/kubernetes-sigs/scheduler-plugins</a></p>
-<p>2、<a href="https://github.com/koordinator-sh/koordinator">https://github.com/koordinator-sh/koordinator</a></p>
-<h1 id="Ref"><a href="#Ref" class="headerlink" title="Ref"></a>Ref</h1><p>1、<a href="https://github.com/kubernetes-sigs/scheduler-plugins">https://github.com/kubernetes-sigs/scheduler-plugins</a></p>
-<p>2、<a href="https://github.com/koordinator-sh/koordinator">https://github.com/koordinator-sh/koordinator</a></p>
-<p>3、<a href="https://github.com/AliyunContainerService/gpushare-scheduler-extender">https://github.com/AliyunContainerService/gpushare-scheduler-extender</a></p>
-<p>4、<a href="https://gocrane.io/zh-cn/docs/">https://gocrane.io/zh-cn/docs/</a></p>
-<p>5、<a href="https://volcano.sh/zh/docs/">https://volcano.sh/zh/docs/</a></p>
-]]></content>
-      <categories>
-        <category>kube-scheduler</category>
-      </categories>
-      <tags>
-        <tag>scheduler-framework</tag>
-        <tag>scheduler-extender</tag>
-        <tag>multiple-schedulers</tag>
-        <tag>kube-scheduler扩展</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>kube-scheduler基础知识及使用</title>
     <url>/2024/08/23/09/</url>
     <content><![CDATA[<h1 id="kube-scheduler定义"><a href="#kube-scheduler定义" class="headerlink" title="kube-scheduler定义"></a>kube-scheduler定义</h1><p>在 kubernetes 中，调度是指将 Pod 放置到合适的节点上，以便对应节点上kubelet 能够运行这些 Pod。</p>
@@ -1533,6 +1071,208 @@
       <tags>
         <tag>kube-scheduler基础知识</tag>
         <tag>kube-scheduler</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>kube-scheduler调度框架</title>
+    <url>/2024/08/21/42/</url>
+    <content><![CDATA[<h1 id="自定义调度器"><a href="#自定义调度器" class="headerlink" title="自定义调度器"></a>自定义调度器</h1><p>一般来说，我们有 4 种扩展 Kubernetes 调度器的方法。</p>
+<ul>
+<li>default-scheduler recoding: 直接在Kubernetes默认scheduler基础上进行添加，然后重新编译kube-scheduler</li>
+<li>standalone: 实现一个与kube-scheduler平行的custom scheduler，单独或者和默认kube-scheduler一起运行在集群中，使用<code>.spec.scheduler.name</code>来区分使用哪一个调度器。</li>
+<li>scheduler extender: 实现一个”scheduler extender”，kube-scheduler会调用它(http/https)作为默认调度算法(预选&amp;优选&amp;bind)的补充，只支持在 Filter、Prioritize、Preempt 和 Bind 的扩展 </li>
+</ul>
+<ul>
+<li>scheduler framework: 实现scheduler framework plugins，重新编译kube-scheduler，类似于第一种方案，但是更加标准化，插件化</li>
+</ul>
+<p>default-scheduler recoding 以及 standalone方案都属于侵入式的方案，不太优雅；而 scheduler extender 以及 scheduler framework 属于非侵入式的方案，目前，比较推荐使用 scheduler-framework 和 scheduler-extender 两种方式。</p>
+<h1 id="Scheduler-Extender"><a href="#Scheduler-Extender" class="headerlink" title="Scheduler Extender"></a>Scheduler Extender</h1><h2 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h2><p>社区最初提供的方案是通过 Extender 的形式来扩展 scheduler。Extender 是外部服务，支持 **Filter、Prioritize、Preempt 和 Bind 的扩展 **，scheduler 运行到相应阶段时，通过调用 Extender 注册的 webhook 来运行扩展的逻辑，影响调度流程中各阶段的决策结果。</p>
+<p>以 Filter 阶段举例，执行过程会经过 2 个阶段:</p>
+<p>1、scheduler 会先执行内置的 Filter 策略，如果执行失败的话，会直接标识 Pod 调度失败。</p>
+<p>2、如何内置的 Filter 策略执行成功的话，scheduler 通过 Http 调用 Extender 注册的 webhook, 将调度所需要的 Pod 和 Node 的信息发送到到 Extender，根据返回 filter 结果，作为最终结果。</p>
+<img src="/2024/08/21/42/extender.png" class="" title="extender">
+
+
+
+<p>我们可以发现 Extender 存在以下问题:</p>
+<p>1、调用 Extender 的接口是 HTTP 请求，受到网络环境的影响，性能远低于本地的函数调用。同时每次调用都需要将 Pod 和 Node 的信息进行 marshaling 和 unmarshalling 的操作，会进一步降低性能。</p>
+<p>2、用户可以扩展的点比较有限，位置比较固定，无法支持灵活的扩展，例如只能在执行完默认的 Filter 策略后才能调用。</p>
+<p>基于以上介绍，Extender 的方式在集群规模较小，调度效率要求不高的情况下，是一个灵活可用的扩展方案，但是在正常生产环境的大型集群中，Extender 无法支持高吞吐量，性能较差。</p>
+<h2 id="参考项目"><a href="#参考项目" class="headerlink" title="参考项目"></a>参考项目</h2><p><a href="https://github.com/AliyunContainerService/gpushare-scheduler-extender/tree/master">gpushare-scheduler-extender</a></p>
+<p><a href="https://lizhewei91.github.io/2023/10/24/08/">gpushare-scheduler-extender工作原理</a></p>
+<h1 id="Multiple-schedulers"><a href="#Multiple-schedulers" class="headerlink" title="Multiple schedulers"></a>Multiple schedulers</h1><h2 id="工作原理-1"><a href="#工作原理-1" class="headerlink" title="工作原理"></a>工作原理</h2><p>Scheduler 在 Kubernetes 集群中其实类似于一个特殊的 Controller，通过监听 Pod 和 Node 的信息，给 Pod 挑选最佳的节点，更新 Pod 的 spec.NodeName 的信息来将调度结果同步到节点。所以对于部分有特殊的调度需求的用户，有些开发者通过自研 Custom Scheduler 来完成以上的流程，然后通过和 default scheduler 同时部署的方式，来支持自己特殊的调度需求。</p>
+<img src="/2024/08/21/42/982345178a76967d014yy05300ca59de.jpg" class="" title="img">
+
+
+
+<p>Custom Scheduler 会存在一下问题：</p>
+<p>1、如果与 default scheduler 同时部署，因为每个调度器所看到的资源视图都是全局的，所以在调度决策中可能会在同一时刻在同一个节点资源上调度不同的 Pod，导致节点资源冲突的问题。</p>
+<p>2、有些用户将调度器所能调度的资源通过 Label 划分不同的池子，可以避免资源冲突的现象出现。但是这样又会导致整体集群资源利用率的下降。</p>
+<p>3、有些用户选择通过完全自研的方式来替换 default scheduler，这种会带来比较高的研发成本，以及 Kubernetes 版本升级后可能存在的兼容性问题。</p>
+<p>Scheduler Extender 的性能较差可是维护成本较小，Custom Scheduler 的研发和维护的成本特别高但是性能较好，这种情况是开发者面临这种两难处境。这时候 Kubernetes Scheduling Framework V2 横空出世，给我们带来鱼和熊掌可以兼得的方案。</p>
+<img src="/2024/08/21/42/d18a5075694afc42b274185771639yy8.jpg" class="" title="img">
+
+<h1 id="Scheduling-Framework"><a href="#Scheduling-Framework" class="headerlink" title="Scheduling Framework"></a>Scheduling Framework</h1><p>社区也逐渐的发现开发者所面临的困境，为了解决如上问题，使 Kube-scheduler 扩展性更好、代码更简洁，社区从 Kubernetes 1.16 版本开始, 构建了一种新的调度框架 Kubernetes Scheduling Framework 的机制。</p>
+<img src="/2024/08/21/42/scheduling-framework-extensions.png" class="" title="img">
+
+<p>用户可以编写自己的<strong>调度插件</strong>（scheduler plugins）注册到这些扩展点来实现想要的调度逻辑。 每个扩展点上一般会有<strong>多个 plugins</strong>，按注册顺序依次执行。</p>
+<h2 id="扩展点分类"><a href="#扩展点分类" class="headerlink" title="扩展点分类"></a>扩展点分类</h2><p>扩展点根据是否影响调度决策，可以分为两类。</p>
+<h3 id="影响调度决策的扩展点"><a href="#影响调度决策的扩展点" class="headerlink" title="影响调度决策的扩展点"></a>影响调度决策的扩展点</h3><p>大部分扩展点是<strong>影响调度决策</strong>的，</p>
+<ul>
+<li>后面会看到，这些函数的返回值中包括一个成功/失败字段，决定了是允许还是拒绝这个 pod 进入下一处理阶段；</li>
+<li>任何一个扩展点失败了，这个 pod 的调度就失败了；</li>
+</ul>
+<h3 id="不影响调度决策的扩展点（informational）"><a href="#不影响调度决策的扩展点（informational）" class="headerlink" title="不影响调度决策的扩展点（informational）"></a>不影响调度决策的扩展点（informational）</h3><p>少数几个扩展点是 informational 的，</p>
+<ul>
+<li>这些函数<strong>没有返回值</strong>，因此<strong>不能影响调度决策</strong>；</li>
+<li>但是，在这里面<strong>可以修改 pod/node 等信息</strong>，或者执行清理操作。</li>
+</ul>
+<h2 id="调度插件分类"><a href="#调度插件分类" class="headerlink" title="调度插件分类"></a>调度插件分类</h2><p>根据是否维护在 k8s 代码仓库本身，分为两类。</p>
+<h3 id="in-tree-plugins"><a href="#in-tree-plugins" class="headerlink" title="in-tree plugins"></a><code>in-tree</code> plugins</h3><p>维护在 k8s 代码目录 <a href="https://github.com/kubernetes/kubernetes/tree/v1.28.4/pkg/scheduler/framework/plugins"><code>pkg/scheduler/framework/plugins</code></a> 中， <strong>跟内置调度器一起编译</strong>。里面有十几个调度插件，大部分都是常用和在用的，</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ ll pkg/scheduler/framework/plugins</span><br><span class="line">defaultbinder/</span><br><span class="line">defaultpreemption/</span><br><span class="line">dynamicresources/</span><br><span class="line">feature/</span><br><span class="line">imagelocality/</span><br><span class="line">interpodaffinity/</span><br><span class="line">names/</span><br><span class="line">nodeaffinity/</span><br><span class="line">nodename/</span><br><span class="line">nodeports/</span><br><span class="line">noderesources/</span><br><span class="line">nodeunschedulable/</span><br><span class="line">nodevolumelimits/</span><br><span class="line">podtopologyspread/</span><br><span class="line">queuesort/</span><br><span class="line">schedulinggates/</span><br><span class="line">selectorspread/</span><br><span class="line">tainttoleration/</span><br><span class="line">volumebinding/</span><br><span class="line">volumerestrictions/</span><br><span class="line">volumezone/</span><br></pre></td></tr></table></figure>
+
+<p>in-tree 方式每次要添加新插件，或者修改原有插件，都需要修改 kube-scheduler 代码然后编译和 <strong>重新部署 kube-scheduler</strong>，比较重量级。</p>
+<h3 id="out-of-tree-plugins"><a href="#out-of-tree-plugins" class="headerlink" title="out-of-tree plugins"></a><code>out-of-tree</code> plugins</h3><p>out-of-tree plugins 由<strong>用户自己编写和维护</strong>，<strong>独立部署</strong>， 不需要对 k8s 做任何代码或配置改动。</p>
+<p>本质上 out-of-tree plugins 也是跟 kube-scheduler 代码一起编译的，不过 kube-scheduler 相关代码已经抽出来作为一个独立项目 <a href="https://github.com/kubernetes-sigs/scheduler-plugins">github.com/kubernetes-sigs/scheduler-plugins</a>。 用户只需要引用这个包，编写自己的调度器插件，然后以普通 pod 方式部署就行（其他部署方式也行，比如 binary 方式部署）。 编译之后是个包含<strong>默认调度器和所有 out-of-tree 插件</strong>的总调度器程序，</p>
+<ul>
+<li>它有内置调度器的功能；</li>
+<li>也包括了 out-of-tree 调度器的功能；</li>
+</ul>
+<p>用法有两种：</p>
+<ul>
+<li>跟现有调度器并行部署，只管理特定的某些 pods；</li>
+<li>取代现有调度器，因为它功能也是全的。</li>
+</ul>
+<h3 id="每个扩展点上分别有哪些内置插件"><a href="#每个扩展点上分别有哪些内置插件" class="headerlink" title="每个扩展点上分别有哪些内置插件"></a>每个扩展点上分别有哪些内置插件</h3><p>内置的调度插件，以及分别工作在哪些 extention points： <a href="https://kubernetes.io/docs/reference/scheduling/config/#scheduling-plugins">官方文档</a>。 比如，</p>
+<ul>
+<li>node selectors 和 node affinity 用到了 <strong><code>NodeAffinity</code></strong> plugin；</li>
+<li>taint/toleration 用到了 <strong><code>TaintToleration</code></strong> plugin。</li>
+</ul>
+<h2 id="Pod-调度过程"><a href="#Pod-调度过程" class="headerlink" title="Pod 调度过程"></a>Pod 调度过程</h2><p>一个 pod 的完整调度过程可以分为两个阶段：</p>
+<ol>
+<li><strong><code>scheduling cycle</code><strong>：为 pod 选择一个 node，类似于</strong>数据库查询和筛选</strong>；</li>
+<li><strong><code>binding cycle</code><strong>：落实以上选择，类似于</strong>处理各种关联的东西并将结果写到数据库</strong>。</li>
+</ol>
+<p>例如，虽然 scheduling cycle 为 pod 选择了一个 node，但是在接下来的 binding cycle 中， 在这个 node 上给这个 pod 创建 persistent volume 失败了， 那整个调度过程也是算失败的，需要回到最开始的步骤重新调度。 以上两个过程加起来称为一个 **<code>scheduling context</code>**。</p>
+<h3 id="PreEnqueue"><a href="#PreEnqueue" class="headerlink" title="PreEnqueue"></a>PreEnqueue</h3><p>这些插件在将 Pod 被添加到 ActiveQ 之前被调用，在此队列中 Pod 被标记为准备好进行调度。这一步没过就不会进入调度队列，更不会进入调度流程。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> PreEnqueuePlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Plugin</span><br><span class="line">	<span class="comment">// PreEnqueue is called prior to adding Pods to activeQ.</span></span><br><span class="line">	PreEnqueue(ctx context.Context, p *v1.Pod) *Status</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>只有当所有 PreEnqueue 插件返回 <code>Success</code> 时，Pod 才允许进入活动队列。 否则，它将被放置在内部无法调度的 Pod 列表中，并且不会获得 <code>Unschedulable</code> 状态。</strong></p>
+<p>要了解有关内部调度器队列如何工作的更多详细信息，请阅读 <a href="https://github.com/kubernetes/community/blob/f03b6d5692bd979f07dd472e7b6836b2dad0fd9b/contributors/devel/sig-scheduling/scheduler_queues.md">kube-scheduler 调度队列</a>。</p>
+<h3 id="EnqueueExtension"><a href="#EnqueueExtension" class="headerlink" title="EnqueueExtension"></a>EnqueueExtension</h3><p>EnqueueExtension 作为一个接口，插件可以在此接口之上根据集群中的变化来控制是否重新尝试调度被此插件拒绝的 Pod。 实现 PreEnqueue、PreFilter、Filter、Reserve 或 Permit 的插件应实现此接口。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> EnqueueExtensions <span class="keyword">interface</span> &#123;</span><br><span class="line">	Plugin</span><br><span class="line">	<span class="comment">// EventsToRegister returns a series of possible events that may cause a Pod</span></span><br><span class="line">	<span class="comment">// failed by this plugin schedulable. Each event has a callback function that</span></span><br><span class="line">	<span class="comment">// filters out events to reduce useless retry of Pod&#x27;s scheduling.</span></span><br><span class="line">	<span class="comment">// The events will be registered when instantiating the internal scheduling queue,</span></span><br><span class="line">	<span class="comment">// and leveraged to build event handlers dynamically.</span></span><br><span class="line">	<span class="comment">// Note: the returned list needs to be static (not depend on configuration parameters);</span></span><br><span class="line">	<span class="comment">// otherwise it would lead to undefined behavior.</span></span><br><span class="line">	EventsToRegister() []ClusterEventWithHint</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="QueueScore"><a href="#QueueScore" class="headerlink" title="QueueScore"></a>QueueScore</h3><p>这些插件用于对调度队列中的 Pod 进行排序。 队列排序插件本质上提供 <code>Less(Pod1, Pod2)</code> 函数。 <strong>一次只能启动一个队列插件</strong>。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> QueueSortPlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Plugin</span><br><span class="line">	<span class="comment">// Less are used to sort pods in the scheduling queue.</span></span><br><span class="line">	Less(*QueuedPodInfo, *QueuedPodInfo) <span class="type">bool</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="PreFilter"><a href="#PreFilter" class="headerlink" title="PreFilter"></a>PreFilter</h3><p>这里的插件可以对 Pod 进行预处理，或者条件检查</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> PreFilterPlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Plugin</span><br><span class="line">	<span class="comment">// PreFilter is called at the beginning of the scheduling cycle. All PreFilter</span></span><br><span class="line">	<span class="comment">// plugins must return success or the pod will be rejected. PreFilter could optionally</span></span><br><span class="line">	<span class="comment">// return a PreFilterResult to influence which nodes to evaluate downstream. This is useful</span></span><br><span class="line">	<span class="comment">// for cases where it is possible to determine the subset of nodes to process in O(1) time.</span></span><br><span class="line">	<span class="comment">// When it returns Skip status, returned PreFilterResult and other fields in status are just ignored,</span></span><br><span class="line">	<span class="comment">// and coupled Filter plugin/PreFilterExtensions() will be skipped in this scheduling cycle.</span></span><br><span class="line">	PreFilter(ctx context.Context, state *CycleState, p *v1.Pod) (*PreFilterResult, *Status)</span><br><span class="line">	<span class="comment">// PreFilterExtensions returns a PreFilterExtensions interface if the plugin implements one,</span></span><br><span class="line">	<span class="comment">// or nil if it does not. A Pre-filter plugin can provide extensions to incrementally</span></span><br><span class="line">	<span class="comment">// modify its pre-processed info. The framework guarantees that the extensions</span></span><br><span class="line">	<span class="comment">// AddPod/RemovePod will only be called after PreFilter, possibly on a cloned</span></span><br><span class="line">	<span class="comment">// CycleState, and may call those functions more than once before calling</span></span><br><span class="line">	<span class="comment">// Filter again on a specific node.</span></span><br><span class="line">	PreFilterExtensions() PreFilterExtensions</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// PreFilterExtensions is an interface that is included in plugins that allow specifying</span></span><br><span class="line"><span class="comment">// callbacks to make incremental updates to its supposedly pre-calculated</span></span><br><span class="line"><span class="comment">// state.</span></span><br><span class="line"><span class="keyword">type</span> PreFilterExtensions <span class="keyword">interface</span> &#123;</span><br><span class="line">	<span class="comment">// AddPod is called by the framework while trying to evaluate the impact</span></span><br><span class="line">	<span class="comment">// of adding podToAdd to the node while scheduling podToSchedule.</span></span><br><span class="line">	AddPod(ctx context.Context, state *CycleState, podToSchedule *v1.Pod, podInfoToAdd *PodInfo, nodeInfo *NodeInfo) *Status</span><br><span class="line">	<span class="comment">// RemovePod is called by the framework while trying to evaluate the impact</span></span><br><span class="line">	<span class="comment">// of removing podToRemove from the node while scheduling podToSchedule.</span></span><br><span class="line">	RemovePod(ctx context.Context, state *CycleState, podToSchedule *v1.Pod, podInfoToRemove *PodInfo, nodeInfo *NodeInfo) *Status</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>输入：<ul>
+<li><code>p *v1.Pod</code> 是<strong>待调度的 pod</strong>；</li>
+<li>第二个参数 <code>state</code> 可用于保存一些状态信息，然后在后面的扩展点（例如 <code>Filter()</code> 阶段）拿出来用；</li>
+</ul>
+</li>
+<li>输出：<ul>
+<li><code>*PreFilterResult </code>保存 <code>prefilter</code> 执行后，不符合要求的 node 列表，如果为 nil，表示所有 node 节点都符合要求</li>
+<li><code>*Status</code>记录每个 plugin 执行是否成功</li>
+</ul>
+</li>
+</ul>
+<p>只要所有已经注册的 <code>PreFilter</code> plugins，<strong>任何一个 plugin 返回失败，这个 pod 的调度就失败了</strong>，失败了，pod 就不会进入下一个环节；</p>
+<h3 id="Filter"><a href="#Filter" class="headerlink" title="Filter"></a>Filter</h3><p><strong>用来过滤掉不满足 Pod 调度要求的 Node</strong>。为了提升效率，<strong>针对每个 node 节点，Filter 的执行顺序可以被配置</strong>，这样用户就可以将可以过滤掉大量节点的 Filter 策略放到前边执行，从而减少后边 Filter 策略执行的次数，<strong>Node 节点执行 Filter 策略是并发执行的</strong>，所以在同一调度周期中多次调用过滤器 。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> FilterPlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Plugin</span><br><span class="line">	<span class="comment">// Filter is called by the scheduling framework.</span></span><br><span class="line">	<span class="comment">// All FilterPlugins should return &quot;Success&quot; to declare that</span></span><br><span class="line">	<span class="comment">// the given node fits the pod. If Filter doesn&#x27;t return &quot;Success&quot;,</span></span><br><span class="line">	<span class="comment">// it will return &quot;Unschedulable&quot;, &quot;UnschedulableAndUnresolvable&quot; or &quot;Error&quot;.</span></span><br><span class="line">	<span class="comment">// For the node being evaluated, Filter plugins should look at the passed</span></span><br><span class="line">	<span class="comment">// nodeInfo reference for this particular node&#x27;s information (e.g., pods</span></span><br><span class="line">	<span class="comment">// considered to be running on the node) instead of looking it up in the</span></span><br><span class="line">	<span class="comment">// NodeInfoSnapshot because we don&#x27;t guarantee that they will be the same.</span></span><br><span class="line">	<span class="comment">// For example, during preemption, we may pass a copy of the original</span></span><br><span class="line">	<span class="comment">// nodeInfo object that has some pods removed from it to evaluate the</span></span><br><span class="line">	<span class="comment">// possibility of preempting them to schedule the target pod.</span></span><br><span class="line">	Filter(ctx context.Context, state *CycleState, pod *v1.Pod, nodeInfo *NodeInfo) *Status</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>输入：</p>
+<ul>
+<li><code>p *v1.Pod</code> 是<strong>待调度的 pod</strong>；</li>
+</ul>
+<ul>
+<li><code>nodeInfo</code> 是<strong>当前给定的 node</strong> 的信息，<code>Filter()</code> 程序判断这个 node 是否符合要求；</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>输出：<ul>
+<li><code>*Status</code> 记录所有注册 <code>Filter</code> plugins 的执行状态</li>
+</ul>
+</li>
+</ul>
+<p>对于给定 node，如果<strong>所有 Filter plugins 都返回成功</strong>，这个 node 才算通过筛选， 成为<strong>备选 node 之一</strong>。</p>
+<h3 id="PostFilter"><a href="#PostFilter" class="headerlink" title="PostFilter"></a>PostFilter</h3><p>如果 Filter 阶段之后，<strong>所有 nodes 都被筛掉了</strong>，一个都没剩，才会执行这个阶段；否则不会执行这个阶段的 plugins。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> PostFilterPlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Plugin</span><br><span class="line">	<span class="comment">// PostFilter is called by the scheduling framework.</span></span><br><span class="line">	<span class="comment">// A PostFilter plugin should return one of the following statuses:</span></span><br><span class="line">	<span class="comment">// - Unschedulable: the plugin gets executed successfully but the pod cannot be made schedulable.</span></span><br><span class="line">	<span class="comment">// - Success: the plugin gets executed successfully and the pod can be made schedulable.</span></span><br><span class="line">	<span class="comment">// - Error: the plugin aborts due to some internal error.</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// Informational plugins should be configured ahead of other ones, and always return Unschedulable status.</span></span><br><span class="line">	<span class="comment">// Optionally, a non-nil PostFilterResult may be returned along with a Success status. For example,</span></span><br><span class="line">	<span class="comment">// a preemption plugin may choose to return nominatedNodeName, so that framework can reuse that to update the</span></span><br><span class="line">	<span class="comment">// preemptor pod&#x27;s .spec.status.nominatedNodeName field.</span></span><br><span class="line">	PostFilter(ctx context.Context, state *CycleState, pod *v1.Pod, filteredNodeStatusMap NodeToStatusMap) (*PostFilterResult, *Status)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>按 plugin 顺序依次执行，<strong>任何一个插件</strong>将 node 标记为 <strong><code>Schedulable</code></strong> 就算<strong>成功</strong>，不再执行剩下的 PostFilter plugins。</p>
+<p><strong>典型例子</strong>：**<code>preemptiontoleration</code>**， <code>Filter()</code> 之后已经没有可用 node 了，在这个阶段就挑一个 pod/node，抢占它的资源。</p>
+<h3 id="PreScore"><a href="#PreScore" class="headerlink" title="PreScore"></a>PreScore</h3><p>这些插件用于执行“前置评分（pre-scoring）”工作，<strong>如果 PreScore 插件返回错误，则调度周期将终止</strong>。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> PreScorePlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Plugin</span><br><span class="line">	<span class="comment">// PreScore is called by the scheduling framework after a list of nodes</span></span><br><span class="line">	<span class="comment">// passed the filtering phase. All prescore plugins must return success or</span></span><br><span class="line">	<span class="comment">// the pod will be rejected</span></span><br><span class="line">	<span class="comment">// When it returns Skip status, other fields in status are just ignored,</span></span><br><span class="line">	<span class="comment">// and coupled Score plugin will be skipped in this scheduling cycle.</span></span><br><span class="line">	PreScore(ctx context.Context, state *CycleState, pod *v1.Pod, nodes []*v1.Node) *Status</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Score"><a href="#Score" class="headerlink" title="Score"></a>Score</h3><p>调度器将为每个 node 节点调用每个评分插件，得到一个分数</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> ScorePlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Plugin</span><br><span class="line">	<span class="comment">// Score is called on each filtered node. It must return success and an integer</span></span><br><span class="line">	<span class="comment">// indicating the rank of the node. All scoring plugins must return success or</span></span><br><span class="line">	<span class="comment">// the pod will be rejected.</span></span><br><span class="line">	Score(ctx context.Context, state *CycleState, p *v1.Pod, nodeName <span class="type">string</span>) (<span class="type">int64</span>, *Status)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// ScoreExtensions returns a ScoreExtensions interface if it implements one, or nil if does not.</span></span><br><span class="line">	ScoreExtensions() ScoreExtensions</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> ScoreExtensions <span class="keyword">interface</span> &#123;</span><br><span class="line">	<span class="comment">// NormalizeScore is called for all node scores produced by the same plugin&#x27;s &quot;Score&quot;</span></span><br><span class="line">	<span class="comment">// method. A successful run of NormalizeScore will update the scores list and return</span></span><br><span class="line">	<span class="comment">// a success status.</span></span><br><span class="line">	NormalizeScore(ctx context.Context, state *CycleState, p *v1.Pod, scores NodeScoreList) *Status</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="NormalizeScore"><a href="#NormalizeScore" class="headerlink" title="NormalizeScore"></a>NormalizeScore</h3><p>这些插件用于在调度器计算 Node 排名之前修改分数。 在此扩展点注册的插件被调用时会使用同一插件的 <a href="https://kubernetes.io/zh-cn/docs/concepts/scheduling-eviction/scheduling-framework/#scoring">Score</a> 结果。每个插件在每个调度周期调用一次。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> ScoreExtensions <span class="keyword">interface</span> &#123;</span><br><span class="line">	<span class="comment">// NormalizeScore is called for all node scores produced by the same plugin&#x27;s &quot;Score&quot;</span></span><br><span class="line">	<span class="comment">// method. A successful run of NormalizeScore will update the scores list and return</span></span><br><span class="line">	<span class="comment">// a success status.</span></span><br><span class="line">	NormalizeScore(ctx context.Context, state *CycleState, p *v1.Pod, scores NodeScoreList) *Status</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果任何 NormalizeScore 插件返回错误，则调度阶段将终止。</p>
+<h3 id="Reserve"><a href="#Reserve" class="headerlink" title="Reserve"></a>Reserve</h3><p>Informational，维护 plugin 状态信息</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> ReservePlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">    Plugin</span><br><span class="line">    <span class="comment">// Reserve is called by the scheduling framework when the scheduler cache is</span></span><br><span class="line">    <span class="comment">// updated. If this method returns a failed Status, the scheduler will call</span></span><br><span class="line">    <span class="comment">// the Unreserve method for all enabled ReservePlugins.</span></span><br><span class="line">    Reserve(ctx , state *CycleState, p *v1.Pod, nodeName <span class="type">string</span>) *Status</span><br><span class="line">    <span class="comment">// Unreserve is called by the scheduling framework when a reserved pod was</span></span><br><span class="line">    <span class="comment">// rejected, an error occurred during reservation of subsequent plugins, or</span></span><br><span class="line">    <span class="comment">// in a later phase. The Unreserve method implementation must be idempotent</span></span><br><span class="line">    <span class="comment">// and may be called by the scheduler even if the corresponding Reserve</span></span><br><span class="line">    <span class="comment">// method for the same plugin was not called.</span></span><br><span class="line">    Unreserve(ctx , state *CycleState, p *v1.Pod, nodeName <span class="type">string</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里有两个方法，都是 **<code>informational</code>**，也就是不影响调度决策； 维护了 runtime state (aka “stateful plugins”) 的插件，可以通过这两个方法 <strong>接收 scheduler 传来的信息</strong>：</p>
+<ol>
+<li><p><code>Reserve</code></p>
+<p>用来避免 scheduler 等待 <code>bind</code> 操作结束期间，因 race condition 导致的错误。 只有当<strong>所有</strong> <code>Reserve</code> plugins 都成功后，才会进入下一阶段，否则 scheduling cycle 就中止了。</p>
+</li>
+<li><p><code>Unreserve</code></p>
+<p>调度失败，这个阶段回滚时执行。<code>Unreserve()</code> 必须幂等，且不能 fail。</p>
+</li>
+</ol>
+<h3 id="Permit"><a href="#Permit" class="headerlink" title="Permit"></a>Permit</h3><p>Permit 插件在每个 Pod 调度周期的最后调用，用于防止或延迟 Pod 的绑定。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// PermitPlugin is an interface that must be implemented by &quot;Permit&quot; plugins.</span></span><br><span class="line"><span class="comment">// These plugins are called before a pod is bound to a node.</span></span><br><span class="line"><span class="keyword">type</span> PermitPlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">    Plugin</span><br><span class="line">    <span class="comment">// Permit is called before binding a pod (and before prebind plugins). Permit</span></span><br><span class="line">    <span class="comment">// plugins are used to prevent or delay the binding of a Pod. A permit plugin</span></span><br><span class="line">    <span class="comment">// must return success or wait with timeout duration, or the pod will be rejected.</span></span><br><span class="line">    <span class="comment">// The pod will also be rejected if the wait timeout or the pod is rejected while</span></span><br><span class="line">    <span class="comment">// waiting. Note that if the plugin returns &quot;wait&quot;, the framework will wait only</span></span><br><span class="line">    <span class="comment">// after running the remaining plugins given that no other plugin rejects the pod.</span></span><br><span class="line">    Permit(ctx , state *CycleState, p *v1.Pod, nodeName <span class="type">string</span>) (*Status, time.Duration)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>三种结果：</p>
+<ol>
+<li><strong>approve</strong>：所有 Permit plugins 都 appove 之后，这个 pod 就进入下面的 binding 阶段；</li>
+<li><strong>deny</strong>：任何一个 Permit plugin deny 之后，就无法进入 binding 阶段。这会触发 <code>Reserve</code> plugins 的 <code>Unreserve()</code> 方法；</li>
+<li><strong>wait</strong> (with a timeout)：如果有 Permit plugin 返回 “wait”，这个 pod 就会进入一个 internal “waiting” Pods list； 如果超时发生，<strong>等待</strong>变成<strong>拒绝</strong>，并且 Pod 将返回调度队列，这会触发 <code>Reserve</code> plugins 的 <code>Unreserve()</code> 方法；</li>
+</ol>
+<h3 id="PreBind"><a href="#PreBind" class="headerlink" title="PreBind"></a>PreBind</h3><p>Bind之前的预处理，例如给 node 上去挂载 volume</p>
+<p>例如，在将 pod 调度到一个 node 之前，先给这个 pod 在那台 node 上挂载一个 network volume。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// PreBindPlugin is an interface that must be implemented by &quot;PreBind&quot; plugins.</span></span><br><span class="line"><span class="comment">// These plugins are called before a pod being scheduled.</span></span><br><span class="line"><span class="keyword">type</span> PreBindPlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">    Plugin</span><br><span class="line">    <span class="comment">// PreBind is called before binding a pod. All prebind plugins must return</span></span><br><span class="line">    <span class="comment">// success or the pod will be rejected and won&#x27;t be sent for binding.</span></span><br><span class="line">    PreBind(ctx , state *CycleState, p *v1.Pod, nodeName <span class="type">string</span>) *Status</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>任何一个 PreBind plugin 失败，都会导致 pod 被 reject，进入到 <code>reserve</code> plugins 的 <code>Unreserve()</code> 方法；</p>
+<h3 id="Bind"><a href="#Bind" class="headerlink" title="Bind"></a>Bind</h3><p>将 pod 关联到 node 节点</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Bind plugins are used to bind a pod to a Node.</span></span><br><span class="line"><span class="keyword">type</span> BindPlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">    Plugin</span><br><span class="line">    <span class="comment">// Bind plugins will not be called until all pre-bind plugins have completed. Each</span></span><br><span class="line">    <span class="comment">// bind plugin is called in the configured order. A bind plugin may choose whether</span></span><br><span class="line">    <span class="comment">// or not to handle the given Pod. If a bind plugin chooses to handle a Pod, the</span></span><br><span class="line">    <span class="comment">// remaining bind plugins are skipped. When a bind plugin does not handle a pod,</span></span><br><span class="line">    <span class="comment">// it must return Skip in its Status code. If a bind plugin returns an Error, the</span></span><br><span class="line">    <span class="comment">// pod is rejected and will not be bound.</span></span><br><span class="line">    Bind(ctx , state *CycleState, p *v1.Pod, nodeName <span class="type">string</span>) *Status</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>所有 plugin 按配置顺序依次执行；</li>
+<li>每个 plugin 可以选择是否要处理一个给定的 pod；</li>
+<li>如果选择处理，<strong>后面剩下的 plugins 会跳过</strong>。也就是<strong>最多只有一个 bind plugin 会执行</strong>。</li>
+</ul>
+<h3 id="PostBind"><a href="#PostBind" class="headerlink" title="PostBind"></a>PostBind</h3><p>这是一个 informational extension point，也就是无法影响调度决策（没有返回值）。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Plugin is the parent type for all the scheduling framework plugins.</span></span><br><span class="line"><span class="keyword">type</span> Plugin <span class="keyword">interface</span> &#123;</span><br><span class="line">	Name() <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// PostBindPlugin is an interface that must be implemented by &quot;PostBind&quot; plugins.</span></span><br><span class="line"><span class="comment">// These plugins are called after a pod is successfully bound to a node.</span></span><br><span class="line"><span class="keyword">type</span> PostBindPlugin <span class="keyword">interface</span> &#123;</span><br><span class="line">    Plugin</span><br><span class="line">    <span class="comment">// PostBind is called after a pod is successfully bound. These plugins are informational.</span></span><br><span class="line">    <span class="comment">// A common application of this extension point is for cleaning</span></span><br><span class="line">    <span class="comment">// up. If a plugin needs to clean-up its state after a pod is scheduled and</span></span><br><span class="line">    <span class="comment">// bound, PostBind is the extension point that it should register.</span></span><br><span class="line">    PostBind(ctx , state *CycleState, p *v1.Pod, nodeName <span class="type">string</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>bind 成功的 pod 才会进入这个阶段；</li>
+<li>作为 binding cycle 的最后一个阶段，一般是用来清理一些相关资源。</li>
+</ul>
+<h2 id="参考项目："><a href="#参考项目：" class="headerlink" title="参考项目："></a>参考项目：</h2><p>1、<a href="https://github.com/kubernetes-sigs/scheduler-plugins">https://github.com/kubernetes-sigs/scheduler-plugins</a></p>
+<p>2、<a href="https://github.com/koordinator-sh/koordinator">https://github.com/koordinator-sh/koordinator</a></p>
+<h1 id="Ref"><a href="#Ref" class="headerlink" title="Ref"></a>Ref</h1><p>1、<a href="https://github.com/kubernetes-sigs/scheduler-plugins">https://github.com/kubernetes-sigs/scheduler-plugins</a></p>
+<p>2、<a href="https://github.com/koordinator-sh/koordinator">https://github.com/koordinator-sh/koordinator</a></p>
+<p>3、<a href="https://github.com/AliyunContainerService/gpushare-scheduler-extender">https://github.com/AliyunContainerService/gpushare-scheduler-extender</a></p>
+<p>4、<a href="https://gocrane.io/zh-cn/docs/">https://gocrane.io/zh-cn/docs/</a></p>
+<p>5、<a href="https://volcano.sh/zh/docs/">https://volcano.sh/zh/docs/</a></p>
+]]></content>
+      <categories>
+        <category>kube-scheduler</category>
+      </categories>
+      <tags>
+        <tag>scheduler-framework</tag>
+        <tag>scheduler-extender</tag>
+        <tag>multiple-schedulers</tag>
+        <tag>kube-scheduler扩展</tag>
       </tags>
   </entry>
   <entry>
@@ -2415,8 +2155,8 @@
         <category>kube-scheduler</category>
       </categories>
       <tags>
-        <tag>scheduler-extender</tag>
         <tag>kube-scheduler</tag>
+        <tag>scheduler-extender</tag>
       </tags>
   </entry>
   <entry>
@@ -2782,6 +2522,22 @@
       </tags>
   </entry>
   <entry>
+    <title>浅析NUMA机制</title>
+    <url>/2024/01/02/22/</url>
+    <content><![CDATA[<h1 id="NUMA的由来"><a href="#NUMA的由来" class="headerlink" title="NUMA的由来"></a>NUMA的由来</h1><p>NUMA(Non-Uniform Memory Access)，即非一致性内存访问，是一种关于多个CPU如何访问内存的架构模型，早期，在计算机系统中，CPU是这样访问内存的：</p>
+<img src="/2024/01/02/22/v2-ba8b4591e92b8027568304f21ac9b773_1440w-4179309.webp" class="" title="img">
+
+
+
+]]></content>
+      <categories>
+        <category>NUMA</category>
+      </categories>
+      <tags>
+        <tag>NUMA</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>在 kubernetes 集群中实现 gpu 共享调度</title>
     <url>/2023/10/24/08/</url>
     <content><![CDATA[<h1 id="问题背景"><a href="#问题背景" class="headerlink" title="问题背景"></a>问题背景</h1><blockquote>
@@ -2840,22 +2596,6 @@
       <tags>
         <tag>gpu</tag>
         <tag>gpushare</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>浅析NUMA机制</title>
-    <url>/2024/01/02/22/</url>
-    <content><![CDATA[<h1 id="NUMA的由来"><a href="#NUMA的由来" class="headerlink" title="NUMA的由来"></a>NUMA的由来</h1><p>NUMA(Non-Uniform Memory Access)，即非一致性内存访问，是一种关于多个CPU如何访问内存的架构模型，早期，在计算机系统中，CPU是这样访问内存的：</p>
-<img src="/2024/01/02/22/v2-ba8b4591e92b8027568304f21ac9b773_1440w-4179309.webp" class="" title="img">
-
-
-
-]]></content>
-      <categories>
-        <category>NUMA</category>
-      </categories>
-      <tags>
-        <tag>NUMA</tag>
       </tags>
   </entry>
   <entry>

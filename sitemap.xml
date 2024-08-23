@@ -29,15 +29,6 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/2024/08/21/02/</loc>
-    
-    <lastmod>2024-08-21</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>http://lizhewei91.github.io/2024/01/15/50/</loc>
     
     <lastmod>2024-01-15</lastmod>
@@ -418,7 +409,14 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/kube-scheduler%E4%BD%BF%E7%94%A8/</loc>
+    <loc>http://lizhewei91.github.io/tags/kube-scheduler%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/</loc>
+    <lastmod>2024-08-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://lizhewei91.github.io/tags/kube-scheduler/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -447,20 +445,6 @@
   
   <url>
     <loc>http://lizhewei91.github.io/tags/kube-scheduler%E6%89%A9%E5%B1%95/</loc>
-    <lastmod>2024-08-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/kube-scheduler%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/</loc>
-    <lastmod>2024-08-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/kube-scheduler/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -579,14 +563,14 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/gpushare/</loc>
+    <loc>http://lizhewei91.github.io/tags/NUMA/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/NUMA/</loc>
+    <loc>http://lizhewei91.github.io/tags/gpushare/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -707,14 +691,14 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/gpushare/</loc>
+    <loc>http://lizhewei91.github.io/categories/NUMA/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/NUMA/</loc>
+    <loc>http://lizhewei91.github.io/categories/gpushare/</loc>
     <lastmod>2024-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>

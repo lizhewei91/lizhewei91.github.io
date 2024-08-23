@@ -1,7 +1,6 @@
 http://lizhewei91.github.io/2024/08/23/09/
 http://lizhewei91.github.io/2024/08/22/26/
 http://lizhewei91.github.io/2024/08/21/42/
-http://lizhewei91.github.io/2024/08/21/02/
 http://lizhewei91.github.io/2024/01/15/50/
 http://lizhewei91.github.io/2024/01/02/22/
 http://lizhewei91.github.io/2023/12/20/53/
@@ -48,13 +47,12 @@ http://lizhewei91.github.io/tags/golang/
 http://lizhewei91.github.io/tags/reloader/
 http://lizhewei91.github.io/tags/configMap/
 http://lizhewei91.github.io/tags/secret/
-http://lizhewei91.github.io/tags/kube-scheduler%E4%BD%BF%E7%94%A8/
+http://lizhewei91.github.io/tags/kube-scheduler%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/
+http://lizhewei91.github.io/tags/kube-scheduler/
 http://lizhewei91.github.io/tags/scheduler-framework/
 http://lizhewei91.github.io/tags/scheduler-extender/
 http://lizhewei91.github.io/tags/multiple-schedulers/
 http://lizhewei91.github.io/tags/kube-scheduler%E6%89%A9%E5%B1%95/
-http://lizhewei91.github.io/tags/kube-scheduler%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/
-http://lizhewei91.github.io/tags/kube-scheduler/
 http://lizhewei91.github.io/tags/kubeadm/
 http://lizhewei91.github.io/tags/%E9%83%A8%E7%BD%B2k8s%E9%9B%86%E7%BE%A4/
 http://lizhewei91.github.io/tags/kubectl-plugins/
@@ -71,8 +69,8 @@ http://lizhewei91.github.io/tags/operator/
 http://lizhewei91.github.io/tags/code-generator/
 http://lizhewei91.github.io/tags/kubebuilder/
 http://lizhewei91.github.io/tags/k8s-swagger-ui/
-http://lizhewei91.github.io/tags/gpushare/
 http://lizhewei91.github.io/tags/NUMA/
+http://lizhewei91.github.io/tags/gpushare/
 http://lizhewei91.github.io/tags/webhook/
 http://lizhewei91.github.io/categories/gin/
 http://lizhewei91.github.io/categories/nvidia-time-slicing/
@@ -89,6 +87,6 @@ http://lizhewei91.github.io/categories/kubelet/
 http://lizhewei91.github.io/categories/nexus/
 http://lizhewei91.github.io/categories/operator/
 http://lizhewei91.github.io/categories/k8s-swagger-ui/
-http://lizhewei91.github.io/categories/gpushare/
 http://lizhewei91.github.io/categories/NUMA/
+http://lizhewei91.github.io/categories/gpushare/
 http://lizhewei91.github.io/categories/webhook/
