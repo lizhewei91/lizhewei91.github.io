@@ -17,18 +17,23 @@
   <meta http-equiv="window-target" content="_top" />
   
   
-  <title>归档: 2022/11 | lizhewei&#39;s Blog</title>
-  <meta name="description" content="专注于云原生领域">
-<meta property="og:type" content="website">
-<meta property="og:title" content="lizhewei&#39;Blog">
-<meta property="og:url" content="http://lizhewei91.github.io/archives/2022/11/index.html">
+  <title>从0到1开发一个调度器scheduler-framework | lizhewei&#39;s Blog</title>
+  <meta name="description" content="之前文章已经介绍了kube-scheduler四种扩展方式： 一般来说，我们有 4 种扩展 Kubernetes 调度器的方法。  default-scheduler recoding: 直接在Kubernetes默认scheduler基础上进行添加，然后重新编译kube-scheduler standalone: 实现一个与kube-scheduler平行的custom scheduler，单独">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从0到1开发一个调度器scheduler-framework">
+<meta property="og:url" content="http://lizhewei91.github.io/2024/08/27/08/index.html">
 <meta property="og:site_name" content="lizhewei&#39;Blog">
-<meta property="og:description" content="专注于云原生领域">
+<meta property="og:description" content="之前文章已经介绍了kube-scheduler四种扩展方式： 一般来说，我们有 4 种扩展 Kubernetes 调度器的方法。  default-scheduler recoding: 直接在Kubernetes默认scheduler基础上进行添加，然后重新编译kube-scheduler standalone: 实现一个与kube-scheduler平行的custom scheduler，单独">
 <meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-08-27T09:15:08.000Z">
+<meta property="article:modified_time" content="2024-08-29T01:56:02.007Z">
 <meta property="article:author" content="lizhewei">
+<meta property="article:tag" content="kube-scheduler">
+<meta property="article:tag" content="scheduler-framework">
+<meta property="article:tag" content="scheduler-plugins">
 <meta name="twitter:card" content="summary">
   <!-- Canonical links -->
-  <link rel="canonical" href="http://lizhewei91.github.io/archives/2022/11/index.html">
+  <link rel="canonical" href="http://lizhewei91.github.io/2024/08/27/08/index.html">
   
     <link rel="alternate" href="/atom.xml" title="lizhewei&#39;Blog" type="application/atom+xml">
   
@@ -207,59 +212,207 @@
 
   
   
+  <aside class="sidebar sidebar-toc collapse   in  " id="collapseToc" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    <nav id="toc" class="article-toc">
+      <h3 class="toc-title">文章目录</h3>
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE%E8%AE%BE%E8%AE%A1"><span class="toc-number">1.</span> <span class="toc-text">项目设计</span></a></li></ol>
+    </nav>
+  </div>
+</aside>
+
 <main class="main" role="main">
-  	<article class="content article article-archives article-type-list" itemscope="">
-	    <header class="article-header">
-	      <h1 itemprop="title">归档: 2022/11</h1>
-	      <p class="text-muted">共 27 篇文章</p>
-	    </header>
-	    <div class="article-body">
-	      
+  <div class="content">
+  <article id="post-从0到1开发一个调度器scheduler-framework" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
   
+    <h1 class="article-title" itemprop="name">
+      从0到1开发一个调度器scheduler-framework
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2024/08/27/08/" class="article-date">
+	  <time datetime="2024-08-27T09:15:08.000Z" itemprop="datePublished">2024-08-27</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/kube-scheduler/">kube-scheduler</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/kube-scheduler/" rel="tag">kube-scheduler</a>, <a class="article-tag-link-link" href="/tags/scheduler-framework/" rel="tag">scheduler-framework</a>, <a class="article-tag-link-link" href="/tags/scheduler-plugins/" rel="tag">scheduler-plugins</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2024/08/27/08/#comments" class="article-comment-link">评论</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 283(字)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 1(分)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p>之前文章已经介绍了kube-scheduler四种扩展方式：</p>
+<p>一般来说，我们有 4 种扩展 Kubernetes 调度器的方法。</p>
+<ul>
+<li>default-scheduler recoding: 直接在Kubernetes默认scheduler基础上进行添加，然后重新编译kube-scheduler</li>
+<li>standalone: 实现一个与kube-scheduler平行的custom scheduler，单独或者和默认kube-scheduler一起运行在集群中，使用<code>.spec.scheduler.name</code>来区分使用哪一个调度器。</li>
+<li>scheduler extender: 实现一个”scheduler extender”，kube-scheduler会调用它(http/https)作为默认调度算法(预选&amp;优选&amp;bind)的补充，只支持在 Filter、Prioritize、Preempt 和 Bind 的扩展 </li>
+</ul>
+<ul>
+<li>scheduler framework: 实现scheduler framework plugins，重新编译kube-scheduler，类似于第一种方案，但是更加标准化，插件化</li>
+</ul>
+<p>default-scheduler recoding 以及 standalone方案都属于侵入式的方案，不太优雅；而 scheduler extender 以及 scheduler framework 属于非侵入式的方案，目前，比较推荐使用 scheduler-framework 和 scheduler-extender 两种方式。</p>
+<p>本篇文章主要介绍如何使用 scheduler-framework 框架，自定义开发一个调度器插件，官方建议基于 scheduler-plugins 项目基础上做开发。</p>
+<h1 id="项目设计"><a href="#项目设计" class="headerlink" title="项目设计"></a>项目设计</h1>
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="http://lizhewei91.github.io/2024/08/27/08/" title="从0到1开发一个调度器scheduler-framework" target="_blank" rel="external">http://lizhewei91.github.io/2024/08/27/08/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/lizhewei91" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/lizhewei91" target="_blank"><span class="text-dark">李哲伟</span><small class="ml-1x">Cloud Native Developer</small></a></h3>
+        <div>专注于云原生领域。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
   
     
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
     
-      
-      
-      <section class="panel panel-default b-no">
-        <div class="panel-heading" role="tab">
-          <h3 class="panel-title">
-            <a data-toggle="collapse" href="#collapse2022" aria-expanded="true">
-              <i class="icon icon-calendar-plus text-active"></i><i class="icon icon-calendar-minus text"></i>
-              2022
-            </a>
-            <!-- <a href="/archives/2022" class="archive-year">2022</a> -->
-          </h3>
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    
+    <li class="next">
+      <a href="/2024/08/23/13/" title="解析gpushare-scheduler-extender工作原理"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+    <li class="toggle-toc">
+      <a class="toggle-btn " data-toggle="collapse" href="#collapseToc" aria-expanded="false" title="文章目录" role="button">    <span>[&nbsp;</span><span>文章目录</span>
+        <i class="text-collapsed icon icon-anchor"></i>
+        <i class="text-in icon icon-close"></i>
+        <span>]</span>
+      </a>
+    </li>
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
         </div>
-        <div id="collapse2022" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="heading2022">
-        <div class="panel-body">
-          <div class="collection">
-    
-    
-<a href="/2022/11/29/16/" class="collection-item"   itemprop="url">
-  <time datetime="2022-11-29T02:53:16.000Z" itemprop="datePublished">2022-11-29</time>
-  <span>&nbsp;&nbsp;&nbsp;</span> 浅谈 k8s 中 device-plugins 机制
-</a>
+      </div>
+    </div>
+  </div>
+</div>
 
 
-  
-    
-    
-    
-<a href="/2022/11/28/56/" class="collection-item"   itemprop="url">
-  <time datetime="2022-11-28T12:28:56.000Z" itemprop="datePublished">2022-11-28</time>
-  <span>&nbsp;&nbsp;&nbsp;</span> 性能剖析大杀器 pprof
-</a>
 
-
-  
-  
-    </div></div></div></section>
-  
-
-	    </div>
-  	</article>
-  	 	
 </main>
 
   <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
@@ -322,6 +475,37 @@ window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
 
 
 
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
 
 
 
