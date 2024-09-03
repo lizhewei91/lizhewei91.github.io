@@ -32,8 +32,9 @@
 <meta property="og:image" content="http://lizhewei91.github.io/2024/08/22/26/1580560022481-4d4be6ad-8274-460b-a7cd-f0934ffd60f6.png">
 <meta property="og:image" content="http://lizhewei91.github.io/2024/08/22/26/extender-5329622.png">
 <meta property="og:image" content="http://lizhewei91.github.io/2024/08/22/26/image-20240903103644099.png">
+<meta property="og:image" content="http://lizhewei91.github.io/2024/08/22/26/image-20240903104025168.png">
 <meta property="article:published_time" content="2024-08-22T07:15:26.000Z">
-<meta property="article:modified_time" content="2024-09-03T02:36:52.552Z">
+<meta property="article:modified_time" content="2024-09-03T02:41:28.348Z">
 <meta property="article:author" content="lizhewei">
 <meta property="article:tag" content="kube-scheduler">
 <meta property="article:tag" content="scheduler-extender">
@@ -457,6 +458,8 @@
 <p>查看 scheduler-extender log日志</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">[root@192 ~]# kubectl logs scheduler-extender-demo-5574987477-bf5td -n kube-system -f</span><br><span class="line">I0903 01:43:32.655904       1 route.go:41] FilterName: customFilter, ExtenderFilterResult: &#123;&quot;Nodes&quot;:null,&quot;NodeNames&quot;:[&quot;192.168.0.253&quot;,&quot;192.168.0.232&quot;],&quot;FailedNodes&quot;:null,&quot;FailedAndUnresolvableNodes&quot;:null,&quot;Error&quot;:&quot;&quot;&#125;</span><br><span class="line">I0903 01:43:32.657058       1 prioritize.go:43] pod: nginx-pod/default is lucky, get score: 4</span><br><span class="line">I0903 01:43:32.657067       1 prioritize.go:43] pod: nginx-pod/default is lucky, get score: 6</span><br><span class="line">I0903 01:43:32.657098       1 route.go:69] prioritizeName: customPrioritize, ExtenderPrioritizeResult: [&#123;&quot;Host&quot;:&quot;192.168.0.253&quot;,&quot;Score&quot;:4&#125;,&#123;&quot;Host&quot;:&quot;192.168.0.232&quot;,&quot;Score&quot;:6&#125;]</span><br></pre></td></tr></table></figure>
 
+<p>Pod 也调度到 192.168.0.232 这个得分较高的节点</p>
+<img src="/2024/08/22/26/image-20240903104025168.png" class="" title="image-20240903104025168">
 
       
     </div>

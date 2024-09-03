@@ -63,11 +63,11 @@ http://lizhewei91.github.io/tags/nexus/
 http://lizhewei91.github.io/tags/docker-repositories/
 http://lizhewei91.github.io/tags/nvidia/
 http://lizhewei91.github.io/tags/scheduler-plugins/
+http://lizhewei91.github.io/tags/kubebuilder/
 http://lizhewei91.github.io/tags/operator/
 http://lizhewei91.github.io/tags/code-generator/
-http://lizhewei91.github.io/tags/kubebuilder/
-http://lizhewei91.github.io/tags/NUMA/
 http://lizhewei91.github.io/tags/k8s-swagger-ui/
+http://lizhewei91.github.io/tags/NUMA/
 http://lizhewei91.github.io/tags/webhook/
 http://lizhewei91.github.io/tags/gpushare/
 http://lizhewei91.github.io/categories/gin/
@@ -83,6 +83,6 @@ http://lizhewei91.github.io/categories/kubectl-%E6%8F%92%E4%BB%B6/
 http://lizhewei91.github.io/categories/kubelet/
 http://lizhewei91.github.io/categories/nexus/
 http://lizhewei91.github.io/categories/operator/
-http://lizhewei91.github.io/categories/NUMA/
 http://lizhewei91.github.io/categories/k8s-swagger-ui/
+http://lizhewei91.github.io/categories/NUMA/
 http://lizhewei91.github.io/categories/webhook/

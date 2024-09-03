@@ -2014,6 +2014,163 @@
       </tags>
   </entry>
   <entry>
+    <title>使用 kubebuilder 开发一个 operator 应用</title>
+    <url>/2023/09/01/10/</url>
+    <content><![CDATA[<h1 id="Kubebuilder-介绍"><a href="#Kubebuilder-介绍" class="headerlink" title="Kubebuilder 介绍"></a>Kubebuilder 介绍</h1><p><a href="https://github.com/kubernetes-sigs/kubebuilder">Kubebuilder</a> 是一个使用 CRDs 构建 K8s API 的 SDK，主要是：</p>
+<ul>
+<li>提供脚手架工具初始化 CRDs 工程，自动生成 boilerplate 代码和配置；</li>
+<li>提供代码库封装底层的 K8s go-client；</li>
+</ul>
+<p>方便用户从零开始开发 CRDs，Controllers 和 Admission Webhooks 来扩展 K8s。</p>
+<p>本文主要基于 <strong>kubebuilder v3.11.1</strong>，从零开发一个 operator 应用。</p>
+<h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><ul>
+<li><a href="https://golang.org/dl/">go</a> version v1.20.0+</li>
+<li><a href="https://docs.docker.com/install/">docker</a> version 17.03+.</li>
+<li><a href="https://kubernetes.io/docs/tasks/tools/install-kubectl/">kubectl</a> version v1.11.3+.</li>
+<li>能够访问 Kubernetes v1.11.3+ 集群.</li>
+</ul>
+<p><strong>安装kubebuilder</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">os=$(go env GOOS)</span><br><span class="line">arch=$(go env GOARCH)</span><br><span class="line"></span><br><span class="line">curl -L -o kubebuilder https://go.kubebuilder.io/dl/3.11.1/$&#123;os&#125;/$&#123;arch&#125;</span><br><span class="line">chmod +x kubebuilder &amp;&amp; mv kubebuilder /usr/local/bin/</span><br></pre></td></tr></table></figure>
+
+<h2 id="项目示例"><a href="#项目示例" class="headerlink" title="项目示例"></a>项目示例</h2><h3 id="初始化项目"><a href="#初始化项目" class="headerlink" title="初始化项目"></a>初始化项目</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mkdir -p /go/src/kubebuilder-project</span><br><span class="line">cd /go/src/kubebuilder-project</span><br><span class="line">kubebuilder init --domain chinaunicom.cn --repo=kubebuilder-project</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>–domain: 设定域名，一般设定为公司域名</p>
+<p>–repo: 如果您的项目在GOPATH中初始化，则隐式调用go mod init将为您插入模块路径。否则必须设置–repo=&lt;模块路径&gt;。</p>
+</blockquote>
+<h3 id="创建-API-和-Controller"><a href="#创建-API-和-Controller" class="headerlink" title="创建 API 和 Controller"></a>创建 API 和 Controller</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubebuilder create api --group extensions --version v1 --kind UnitedDeployment --namespaced true</span><br><span class="line">// 实际上不仅会创建 API，也就是 CRD，还会生成 Controller 的框架</span><br><span class="line"></span><br><span class="line">Create Resource [y/n]</span><br><span class="line">y</span><br><span class="line">Create Controller [y/n]</span><br><span class="line">y</span><br></pre></td></tr></table></figure>
+
+<p><strong>参数解读</strong>：</p>
+<ul>
+<li>group:  表示该CRD 的 Group组前缀，group=<group>.<domain>, 则该CRD生成的 group=extensions.chinaunicom.cn</li>
+</ul>
+<ul>
+<li>version 一般分三种，按社区标准：<ul>
+<li>v1alpha1: 此 api 不稳定，CRD 可能废弃、字段可能随时调整，不要依赖；</li>
+<li>v1beta1: api 已稳定，会保证向后兼容，特性可能会调整；</li>
+<li>v1: api 和特性都已稳定；</li>
+</ul>
+</li>
+<li>kind: 此 CRD 的类型，使用大驼峰单数形式；</li>
+<li>namespaced: 此 CRD 是k8s集群级别资源，还是 namespace隔离的</li>
+</ul>
+<h3 id="创建-webhook（可选）"><a href="#创建-webhook（可选）" class="headerlink" title="创建 webhook（可选）"></a>创建 webhook（可选）</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">// 创建UnitedSet的 MutatingAdmissionWebhook 和 ValidatingAdmissionWebhook</span><br><span class="line">kubebuilder create webhook --group extensions --version v1 --kind UnitedDeployment --defaulting --programmatic-validation</span><br></pre></td></tr></table></figure>
+
+<p><strong>参数解读</strong>：</p>
+<ul>
+<li>defaulting: 创建 MutatingAdmissionWebhook</li>
+<li>programmatic-validation: 创建 ValidatingAdmissionWebhook</li>
+</ul>
+<p>至此，kubebuilder 脚手架搭建的 operator 框架已经完成，下面看一下项目结构：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">[root@localhost kubebuilder-project]# tree</span><br><span class="line">.</span><br><span class="line">|-- Dockerfile</span><br><span class="line">|-- Makefile</span><br><span class="line">|-- PROJECT</span><br><span class="line">|-- README.md</span><br><span class="line">|-- api</span><br><span class="line">|   `-- v1</span><br><span class="line">|       |-- groupversion_info.go</span><br><span class="line">|       |-- uniteddeployment_types.go</span><br><span class="line">|       |-- uniteddeployment_webhook.go</span><br><span class="line">|       |-- webhook_suite_test.go</span><br><span class="line">|       `-- zz_generated.deepcopy.go</span><br><span class="line">|-- bin</span><br><span class="line">|   `-- controller-gen</span><br><span class="line">|-- cmd</span><br><span class="line">|   `-- main.go</span><br><span class="line">|-- config</span><br><span class="line">|   |-- certmanager</span><br><span class="line">|   |   |-- certificate.yaml</span><br><span class="line">|   |   |-- kustomization.yaml</span><br><span class="line">|   |   `-- kustomizeconfig.yaml</span><br><span class="line">|   |-- crd</span><br><span class="line">|   |   |-- kustomization.yaml</span><br><span class="line">|   |   |-- kustomizeconfig.yaml</span><br><span class="line">|   |   `-- patches</span><br><span class="line">|   |       |-- cainjection_in_uniteddeployments.yaml</span><br><span class="line">|   |       `-- webhook_in_uniteddeployments.yaml</span><br><span class="line">|   |-- default</span><br><span class="line">|   |   |-- kustomization.yaml</span><br><span class="line">|   |   |-- manager_auth_proxy_patch.yaml</span><br><span class="line">|   |   |-- manager_config_patch.yaml</span><br><span class="line">|   |   |-- manager_webhook_patch.yaml</span><br><span class="line">|   |   `-- webhookcainjection_patch.yaml</span><br><span class="line">|   |-- manager</span><br><span class="line">|   |   |-- kustomization.yaml</span><br><span class="line">|   |   `-- manager.yaml</span><br><span class="line">|   |-- prometheus</span><br><span class="line">|   |   |-- kustomization.yaml</span><br><span class="line">|   |   `-- monitor.yaml</span><br><span class="line">|   |-- rbac</span><br><span class="line">|   |   |-- auth_proxy_client_clusterrole.yaml</span><br><span class="line">|   |   |-- auth_proxy_role.yaml</span><br><span class="line">|   |   |-- auth_proxy_role_binding.yaml</span><br><span class="line">|   |   |-- auth_proxy_service.yaml</span><br><span class="line">|   |   |-- kustomization.yaml</span><br><span class="line">|   |   |-- leader_election_role.yaml</span><br><span class="line">|   |   |-- leader_election_role_binding.yaml</span><br><span class="line">|   |   |-- role_binding.yaml</span><br><span class="line">|   |   |-- service_account.yaml</span><br><span class="line">|   |   |-- uniteddeployment_editor_role.yaml</span><br><span class="line">|   |   `-- uniteddeployment_viewer_role.yaml</span><br><span class="line">|   |-- samples</span><br><span class="line">|   |   |-- extensions_v1_uniteddeployment.yaml</span><br><span class="line">|   |   `-- kustomization.yaml</span><br><span class="line">|   `-- webhook</span><br><span class="line">|       |-- kustomization.yaml</span><br><span class="line">|       |-- kustomizeconfig.yaml</span><br><span class="line">|       `-- service.yaml</span><br><span class="line">|-- go.mod</span><br><span class="line">|-- go.sum</span><br><span class="line">|-- hack</span><br><span class="line">|   `-- boilerplate.go.txt</span><br><span class="line">`-- internal</span><br><span class="line">    `-- controller</span><br><span class="line">        |-- suite_test.go</span><br><span class="line">        `-- uniteddeployment_controller.go</span><br></pre></td></tr></table></figure>
+
+<h3 id="定义-CRD-字段"><a href="#定义-CRD-字段" class="headerlink" title="定义 CRD 字段"></a>定义 CRD 字段</h3><p>自定义 UnitedDeploymentSpec 字段</p>
+<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> UnitedDeploymentSpec <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster</span></span><br><span class="line">	<span class="comment">// Important: Run &quot;make&quot; to regenerate code after modifying this file</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// Foo is an example field of UnitedDeployment. Edit uniteddeployment_types.go to remove/update</span></span><br><span class="line">	DeploymentName <span class="type">string</span> <span class="string">`json:&quot;deploymentName&quot;`</span></span><br><span class="line">	Replicas       *<span class="type">int32</span> <span class="string">`json:&quot;replicas&quot;`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>自定义 UnitedDeploymentStatus 字段</p>
+<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> UnitedDeploymentStatus <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster</span></span><br><span class="line">	<span class="comment">// Important: Run &quot;make&quot; to regenerate code after modifying this file</span></span><br><span class="line">	AvailableReplicas *<span class="type">int32</span> <span class="string">`json:&quot;availableReplicas&quot;`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>注意：</strong></p>
+<p>如果修改了 <code>apis/v1/uniteddeployment_types.go</code> ，需要执行以下命令来更新代码和manifests：</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">make &amp;&amp; make manifests</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用-code-generator"><a href="#使用-code-generator" class="headerlink" title="使用 code-generator"></a>使用 code-generator</h3><h4 id="更新依赖版本"><a href="#更新依赖版本" class="headerlink" title="更新依赖版本"></a>更新依赖版本</h4><p>初始化项目后的go.mod：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">module kubebuilder-project</span><br><span class="line"></span><br><span class="line">go 1.21</span><br><span class="line"></span><br><span class="line">require (</span><br><span class="line">        github.com/onsi/ginkgo/v2 v2.9.5</span><br><span class="line">        github.com/onsi/gomega v1.27.7</span><br><span class="line">        k8s.io/api v0.27.2</span><br><span class="line">        k8s.io/apimachinery v0.27.2</span><br><span class="line">        k8s.io/client-go v0.27.2</span><br><span class="line">        sigs.k8s.io/controller-runtime v0.15.0</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p>需要将初始化的k8s库更新到要使用的版本，如：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">K8S_VERSION=v0.28.0</span><br><span class="line">go get k8s.io/api@<span class="variable">$K8S_VERSION</span></span><br><span class="line">go get k8s.io/client-go@<span class="variable">$K8S_VERSION</span></span><br><span class="line">go get k8s.io/apimachinery@<span class="variable">$K8S_VERSION</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="安装-code-generator"><a href="#安装-code-generator" class="headerlink" title="安装 code-generator"></a>安装 code-generator</h4><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">K8S_VERSION=v0.28.0</span><br><span class="line">go get k8s.io/code-generator@<span class="variable">$K8S_VERSION</span></span><br><span class="line">go mod vendor</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>注意：</strong></p>
+<ul>
+<li>code-generator 包版本, 需要与 kubernetes 相关包版本，保持一致</li>
+<li>需要将依赖复制到 vendor 中</li>
+</ul>
+</blockquote>
+<h4 id="创建-amp-amp-修改所需文件"><a href="#创建-amp-amp-修改所需文件" class="headerlink" title="创建 &amp;&amp; 修改所需文件"></a>创建 &amp;&amp; 修改所需文件</h4><p>需要在api目录下创建code-generator所需的文件，并添加相关注释。</p>
+<ul>
+<li><p>新增 <code>api/v1/doc.go</code></p>
+<p><strong>注意：</strong>修改groupName，package与api的version保持一致。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// +groupName=extensions.chinaunicom.cn</span></span><br><span class="line"><span class="keyword">package</span> v1</span><br></pre></td></tr></table></figure></li>
+<li><p>新增 <code>api/v1/register.go</code></p>
+<p><strong>注意：</strong>package与api的version保持一致。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> v1</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;k8s.io/apimachinery/pkg/runtime/schema&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// SchemeGroupVersion is group version used to register these objects.</span></span><br><span class="line"><span class="keyword">var</span> SchemeGroupVersion = GroupVersion</span><br><span class="line"></span><br><span class="line"><span class="comment">// Resource takes an unqualified resource and returns a Group qualified GroupResource</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Resource</span><span class="params">(resource <span class="type">string</span>)</span></span> schema.GroupResource &#123;</span><br><span class="line">    <span class="keyword">return</span> SchemeGroupVersion.WithResource(resource).GroupResource()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>修改 <code>api/v1/&#123;crd&#125;_types.go</code> 文件，添加注释 <code>// +genclient</code></p>
+<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="comment">//+genclient</span></span><br><span class="line"><span class="comment">//+kubebuilder:object:root=true</span></span><br><span class="line"><span class="comment">//+kubebuilder:subresource:status</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// UnitedDeployment is the Schema for the uniteddeployments API</span></span><br><span class="line"><span class="keyword">type</span> UnitedDeployment <span class="keyword">struct</span> &#123;</span><br><span class="line">	metav1.TypeMeta   <span class="string">`json:&quot;,inline&quot;`</span></span><br><span class="line">	metav1.ObjectMeta <span class="string">`json:&quot;metadata,omitempty&quot;`</span></span><br><span class="line"></span><br><span class="line">	Spec   UnitedDeploymentSpec   <span class="string">`json:&quot;spec,omitempty&quot;`</span></span><br><span class="line">	Status UnitedDeploymentStatus <span class="string">`json:&quot;status,omitempty&quot;`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h4 id="准备-hack-脚本"><a href="#准备-hack-脚本" class="headerlink" title="准备 hack 脚本"></a>准备 hack 脚本</h4><p>在项目 <code>hack</code> 目录下准备以下文件：</p>
+<ul>
+<li>新建 <code>hack/tools.go</code> 文件导入 code-generator 包</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="comment">//go:build tools</span></span><br><span class="line"><span class="comment">// +build tools</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// This package imports things required by build scripts, to force `go mod` to see them as dependencies</span></span><br><span class="line"><span class="keyword">package</span> tools</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> _ <span class="string">&quot;k8s.io/code-generator&quot;</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>新建 <code>hack/update-codegen.sh</code>，根据项目修改相应的变量</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/usr/bin/env bash</span></span><br><span class="line"></span><br><span class="line">set -o errexit</span><br><span class="line">set -o nounset</span><br><span class="line">set -o pipefail</span><br><span class="line"></span><br><span class="line">SCRIPT_ROOT=$(dirname &quot;$&#123;BASH_SOURCE[0]&#125;&quot;)/..</span><br><span class="line">CODEGEN_PKG=$&#123;CODEGEN_PKG:-$(cd &quot;$&#123;SCRIPT_ROOT&#125;&quot;; ls -d -1 ./vendor/k8s.io/code-generator 2&gt;/dev/null || echo ../code-generator)&#125;</span><br><span class="line"></span><br><span class="line">source &quot;$&#123;CODEGEN_PKG&#125;/kube_codegen.sh&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">generate the code with:</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">--output-base    because this script should also be able to run inside the vendor <span class="built_in">dir</span> of</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">                 k8s.io/kubernetes. The output-base is needed <span class="keyword">for</span> the generators to output into the vendor <span class="built_in">dir</span></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">                 instead of the <span class="variable">$GOPATH</span> directly. For normal projects this can be dropped.</span></span><br><span class="line"></span><br><span class="line">kube::codegen::gen_helpers \</span><br><span class="line">    --input-pkg-root kubebuilder-project/apis \</span><br><span class="line">    --output-base &quot;$(dirname &quot;$&#123;BASH_SOURCE[0]&#125;&quot;)/../..&quot; \</span><br><span class="line">    --boilerplate &quot;$&#123;SCRIPT_ROOT&#125;/hack/custom-boilerplate.go.txt&quot;</span><br><span class="line"></span><br><span class="line">kube::codegen::gen_client \</span><br><span class="line">    --with-watch \</span><br><span class="line">    --input-pkg-root kubebuilder-project/apis \</span><br><span class="line">    --output-pkg-root kubebuilder-project/pkg/generated \</span><br><span class="line">    --output-base &quot;$(dirname &quot;$&#123;BASH_SOURCE[0]&#125;&quot;)/../..&quot; \</span><br><span class="line">    --boilerplate &quot;$&#123;SCRIPT_ROOT&#125;/hack/custom-boilerplate.go.txt&quot;</span><br></pre></td></tr></table></figure>
+
+<p>hack 目录下，新建 verify-codegen.sh </p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/usr/bin/env bash</span></span><br><span class="line"></span><br><span class="line">set -o errexit</span><br><span class="line">set -o nounset</span><br><span class="line">set -o pipefail</span><br><span class="line"></span><br><span class="line">SCRIPT_ROOT=&quot;$(cd &quot;$(dirname &quot;$&#123;BASH_SOURCE[0]&#125;&quot;)/..&quot; &amp;&amp; pwd -P)&quot;</span><br><span class="line">DIFFROOT=&quot;$&#123;SCRIPT_ROOT&#125;/pkg&quot;</span><br><span class="line">TMP_DIFFROOT=&quot;$(mktemp -d -t &quot;$(basename &quot;$0&quot;).XXXXXX&quot;)/pkg&quot;</span><br><span class="line"></span><br><span class="line">cleanup() &#123;</span><br><span class="line">  rm -rf &quot;$&#123;TMP_DIFFROOT&#125;&quot;</span><br><span class="line">&#125;</span><br><span class="line">trap &quot;cleanup&quot; EXIT SIGINT</span><br><span class="line"></span><br><span class="line">cleanup</span><br><span class="line"></span><br><span class="line">mkdir -p &quot;$&#123;TMP_DIFFROOT&#125;&quot;</span><br><span class="line">cp -a &quot;$&#123;DIFFROOT&#125;&quot;/* &quot;$&#123;TMP_DIFFROOT&#125;&quot;</span><br><span class="line"></span><br><span class="line">&quot;$&#123;SCRIPT_ROOT&#125;/hack/update-codegen.sh&quot;</span><br><span class="line">echo &quot;diffing $&#123;DIFFROOT&#125; against freshly generated codegen&quot;</span><br><span class="line">ret=0</span><br><span class="line">diff -Naupr &quot;$&#123;DIFFROOT&#125;&quot; &quot;$&#123;TMP_DIFFROOT&#125;&quot; || ret=$?</span><br><span class="line">if [[ $ret -eq 0 ]]; then</span><br><span class="line">  echo &quot;$&#123;DIFFROOT&#125; up to date.&quot;</span><br><span class="line">else</span><br><span class="line">  echo &quot;$&#123;DIFFROOT&#125; is out of date. Please run hack/update-codegen.sh&quot;</span><br><span class="line">  exit 1</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
+
+<p>hack目录脚本文件，可以参考，<a href="https://github.com/kubernetes/sample-controller/tree/v0.28.0/hack">sample-controller/hack</a> 项目</p>
+<h4 id="生成代码"><a href="#生成代码" class="headerlink" title="生成代码"></a>生成代码</h4><p><strong>注意</strong>：kubebuilder v3.11.1 版本生成的 api 目录结构, code-generator无法直接使用(将 api 由 <code>api/$&#123;VERSION&#125;</code> 移动至 <code>apis/$&#123;GROUP&#125;/$&#123;VERSION&#125;</code> 即可)</p>
+<p>修改 <code>Makefile</code> ，添加生成命令</p>
+<figure class="highlight makefile"><table><tr><td class="code"><pre><span class="line"><span class="meta"><span class="keyword">.PHONY</span>: update-codegen</span></span><br><span class="line"><span class="section">update-codegen:</span></span><br><span class="line">	chmod +x ./hack/update-codegen.sh</span><br><span class="line">	./hack/update-codegen.sh</span><br></pre></td></tr></table></figure>
+
+<p>项目根目录下执行<code>make update-codegen </code>即可，将生成如下代码结构：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">[root@localhost kubebuilder-project]# tree -L 4</span><br><span class="line">.</span><br><span class="line">|-- apis</span><br><span class="line">|   `-- extensions</span><br><span class="line">|       `-- v1</span><br><span class="line">|           |-- doc.go</span><br><span class="line">|           |-- groupversion_info.go</span><br><span class="line">|           |-- register.go</span><br><span class="line">|           |-- types.go</span><br><span class="line">|           |-- uniteddeployment_webhook.go</span><br><span class="line">|           |-- webhook_suite_test.go</span><br><span class="line">|           `-- zz_generated.deepcopy.go</span><br><span class="line">`-- pkg</span><br><span class="line">    `-- generated</span><br><span class="line">        |-- clientset</span><br><span class="line">        |   `-- versioned</span><br><span class="line">        |-- informers</span><br><span class="line">        |   `-- externalversions</span><br><span class="line">        `-- listers</span><br><span class="line">            `-- extensions</span><br></pre></td></tr></table></figure>
+
+<p>这里有一个坑，需要把 <code>apis/extensions/v1</code>目录下，<code>unitddeployment_type.go  </code>修改为 <code>type.go</code>,否则执行命令后，无法生成代码。</p>
+<h3 id="本地调试运行"><a href="#本地调试运行" class="headerlink" title="本地调试运行"></a>本地调试运行</h3><h4 id="CRD安装"><a href="#CRD安装" class="headerlink" title="CRD安装"></a>CRD安装</h4><p>第一种方式：</p>
+<p>在本地机器执行，make install，在 <code>config/crd/bases</code> 目录生成 crd.yaml，拷贝至 k8s 集群机器，执行</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl create -f extensions.chinaunicom.cn_uniteddeployments.yaml</span></span><br></pre></td></tr></table></figure>
+
+<p>第二种方式:<br>将代码拷贝至k8s集群机器</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">make install    // 先生成 config/crd/bases 文件，里面包含 crd 的YAML文件，然后kubectl apply</span></span><br></pre></td></tr></table></figure>
+
+<p>然后我们就可以看到创建的 CRD 了</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get crd |grep united</span></span><br><span class="line">uniteddeployments.extensions.chinaunicom.cn           2023-09-05T02:15:40Z</span><br></pre></td></tr></table></figure>
+
+<p>创建一个 uniteddeployment 资源</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> kubebuilder-project/config/samples</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl apply -f extensions_v1_uniteddeployment.yaml</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get uniteddeployments.extensions.chinaunicom.cn</span></span><br><span class="line">NAME                      AGE</span><br><span class="line">uniteddeployment-sample   103s</span><br></pre></td></tr></table></figure>
+
+<p>看一眼 yaml 文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+
+
+
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>至此，通过使用 kubebuilder 与 code-generator 一个完整的 operator 开发框架就搭建好了，剩下的工作就主要是写 controller 与webhook 的业务逻辑。 </p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
+<li><p>kuberbuilder: <a href="https://github.com/kubernetes-sigs/kubebuilder/tree/v3.11.1">https://github.com/kubernetes-sigs/kubebuilder/tree/v3.11.1</a></p>
+</li>
+<li><p>code-generator: <a href="https://github.com/kubernetes/code-generator/tree/v0.28.0">https://github.com/kubernetes/code-generator/tree/v0.28.0</a></p>
+</li>
+<li><p>sample-controller: <a href="https://github.com/kubernetes/sample-controller/tree/v0.28.0">https://github.com/kubernetes/sample-controller/tree/v0.28.0</a></p>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>operator</category>
+      </categories>
+      <tags>
+        <tag>kubebuilder</tag>
+        <tag>operator</tag>
+        <tag>code-generator</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>从零到1开发一个operator</title>
     <url>/2023/07/21/00/</url>
     <content><![CDATA[<h1 id="什么是-operator-？"><a href="#什么是-operator-？" class="headerlink" title="什么是 operator ？"></a>什么是 operator ？</h1><p>operator 是一种 kubernetes 的扩展形式，利用自定义资源对象（Custom Resource）来管理应用和组件，允许用户以 Kubernetes 的声明式 API 风格来管理应用及服务。</p>
@@ -2184,176 +2341,38 @@
       </tags>
   </entry>
   <entry>
-    <title>使用 kubebuilder 开发一个 operator 应用</title>
-    <url>/2023/09/01/10/</url>
-    <content><![CDATA[<h1 id="Kubebuilder-介绍"><a href="#Kubebuilder-介绍" class="headerlink" title="Kubebuilder 介绍"></a>Kubebuilder 介绍</h1><p><a href="https://github.com/kubernetes-sigs/kubebuilder">Kubebuilder</a> 是一个使用 CRDs 构建 K8s API 的 SDK，主要是：</p>
-<ul>
-<li>提供脚手架工具初始化 CRDs 工程，自动生成 boilerplate 代码和配置；</li>
-<li>提供代码库封装底层的 K8s go-client；</li>
-</ul>
-<p>方便用户从零开始开发 CRDs，Controllers 和 Admission Webhooks 来扩展 K8s。</p>
-<p>本文主要基于 <strong>kubebuilder v3.11.1</strong>，从零开发一个 operator 应用。</p>
-<h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><ul>
-<li><a href="https://golang.org/dl/">go</a> version v1.20.0+</li>
-<li><a href="https://docs.docker.com/install/">docker</a> version 17.03+.</li>
-<li><a href="https://kubernetes.io/docs/tasks/tools/install-kubectl/">kubectl</a> version v1.11.3+.</li>
-<li>能够访问 Kubernetes v1.11.3+ 集群.</li>
-</ul>
-<p><strong>安装kubebuilder</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">os=$(go env GOOS)</span><br><span class="line">arch=$(go env GOARCH)</span><br><span class="line"></span><br><span class="line">curl -L -o kubebuilder https://go.kubebuilder.io/dl/3.11.1/$&#123;os&#125;/$&#123;arch&#125;</span><br><span class="line">chmod +x kubebuilder &amp;&amp; mv kubebuilder /usr/local/bin/</span><br></pre></td></tr></table></figure>
+    <title>使用swagger-ui可视化Kubernetes-API文档</title>
+    <url>/2023/08/25/41/</url>
+    <content><![CDATA[<p>在工作中，你可能需要基于 Kubernetes 提供的 API 进行开发，比如开发适合自己的控制台，Kubernetes 官方提供的 API 文档，有两个问题：</p>
+<ol>
+<li>非常的不直观，这个问题其实还好，自己克服一下也不是大问题</li>
+<li>只有 K8S api-server 的接口，这个就难办了，假如有新的 CRD 资源，比如 kubevirt ，又要去找 kubevirt 的 api 文档，关键是找不着</li>
+</ol>
+<h2 id="如何部署-swagger-ui"><a href="#如何部署-swagger-ui" class="headerlink" title="如何部署 swagger-ui"></a>如何部署 swagger-ui</h2><p>打开两个 ssh 连接到你的 K8S 集群中。</p>
+<p>进入第一个窗口，执行如下命令建立一个反向代理</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl proxy --port=8080</span><br></pre></td></tr></table></figure>
 
-<h2 id="项目示例"><a href="#项目示例" class="headerlink" title="项目示例"></a>项目示例</h2><h3 id="初始化项目"><a href="#初始化项目" class="headerlink" title="初始化项目"></a>初始化项目</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mkdir -p /go/src/kubebuilder-project</span><br><span class="line">cd /go/src/kubebuilder-project</span><br><span class="line">kubebuilder init --domain chinaunicom.cn --repo=kubebuilder-project</span><br></pre></td></tr></table></figure>
+<p>进入第二个窗口，执行如下命令建立获取 k8s的 api 文档信息，输出到一个 <code>k8s-swagger.json</code> 文件中</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl localhost:8080/openapi/v2 &gt; k8s-swagger.json</span><br></pre></td></tr></table></figure>
 
-<blockquote>
-<p>–domain: 设定域名，一般设定为公司域名</p>
-<p>–repo: 如果您的项目在GOPATH中初始化，则隐式调用go mod init将为您插入模块路径。否则必须设置–repo=&lt;模块路径&gt;。</p>
-</blockquote>
-<h3 id="创建-API-和-Controller"><a href="#创建-API-和-Controller" class="headerlink" title="创建 API 和 Controller"></a>创建 API 和 Controller</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubebuilder create api --group extensions --version v1 --kind UnitedDeployment --namespaced true</span><br><span class="line">// 实际上不仅会创建 API，也就是 CRD，还会生成 Controller 的框架</span><br><span class="line"></span><br><span class="line">Create Resource [y/n]</span><br><span class="line">y</span><br><span class="line">Create Controller [y/n]</span><br><span class="line">y</span><br></pre></td></tr></table></figure>
+<p>获取到后，第一个窗口就可以关闭了。</p>
+<p>然后任选一个窗口，执行如下命令运行一个容器</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">docker run \</span><br><span class="line">    --rm \</span><br><span class="line">    -d \</span><br><span class="line">    -p 80:8080 \</span><br><span class="line">    -e SWAGGER_JSON=/k8s-swagger.json \</span><br><span class="line">    -v $(pwd)/k8s-swagger.json:/k8s-swagger.json \</span><br><span class="line">    swaggerapi/swagger-ui</span><br></pre></td></tr></table></figure>
 
-<p><strong>参数解读</strong>：</p>
-<ul>
-<li>group:  表示该CRD 的 Group组前缀，group=<group>.<domain>, 则该CRD生成的 group=extensions.chinaunicom.cn</li>
-</ul>
-<ul>
-<li>version 一般分三种，按社区标准：<ul>
-<li>v1alpha1: 此 api 不稳定，CRD 可能废弃、字段可能随时调整，不要依赖；</li>
-<li>v1beta1: api 已稳定，会保证向后兼容，特性可能会调整；</li>
-<li>v1: api 和特性都已稳定；</li>
-</ul>
-</li>
-<li>kind: 此 CRD 的类型，使用大驼峰单数形式；</li>
-<li>namespaced: 此 CRD 是k8s集群级别资源，还是 namespace隔离的</li>
-</ul>
-<h3 id="创建-webhook（可选）"><a href="#创建-webhook（可选）" class="headerlink" title="创建 webhook（可选）"></a>创建 webhook（可选）</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">// 创建UnitedSet的 MutatingAdmissionWebhook 和 ValidatingAdmissionWebhook</span><br><span class="line">kubebuilder create webhook --group extensions --version v1 --kind UnitedDeployment --defaulting --programmatic-validation</span><br></pre></td></tr></table></figure>
+<h2 id="使用-swagger-ui"><a href="#使用-swagger-ui" class="headerlink" title="使用 swagger-ui"></a>使用 swagger-ui</h2><p>此时，你在浏览器上输入 <code>http://ip</code> 就可以看到一个经过可视化的 api 文档界面，其中包括安装在集群上的所有自定义资源的模型和路径！</p>
+<img src="/2023/08/25/41/50a5136b19764f23861be47fcaf4758d~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp" class="" title="img">
 
-<p><strong>参数解读</strong>：</p>
-<ul>
-<li>defaulting: 创建 MutatingAdmissionWebhook</li>
-<li>programmatic-validation: 创建 ValidatingAdmissionWebhook</li>
-</ul>
-<p>至此，kubebuilder 脚手架搭建的 operator 框架已经完成，下面看一下项目结构：</p>
-<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">[root@localhost kubebuilder-project]# tree</span><br><span class="line">.</span><br><span class="line">|-- Dockerfile</span><br><span class="line">|-- Makefile</span><br><span class="line">|-- PROJECT</span><br><span class="line">|-- README.md</span><br><span class="line">|-- api</span><br><span class="line">|   `-- v1</span><br><span class="line">|       |-- groupversion_info.go</span><br><span class="line">|       |-- uniteddeployment_types.go</span><br><span class="line">|       |-- uniteddeployment_webhook.go</span><br><span class="line">|       |-- webhook_suite_test.go</span><br><span class="line">|       `-- zz_generated.deepcopy.go</span><br><span class="line">|-- bin</span><br><span class="line">|   `-- controller-gen</span><br><span class="line">|-- cmd</span><br><span class="line">|   `-- main.go</span><br><span class="line">|-- config</span><br><span class="line">|   |-- certmanager</span><br><span class="line">|   |   |-- certificate.yaml</span><br><span class="line">|   |   |-- kustomization.yaml</span><br><span class="line">|   |   `-- kustomizeconfig.yaml</span><br><span class="line">|   |-- crd</span><br><span class="line">|   |   |-- kustomization.yaml</span><br><span class="line">|   |   |-- kustomizeconfig.yaml</span><br><span class="line">|   |   `-- patches</span><br><span class="line">|   |       |-- cainjection_in_uniteddeployments.yaml</span><br><span class="line">|   |       `-- webhook_in_uniteddeployments.yaml</span><br><span class="line">|   |-- default</span><br><span class="line">|   |   |-- kustomization.yaml</span><br><span class="line">|   |   |-- manager_auth_proxy_patch.yaml</span><br><span class="line">|   |   |-- manager_config_patch.yaml</span><br><span class="line">|   |   |-- manager_webhook_patch.yaml</span><br><span class="line">|   |   `-- webhookcainjection_patch.yaml</span><br><span class="line">|   |-- manager</span><br><span class="line">|   |   |-- kustomization.yaml</span><br><span class="line">|   |   `-- manager.yaml</span><br><span class="line">|   |-- prometheus</span><br><span class="line">|   |   |-- kustomization.yaml</span><br><span class="line">|   |   `-- monitor.yaml</span><br><span class="line">|   |-- rbac</span><br><span class="line">|   |   |-- auth_proxy_client_clusterrole.yaml</span><br><span class="line">|   |   |-- auth_proxy_role.yaml</span><br><span class="line">|   |   |-- auth_proxy_role_binding.yaml</span><br><span class="line">|   |   |-- auth_proxy_service.yaml</span><br><span class="line">|   |   |-- kustomization.yaml</span><br><span class="line">|   |   |-- leader_election_role.yaml</span><br><span class="line">|   |   |-- leader_election_role_binding.yaml</span><br><span class="line">|   |   |-- role_binding.yaml</span><br><span class="line">|   |   |-- service_account.yaml</span><br><span class="line">|   |   |-- uniteddeployment_editor_role.yaml</span><br><span class="line">|   |   `-- uniteddeployment_viewer_role.yaml</span><br><span class="line">|   |-- samples</span><br><span class="line">|   |   |-- extensions_v1_uniteddeployment.yaml</span><br><span class="line">|   |   `-- kustomization.yaml</span><br><span class="line">|   `-- webhook</span><br><span class="line">|       |-- kustomization.yaml</span><br><span class="line">|       |-- kustomizeconfig.yaml</span><br><span class="line">|       `-- service.yaml</span><br><span class="line">|-- go.mod</span><br><span class="line">|-- go.sum</span><br><span class="line">|-- hack</span><br><span class="line">|   `-- boilerplate.go.txt</span><br><span class="line">`-- internal</span><br><span class="line">    `-- controller</span><br><span class="line">        |-- suite_test.go</span><br><span class="line">        `-- uniteddeployment_controller.go</span><br></pre></td></tr></table></figure>
+<p>里面的 api 非常多，你用得上的，用不上的，这里都有。 不仅有 api-server 的 API ，其他所有你另外安装的 CRD 资源也都有。</p>
+<p>比如我自己安装的 VirtualMachineInstance 资源，根据关键字，立马就找到 KubeVirt 创建虚拟机的 API</p>
+<img src="/2023/08/25/41/c1ea7c9fa54f4ba785dec6ab083dff1d~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp" class="" title="img">
 
-<h3 id="定义-CRD-字段"><a href="#定义-CRD-字段" class="headerlink" title="定义 CRD 字段"></a>定义 CRD 字段</h3><p>自定义 UnitedDeploymentSpec 字段</p>
-<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> UnitedDeploymentSpec <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster</span></span><br><span class="line">	<span class="comment">// Important: Run &quot;make&quot; to regenerate code after modifying this file</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// Foo is an example field of UnitedDeployment. Edit uniteddeployment_types.go to remove/update</span></span><br><span class="line">	DeploymentName <span class="type">string</span> <span class="string">`json:&quot;deploymentName&quot;`</span></span><br><span class="line">	Replicas       *<span class="type">int32</span> <span class="string">`json:&quot;replicas&quot;`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>自定义 UnitedDeploymentStatus 字段</p>
-<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> UnitedDeploymentStatus <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster</span></span><br><span class="line">	<span class="comment">// Important: Run &quot;make&quot; to regenerate code after modifying this file</span></span><br><span class="line">	AvailableReplicas *<span class="type">int32</span> <span class="string">`json:&quot;availableReplicas&quot;`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><strong>注意：</strong></p>
-<p>如果修改了 <code>apis/v1/uniteddeployment_types.go</code> ，需要执行以下命令来更新代码和manifests：</p>
-</blockquote>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">make &amp;&amp; make manifests</span><br></pre></td></tr></table></figure>
-
-<h3 id="使用-code-generator"><a href="#使用-code-generator" class="headerlink" title="使用 code-generator"></a>使用 code-generator</h3><h4 id="更新依赖版本"><a href="#更新依赖版本" class="headerlink" title="更新依赖版本"></a>更新依赖版本</h4><p>初始化项目后的go.mod：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">module kubebuilder-project</span><br><span class="line"></span><br><span class="line">go 1.21</span><br><span class="line"></span><br><span class="line">require (</span><br><span class="line">        github.com/onsi/ginkgo/v2 v2.9.5</span><br><span class="line">        github.com/onsi/gomega v1.27.7</span><br><span class="line">        k8s.io/api v0.27.2</span><br><span class="line">        k8s.io/apimachinery v0.27.2</span><br><span class="line">        k8s.io/client-go v0.27.2</span><br><span class="line">        sigs.k8s.io/controller-runtime v0.15.0</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
-
-<p>需要将初始化的k8s库更新到要使用的版本，如：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">K8S_VERSION=v0.28.0</span><br><span class="line">go get k8s.io/api@<span class="variable">$K8S_VERSION</span></span><br><span class="line">go get k8s.io/client-go@<span class="variable">$K8S_VERSION</span></span><br><span class="line">go get k8s.io/apimachinery@<span class="variable">$K8S_VERSION</span></span><br></pre></td></tr></table></figure>
-
-<h4 id="安装-code-generator"><a href="#安装-code-generator" class="headerlink" title="安装 code-generator"></a>安装 code-generator</h4><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">K8S_VERSION=v0.28.0</span><br><span class="line">go get k8s.io/code-generator@<span class="variable">$K8S_VERSION</span></span><br><span class="line">go mod vendor</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><strong>注意：</strong></p>
-<ul>
-<li>code-generator 包版本, 需要与 kubernetes 相关包版本，保持一致</li>
-<li>需要将依赖复制到 vendor 中</li>
-</ul>
-</blockquote>
-<h4 id="创建-amp-amp-修改所需文件"><a href="#创建-amp-amp-修改所需文件" class="headerlink" title="创建 &amp;&amp; 修改所需文件"></a>创建 &amp;&amp; 修改所需文件</h4><p>需要在api目录下创建code-generator所需的文件，并添加相关注释。</p>
-<ul>
-<li><p>新增 <code>api/v1/doc.go</code></p>
-<p><strong>注意：</strong>修改groupName，package与api的version保持一致。</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// +groupName=extensions.chinaunicom.cn</span></span><br><span class="line"><span class="keyword">package</span> v1</span><br></pre></td></tr></table></figure></li>
-<li><p>新增 <code>api/v1/register.go</code></p>
-<p><strong>注意：</strong>package与api的version保持一致。</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> v1</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;k8s.io/apimachinery/pkg/runtime/schema&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// SchemeGroupVersion is group version used to register these objects.</span></span><br><span class="line"><span class="keyword">var</span> SchemeGroupVersion = GroupVersion</span><br><span class="line"></span><br><span class="line"><span class="comment">// Resource takes an unqualified resource and returns a Group qualified GroupResource</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Resource</span><span class="params">(resource <span class="type">string</span>)</span></span> schema.GroupResource &#123;</span><br><span class="line">    <span class="keyword">return</span> SchemeGroupVersion.WithResource(resource).GroupResource()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li><p>修改 <code>api/v1/&#123;crd&#125;_types.go</code> 文件，添加注释 <code>// +genclient</code></p>
-<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="comment">//+genclient</span></span><br><span class="line"><span class="comment">//+kubebuilder:object:root=true</span></span><br><span class="line"><span class="comment">//+kubebuilder:subresource:status</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// UnitedDeployment is the Schema for the uniteddeployments API</span></span><br><span class="line"><span class="keyword">type</span> UnitedDeployment <span class="keyword">struct</span> &#123;</span><br><span class="line">	metav1.TypeMeta   <span class="string">`json:&quot;,inline&quot;`</span></span><br><span class="line">	metav1.ObjectMeta <span class="string">`json:&quot;metadata,omitempty&quot;`</span></span><br><span class="line"></span><br><span class="line">	Spec   UnitedDeploymentSpec   <span class="string">`json:&quot;spec,omitempty&quot;`</span></span><br><span class="line">	Status UnitedDeploymentStatus <span class="string">`json:&quot;status,omitempty&quot;`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-</ul>
-<h4 id="准备-hack-脚本"><a href="#准备-hack-脚本" class="headerlink" title="准备 hack 脚本"></a>准备 hack 脚本</h4><p>在项目 <code>hack</code> 目录下准备以下文件：</p>
-<ul>
-<li>新建 <code>hack/tools.go</code> 文件导入 code-generator 包</li>
-</ul>
-<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="comment">//go:build tools</span></span><br><span class="line"><span class="comment">// +build tools</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// This package imports things required by build scripts, to force `go mod` to see them as dependencies</span></span><br><span class="line"><span class="keyword">package</span> tools</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> _ <span class="string">&quot;k8s.io/code-generator&quot;</span></span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>新建 <code>hack/update-codegen.sh</code>，根据项目修改相应的变量</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/usr/bin/env bash</span></span><br><span class="line"></span><br><span class="line">set -o errexit</span><br><span class="line">set -o nounset</span><br><span class="line">set -o pipefail</span><br><span class="line"></span><br><span class="line">SCRIPT_ROOT=$(dirname &quot;$&#123;BASH_SOURCE[0]&#125;&quot;)/..</span><br><span class="line">CODEGEN_PKG=$&#123;CODEGEN_PKG:-$(cd &quot;$&#123;SCRIPT_ROOT&#125;&quot;; ls -d -1 ./vendor/k8s.io/code-generator 2&gt;/dev/null || echo ../code-generator)&#125;</span><br><span class="line"></span><br><span class="line">source &quot;$&#123;CODEGEN_PKG&#125;/kube_codegen.sh&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">generate the code with:</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">--output-base    because this script should also be able to run inside the vendor <span class="built_in">dir</span> of</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">                 k8s.io/kubernetes. The output-base is needed <span class="keyword">for</span> the generators to output into the vendor <span class="built_in">dir</span></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">                 instead of the <span class="variable">$GOPATH</span> directly. For normal projects this can be dropped.</span></span><br><span class="line"></span><br><span class="line">kube::codegen::gen_helpers \</span><br><span class="line">    --input-pkg-root kubebuilder-project/apis \</span><br><span class="line">    --output-base &quot;$(dirname &quot;$&#123;BASH_SOURCE[0]&#125;&quot;)/../..&quot; \</span><br><span class="line">    --boilerplate &quot;$&#123;SCRIPT_ROOT&#125;/hack/custom-boilerplate.go.txt&quot;</span><br><span class="line"></span><br><span class="line">kube::codegen::gen_client \</span><br><span class="line">    --with-watch \</span><br><span class="line">    --input-pkg-root kubebuilder-project/apis \</span><br><span class="line">    --output-pkg-root kubebuilder-project/pkg/generated \</span><br><span class="line">    --output-base &quot;$(dirname &quot;$&#123;BASH_SOURCE[0]&#125;&quot;)/../..&quot; \</span><br><span class="line">    --boilerplate &quot;$&#123;SCRIPT_ROOT&#125;/hack/custom-boilerplate.go.txt&quot;</span><br></pre></td></tr></table></figure>
-
-<p>hack 目录下，新建 verify-codegen.sh </p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/usr/bin/env bash</span></span><br><span class="line"></span><br><span class="line">set -o errexit</span><br><span class="line">set -o nounset</span><br><span class="line">set -o pipefail</span><br><span class="line"></span><br><span class="line">SCRIPT_ROOT=&quot;$(cd &quot;$(dirname &quot;$&#123;BASH_SOURCE[0]&#125;&quot;)/..&quot; &amp;&amp; pwd -P)&quot;</span><br><span class="line">DIFFROOT=&quot;$&#123;SCRIPT_ROOT&#125;/pkg&quot;</span><br><span class="line">TMP_DIFFROOT=&quot;$(mktemp -d -t &quot;$(basename &quot;$0&quot;).XXXXXX&quot;)/pkg&quot;</span><br><span class="line"></span><br><span class="line">cleanup() &#123;</span><br><span class="line">  rm -rf &quot;$&#123;TMP_DIFFROOT&#125;&quot;</span><br><span class="line">&#125;</span><br><span class="line">trap &quot;cleanup&quot; EXIT SIGINT</span><br><span class="line"></span><br><span class="line">cleanup</span><br><span class="line"></span><br><span class="line">mkdir -p &quot;$&#123;TMP_DIFFROOT&#125;&quot;</span><br><span class="line">cp -a &quot;$&#123;DIFFROOT&#125;&quot;/* &quot;$&#123;TMP_DIFFROOT&#125;&quot;</span><br><span class="line"></span><br><span class="line">&quot;$&#123;SCRIPT_ROOT&#125;/hack/update-codegen.sh&quot;</span><br><span class="line">echo &quot;diffing $&#123;DIFFROOT&#125; against freshly generated codegen&quot;</span><br><span class="line">ret=0</span><br><span class="line">diff -Naupr &quot;$&#123;DIFFROOT&#125;&quot; &quot;$&#123;TMP_DIFFROOT&#125;&quot; || ret=$?</span><br><span class="line">if [[ $ret -eq 0 ]]; then</span><br><span class="line">  echo &quot;$&#123;DIFFROOT&#125; up to date.&quot;</span><br><span class="line">else</span><br><span class="line">  echo &quot;$&#123;DIFFROOT&#125; is out of date. Please run hack/update-codegen.sh&quot;</span><br><span class="line">  exit 1</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
-
-<p>hack目录脚本文件，可以参考，<a href="https://github.com/kubernetes/sample-controller/tree/v0.28.0/hack">sample-controller/hack</a> 项目</p>
-<h4 id="生成代码"><a href="#生成代码" class="headerlink" title="生成代码"></a>生成代码</h4><p><strong>注意</strong>：kubebuilder v3.11.1 版本生成的 api 目录结构, code-generator无法直接使用(将 api 由 <code>api/$&#123;VERSION&#125;</code> 移动至 <code>apis/$&#123;GROUP&#125;/$&#123;VERSION&#125;</code> 即可)</p>
-<p>修改 <code>Makefile</code> ，添加生成命令</p>
-<figure class="highlight makefile"><table><tr><td class="code"><pre><span class="line"><span class="meta"><span class="keyword">.PHONY</span>: update-codegen</span></span><br><span class="line"><span class="section">update-codegen:</span></span><br><span class="line">	chmod +x ./hack/update-codegen.sh</span><br><span class="line">	./hack/update-codegen.sh</span><br></pre></td></tr></table></figure>
-
-<p>项目根目录下执行<code>make update-codegen </code>即可，将生成如下代码结构：</p>
-<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">[root@localhost kubebuilder-project]# tree -L 4</span><br><span class="line">.</span><br><span class="line">|-- apis</span><br><span class="line">|   `-- extensions</span><br><span class="line">|       `-- v1</span><br><span class="line">|           |-- doc.go</span><br><span class="line">|           |-- groupversion_info.go</span><br><span class="line">|           |-- register.go</span><br><span class="line">|           |-- types.go</span><br><span class="line">|           |-- uniteddeployment_webhook.go</span><br><span class="line">|           |-- webhook_suite_test.go</span><br><span class="line">|           `-- zz_generated.deepcopy.go</span><br><span class="line">`-- pkg</span><br><span class="line">    `-- generated</span><br><span class="line">        |-- clientset</span><br><span class="line">        |   `-- versioned</span><br><span class="line">        |-- informers</span><br><span class="line">        |   `-- externalversions</span><br><span class="line">        `-- listers</span><br><span class="line">            `-- extensions</span><br></pre></td></tr></table></figure>
-
-<p>这里有一个坑，需要把 <code>apis/extensions/v1</code>目录下，<code>unitddeployment_type.go  </code>修改为 <code>type.go</code>,否则执行命令后，无法生成代码。</p>
-<h3 id="本地调试运行"><a href="#本地调试运行" class="headerlink" title="本地调试运行"></a>本地调试运行</h3><h4 id="CRD安装"><a href="#CRD安装" class="headerlink" title="CRD安装"></a>CRD安装</h4><p>第一种方式：</p>
-<p>在本地机器执行，make install，在 <code>config/crd/bases</code> 目录生成 crd.yaml，拷贝至 k8s 集群机器，执行</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl create -f extensions.chinaunicom.cn_uniteddeployments.yaml</span></span><br></pre></td></tr></table></figure>
-
-<p>第二种方式:<br>将代码拷贝至k8s集群机器</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">make install    // 先生成 config/crd/bases 文件，里面包含 crd 的YAML文件，然后kubectl apply</span></span><br></pre></td></tr></table></figure>
-
-<p>然后我们就可以看到创建的 CRD 了</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get crd |grep united</span></span><br><span class="line">uniteddeployments.extensions.chinaunicom.cn           2023-09-05T02:15:40Z</span><br></pre></td></tr></table></figure>
-
-<p>创建一个 uniteddeployment 资源</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> kubebuilder-project/config/samples</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl apply -f extensions_v1_uniteddeployment.yaml</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kubectl get uniteddeployments.extensions.chinaunicom.cn</span></span><br><span class="line">NAME                      AGE</span><br><span class="line">uniteddeployment-sample   103s</span><br></pre></td></tr></table></figure>
-
-<p>看一眼 yaml 文件</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
-
-
-
-
-
-
-
-
-
-
-
-<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>至此，通过使用 kubebuilder 与 code-generator 一个完整的 operator 开发框架就搭建好了，剩下的工作就主要是写 controller 与webhook 的业务逻辑。 </p>
-<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
-<li><p>kuberbuilder: <a href="https://github.com/kubernetes-sigs/kubebuilder/tree/v3.11.1">https://github.com/kubernetes-sigs/kubebuilder/tree/v3.11.1</a></p>
-</li>
-<li><p>code-generator: <a href="https://github.com/kubernetes/code-generator/tree/v0.28.0">https://github.com/kubernetes/code-generator/tree/v0.28.0</a></p>
-</li>
-<li><p>sample-controller: <a href="https://github.com/kubernetes/sample-controller/tree/v0.28.0">https://github.com/kubernetes/sample-controller/tree/v0.28.0</a></p>
-</li>
-</ul>
+<p>点击上面的 <code>Try it out</code> 可以修改请求体的参数，请生成一个 curl 命令，方便你进行调试。</p>
 ]]></content>
       <categories>
-        <category>operator</category>
+        <category>k8s-swagger-ui</category>
       </categories>
       <tags>
-        <tag>operator</tag>
-        <tag>code-generator</tag>
-        <tag>kubebuilder</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>浅析NUMA机制</title>
-    <url>/2024/01/02/22/</url>
-    <content><![CDATA[<h1 id="NUMA的由来"><a href="#NUMA的由来" class="headerlink" title="NUMA的由来"></a>NUMA的由来</h1><p>NUMA(Non-Uniform Memory Access)，即非一致性内存访问，是一种关于多个CPU如何访问内存的架构模型，早期，在计算机系统中，CPU是这样访问内存的：</p>
-<img src="/2024/01/02/22/v2-ba8b4591e92b8027568304f21ac9b773_1440w-4179309.webp" class="" title="img">
-
-
-
-]]></content>
-      <categories>
-        <category>NUMA</category>
-      </categories>
-      <tags>
-        <tag>NUMA</tag>
+        <tag>k8s-swagger-ui</tag>
       </tags>
   </entry>
   <entry>
@@ -2539,6 +2558,8 @@
 <p>查看 scheduler-extender log日志</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">[root@192 ~]# kubectl logs scheduler-extender-demo-5574987477-bf5td -n kube-system -f</span><br><span class="line">I0903 01:43:32.655904       1 route.go:41] FilterName: customFilter, ExtenderFilterResult: &#123;&quot;Nodes&quot;:null,&quot;NodeNames&quot;:[&quot;192.168.0.253&quot;,&quot;192.168.0.232&quot;],&quot;FailedNodes&quot;:null,&quot;FailedAndUnresolvableNodes&quot;:null,&quot;Error&quot;:&quot;&quot;&#125;</span><br><span class="line">I0903 01:43:32.657058       1 prioritize.go:43] pod: nginx-pod/default is lucky, get score: 4</span><br><span class="line">I0903 01:43:32.657067       1 prioritize.go:43] pod: nginx-pod/default is lucky, get score: 6</span><br><span class="line">I0903 01:43:32.657098       1 route.go:69] prioritizeName: customPrioritize, ExtenderPrioritizeResult: [&#123;&quot;Host&quot;:&quot;192.168.0.253&quot;,&quot;Score&quot;:4&#125;,&#123;&quot;Host&quot;:&quot;192.168.0.232&quot;,&quot;Score&quot;:6&#125;]</span><br></pre></td></tr></table></figure>
 
+<p>Pod 也调度到 192.168.0.232 这个得分较高的节点</p>
+<img src="/2024/08/22/26/image-20240903104025168.png" class="" title="image-20240903104025168">
 ]]></content>
       <categories>
         <category>kube-scheduler</category>
@@ -2549,38 +2570,19 @@
       </tags>
   </entry>
   <entry>
-    <title>使用swagger-ui可视化Kubernetes-API文档</title>
-    <url>/2023/08/25/41/</url>
-    <content><![CDATA[<p>在工作中，你可能需要基于 Kubernetes 提供的 API 进行开发，比如开发适合自己的控制台，Kubernetes 官方提供的 API 文档，有两个问题：</p>
-<ol>
-<li>非常的不直观，这个问题其实还好，自己克服一下也不是大问题</li>
-<li>只有 K8S api-server 的接口，这个就难办了，假如有新的 CRD 资源，比如 kubevirt ，又要去找 kubevirt 的 api 文档，关键是找不着</li>
-</ol>
-<h2 id="如何部署-swagger-ui"><a href="#如何部署-swagger-ui" class="headerlink" title="如何部署 swagger-ui"></a>如何部署 swagger-ui</h2><p>打开两个 ssh 连接到你的 K8S 集群中。</p>
-<p>进入第一个窗口，执行如下命令建立一个反向代理</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl proxy --port=8080</span><br></pre></td></tr></table></figure>
+    <title>浅析NUMA机制</title>
+    <url>/2024/01/02/22/</url>
+    <content><![CDATA[<h1 id="NUMA的由来"><a href="#NUMA的由来" class="headerlink" title="NUMA的由来"></a>NUMA的由来</h1><p>NUMA(Non-Uniform Memory Access)，即非一致性内存访问，是一种关于多个CPU如何访问内存的架构模型，早期，在计算机系统中，CPU是这样访问内存的：</p>
+<img src="/2024/01/02/22/v2-ba8b4591e92b8027568304f21ac9b773_1440w-4179309.webp" class="" title="img">
 
-<p>进入第二个窗口，执行如下命令建立获取 k8s的 api 文档信息，输出到一个 <code>k8s-swagger.json</code> 文件中</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl localhost:8080/openapi/v2 &gt; k8s-swagger.json</span><br></pre></td></tr></table></figure>
 
-<p>获取到后，第一个窗口就可以关闭了。</p>
-<p>然后任选一个窗口，执行如下命令运行一个容器</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">docker run \</span><br><span class="line">    --rm \</span><br><span class="line">    -d \</span><br><span class="line">    -p 80:8080 \</span><br><span class="line">    -e SWAGGER_JSON=/k8s-swagger.json \</span><br><span class="line">    -v $(pwd)/k8s-swagger.json:/k8s-swagger.json \</span><br><span class="line">    swaggerapi/swagger-ui</span><br></pre></td></tr></table></figure>
 
-<h2 id="使用-swagger-ui"><a href="#使用-swagger-ui" class="headerlink" title="使用 swagger-ui"></a>使用 swagger-ui</h2><p>此时，你在浏览器上输入 <code>http://ip</code> 就可以看到一个经过可视化的 api 文档界面，其中包括安装在集群上的所有自定义资源的模型和路径！</p>
-<img src="/2023/08/25/41/50a5136b19764f23861be47fcaf4758d~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp" class="" title="img">
-
-<p>里面的 api 非常多，你用得上的，用不上的，这里都有。 不仅有 api-server 的 API ，其他所有你另外安装的 CRD 资源也都有。</p>
-<p>比如我自己安装的 VirtualMachineInstance 资源，根据关键字，立马就找到 KubeVirt 创建虚拟机的 API</p>
-<img src="/2023/08/25/41/c1ea7c9fa54f4ba785dec6ab083dff1d~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp" class="" title="img">
-
-<p>点击上面的 <code>Try it out</code> 可以修改请求体的参数，请生成一个 curl 命令，方便你进行调试。</p>
 ]]></content>
       <categories>
-        <category>k8s-swagger-ui</category>
+        <category>NUMA</category>
       </categories>
       <tags>
-        <tag>k8s-swagger-ui</tag>
+        <tag>NUMA</tag>
       </tags>
   </entry>
   <entry>

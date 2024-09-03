@@ -521,6 +521,13 @@
   </url>
   
   <url>
+    <loc>http://lizhewei91.github.io/tags/kubebuilder/</loc>
+    <lastmod>2024-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
     <loc>http://lizhewei91.github.io/tags/operator/</loc>
     <lastmod>2024-09-03</lastmod>
     <changefreq>weekly</changefreq>
@@ -535,7 +542,7 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/tags/kubebuilder/</loc>
+    <loc>http://lizhewei91.github.io/tags/k8s-swagger-ui/</loc>
     <lastmod>2024-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -543,13 +550,6 @@
   
   <url>
     <loc>http://lizhewei91.github.io/tags/NUMA/</loc>
-    <lastmod>2024-09-03</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://lizhewei91.github.io/tags/k8s-swagger-ui/</loc>
     <lastmod>2024-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -663,14 +663,14 @@
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/NUMA/</loc>
+    <loc>http://lizhewei91.github.io/categories/k8s-swagger-ui/</loc>
     <lastmod>2024-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://lizhewei91.github.io/categories/k8s-swagger-ui/</loc>
+    <loc>http://lizhewei91.github.io/categories/NUMA/</loc>
     <lastmod>2024-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
