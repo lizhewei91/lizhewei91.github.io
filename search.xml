@@ -674,132 +674,6 @@
       </tags>
   </entry>
   <entry>
-    <title>在k8s中，实现应用配置文件热更新</title>
-    <url>/2023/02/10/44/</url>
-    <content><![CDATA[<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>目前，在k8s部署的工作负载使用 <code>ConfigMap</code> 或 <code>Secret</code>时，通过两种方式：</p>
-<ul>
-<li>环境变量 Env 方式挂载</li>
-<li>文件方式挂载</li>
-</ul>
-<p>当更新 <code>ConfigMap </code>或 <code>Secret</code> 时，挂载到Pod中的数据存在两种情况：</p>
-<ul>
-<li>Env 方式挂载的环境变量不会同步更新</li>
-<li>文件方式挂载的数据会同步更新（存在秒级延时）</li>
-</ul>
-<p>大部分场景下，在更新了 <code>ConfigMap</code> 或 <code>Secret</code> 中的信息后，都希望Pod内业务能读取到最新的值。通常都会手动去滚动更新一下Pod，重新读取环境变量或文件内容。当前社区已经有对应的开源工具 <a href="https://github.com/stakater/Reloader">Reloader</a> 实现了 <code>ConfigMap</code>/<code>Secret</code> 更新时自动触发Pod的滚动更新。</p>
-<h1 id="Reloader介绍"><a href="#Reloader介绍" class="headerlink" title="Reloader介绍"></a>Reloader介绍</h1><p>Reloader 通过 watch <code>ConfigMap</code> 和 <code>Secret</code> 中的变化，对 <code>Deployment</code>、 <code>DaemonSet</code> 和 <code>StatefulSet</code> 等负载的 <code>Pod</code> 进行滚动升级。</p>
-<p>官方文档：<a href="https://github.com/stakater/Reloader">Reloader</a></p>
-<h2 id="兼容性"><a href="#兼容性" class="headerlink" title="兼容性"></a>兼容性</h2><p>Reloader 兼容的 K8s 版本为 &gt;=1.9。</p>
-<h2 id="常用配置"><a href="#常用配置" class="headerlink" title="常用配置"></a>常用配置</h2><p>以下使用Deployment举例：</p>
-<ul>
-<li>Deployment 中使用的所有 ConfigMap 和 Secret 变动都会触发 Pod 滚动更新</li>
-</ul>
-<p>在Deployment 的 <code>metadata.annotations</code> 中添加 <code>reloader.stakater.com/auto: &quot;true&quot;</code></p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    reloader.stakater.com/<span class="keyword">auto</span>: <span class="string">&quot;true&quot;</span></span><br><span class="line">spec:</span><br><span class="line">  <span class="keyword">template</span>:</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>Deployment 中的部分 ConfigMap 和 Secret 变动会触发 Pod 滚动更新</li>
-</ul>
-<p>在 Deployment 的 <code>metadata.annotations</code>中添加<code>reloader.stakater.com/search: &quot;true&quot;</code></p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    reloader.stakater.com/search: <span class="string">&quot;true&quot;</span></span><br><span class="line">spec:</span><br><span class="line">  <span class="keyword">template</span>:</span><br></pre></td></tr></table></figure>
-
-<p>同时在需要触发 Pod 更新的 ConfigMap 或 Secret 中的 <code>metadata.annotations</code>中添加 <code>reloader.stakater.com/match: &quot;true&quot;</code></p>
-<figure class="highlight csharp"><table><tr><td class="code"><pre><span class="line">kind: ConfigMap</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    reloader.stakater.com/match: <span class="string">&quot;true&quot;</span></span><br><span class="line">data:</span><br><span class="line">  key: <span class="keyword">value</span></span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>Deployment 中指定 ConfigMap 或 Secret 的变动触发 Pod 滚动更新</li>
-</ul>
-<p>在Deployment 的 <code>metadata.annotations</code>中添加 <code>configmap.reloader.stakater.com/reload: &quot;foo-configmap,bar-configmap,baz-configmap&quot;</code>，指定这些 ConfigMap 才会触发 Pod 的更新。多个 ConfigMap 使用逗号分隔</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    configmap.reloader.stakater.com/reload: <span class="string">&quot;foo-configmap,bar-configmap,baz-configmap&quot;</span></span><br><span class="line">spec:</span><br><span class="line">  <span class="keyword">template</span>: </span><br><span class="line">    metadata:</span><br></pre></td></tr></table></figure>
-
-<p>在Deployment 的 <code>metadata.annotations</code> 中添加 <code>secret.reloader.stakater.com/reload: &quot;foo-secret,bar-secret,baz-secret&quot;</code>，指定这些 Secret 才会触发 Pod 的更新。多个 Secret 使用逗号分隔</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    secret.reloader.stakater.com/reload: <span class="string">&quot;foo-secret,bar-secret,baz-secret&quot;</span></span><br><span class="line">spec:</span><br><span class="line">  <span class="keyword">template</span>: </span><br><span class="line">    metadata:</span><br></pre></td></tr></table></figure>
-
-<h2 id="其他配置"><a href="#其他配置" class="headerlink" title="其他配置"></a>其他配置</h2><ul>
-<li>忽略 ConfigMap 或 Secret 变动（<strong>全局</strong>）</li>
-</ul>
-<p>在 Reloader deployment的 <code>spec.template.spec.container.args</code> 中添加参数：</p>
-<table>
-<thead>
-<tr>
-<th>参数</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>–resources-to-ignore=configMaps</td>
-<td>忽略 configMaps 变动</td>
-</tr>
-<tr>
-<td>–resources-to-ignore=secrets</td>
-<td>忽略 secrets 变动</td>
-</tr>
-</tbody></table>
-<p><code>--resources-to-ignore</code>参数只支持忽略一种资源，若要同时忽略 configMaps 和 secrets 的变动，则只需要把 Reloader 副本数降为0。</p>
-<ul>
-<li>通过使用 <code>--namespace-selector</code> 参数，Reloader可以配置为只监视带有(一个或多个)标签的命名空间，例如：</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">--namespace-selector=reloder:enabled,test:true</span><br></pre></td></tr></table></figure>
-
-<p>只有标记为如下命名空间 YAML 的命名空间才会被监视：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">kind: Namespace</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  ...</span><br><span class="line">  labels:</span><br><span class="line">    reloder: enabled</span><br><span class="line">    test: true</span><br><span class="line">  ...</span><br></pre></td></tr></table></figure>
-
-<p>如果您只想通过标签的键选择命名空间，请使用 <code>&quot;*&quot;</code> 作为值。例如，对于 <code>--namespace-selector=select-this:*</code> 所有标签键为<code>&quot;select-this&quot;</code>的命名空间将被选中，而不管标签的值是多少。</p>
-<h1 id="实战验证"><a href="#实战验证" class="headerlink" title="实战验证"></a>实战验证</h1><h2 id="测试准备"><a href="#测试准备" class="headerlink" title="测试准备"></a>测试准备</h2><ol>
-<li>创建一个测试 namespace</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ kubectl create ns ns1</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>安装 reloader</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ kubectl apply -f https://raw.githubusercontent.com/stakater/Reloader/master/deployments/kubernetes/reloader.yaml</span><br></pre></td></tr></table></figure>
-
-<ol start="3">
-<li>创建configmap</li>
-</ol>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">test-config-file</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">ns1</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line"><span class="comment">#    reloader.stakater.com/match: &quot;true&quot;</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="attr">info.yaml:</span> <span class="string">|</span></span><br><span class="line"><span class="string">    user=lzw</span></span><br><span class="line"><span class="string">    age=30</span></span><br><span class="line"><span class="string"></span><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">test-config-env</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">ns1</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line"><span class="comment">#    reloader.stakater.com/match: &quot;true&quot;</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="attr">COUNTRY:</span> <span class="string">china</span></span><br><span class="line">  <span class="attr">CITY:</span> <span class="string">beijing</span></span><br></pre></td></tr></table></figure>
-
-<ol start="4">
-<li>创建 deployment</li>
-</ol>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nginx</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">ns1</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line"><span class="comment">#    configmap.reloader.stakater.com/reload: &quot;test-config-file&quot;</span></span><br><span class="line"><span class="comment">#    reloader.stakater.com/search: &quot;true&quot;</span></span><br><span class="line">     <span class="attr">reloader.stakater.com/auto:</span> <span class="string">&quot;true&quot;</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span> </span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">nginx</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">nginx</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">nginx</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">nginx</span></span><br><span class="line">        <span class="attr">env:</span></span><br><span class="line">          <span class="comment"># Define the environment variable</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">COUNTRY</span></span><br><span class="line">            <span class="attr">valueFrom:</span></span><br><span class="line">              <span class="attr">configMapKeyRef:</span></span><br><span class="line">                <span class="attr">name:</span> <span class="string">test-config-env</span></span><br><span class="line">                <span class="attr">key:</span> <span class="string">COUNTRY</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">CITY</span></span><br><span class="line">            <span class="attr">valueFrom:</span></span><br><span class="line">              <span class="attr">configMapKeyRef:</span></span><br><span class="line">                <span class="attr">name:</span> <span class="string">test-config-env</span></span><br><span class="line">                <span class="attr">key:</span> <span class="string">CITY</span></span><br><span class="line">        <span class="attr">volumeMounts:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">foo</span></span><br><span class="line">          <span class="attr">mountPath:</span> <span class="string">&quot;/etc/foo&quot;</span></span><br><span class="line">          <span class="attr">readOnly:</span> <span class="literal">true</span></span><br><span class="line">      <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">foo</span></span><br><span class="line">        <span class="attr">configMap:</span></span><br><span class="line">          <span class="attr">name:</span> <span class="string">test-config-file</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="Reloader功能验证"><a href="#Reloader功能验证" class="headerlink" title="Reloader功能验证"></a>Reloader功能验证</h2><ol>
-<li>更新 configmap（以文件方式挂载）</li>
-</ol>
-<p>使用命令 <code>kubectl -nns1 edit cm test-config-file</code> 编辑configmap，设置 <code>user</code> 的值为 <code>ted</code>。查看pod已经滚动更新。</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">➜ kubectl edit cm -n ns1 test-config-file</span><br><span class="line">configmap/test-config-file edited</span><br><span class="line">➜ kubectl get pods -n ns1</span><br><span class="line">NAME                     READY   STATUS              RESTARTS   AGE</span><br><span class="line">nginx-5dff48f5dd-m528h   0/1     ContainerCreating   0          6s</span><br><span class="line">nginx-6f455f8cd5-9h7pp   1/1     Running             0          34m</span><br></pre></td></tr></table></figure>
-
-<p>查看新启动 pod 中 configmap 所挂载的文件内容，发现 <code>user</code> 的值已经变为 <code>lzw-test</code>。</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">➜ kubectl <span class="built_in">exec</span> -it nginx-5dff48f5dd-m528h  -nns1 -- <span class="built_in">cat</span> /etc/foo/info.yaml</span><br><span class="line">user=lzw-test</span><br><span class="line">age=30</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>更新 configmap（以环境变量方式注入）</li>
-</ol>
-<p>使用命令 <code>kubectl -nns1edit cm test-config-env</code> 编辑 configmap，设置 <code>CITY</code> 的值为 <code>shenzhen</code>。查看 pod 已经滚动更新。</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">➜ kubectl edit cm -n ns1 test-config-env</span><br><span class="line">configmap/test-config-env edited</span><br><span class="line">➜ kubectl get pods -n ns1</span><br><span class="line">NAME                     READY   STATUS              RESTARTS   AGE</span><br><span class="line">nginx-5b4cb86669-9cv6k   0/1     ContainerCreating   0          6s</span><br><span class="line">nginx-5dff48f5dd-m528h   1/1     Running             0          9m35s</span><br></pre></td></tr></table></figure>
-
-<p>查看新启动 pod 中 configmap 所注入的环境变量，发现 <code>CITY</code> 的值已经变为 <code>shenzhen</code>。</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">➜ kubectl <span class="built_in">exec</span> -it nginx-5b4cb86669-9cv6k -nns1 -- <span class="built_in">env</span>|grep CITY</span><br><span class="line">CITY=shenzhen</span><br></pre></td></tr></table></figure>
-
-<h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h2><ul>
-<li><p>Reloader 自动触发滚动更新，可能会导致业务中断。使用该功能时需要评估 pod 滚动更新对业务带来的影响。</p>
-</li>
-<li><p><code>reloader.stakater.com/auto</code>的优先级高于 <code>reloader.stakater.com/search</code>。</p>
-</li>
-</ul>
-]]></content>
-      <categories>
-        <category>reloader</category>
-      </categories>
-      <tags>
-        <tag>reloader</tag>
-        <tag>configMap</tag>
-        <tag>secret</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>kube-scheduler基础知识及使用</title>
     <url>/2024/08/23/09/</url>
     <content><![CDATA[<h1 id="kube-scheduler定义"><a href="#kube-scheduler定义" class="headerlink" title="kube-scheduler定义"></a>kube-scheduler定义</h1><p>在 kubernetes 中，调度是指将 Pod 放置到合适的节点上，以便对应节点上kubelet 能够运行这些 Pod。</p>
@@ -811,7 +685,7 @@
 <p>当 Kubernetes 集群中计算资源不足时（如 Pod 占用资源过多），Kubernetes 提供了资源限制的机制，其核心如下：</p>
 <ul>
 <li>限制 Pod 资源占用率；</li>
-<li>为 Pod 划分等级(QoS)，当资源不足时先杀死等级低的 Pod 来释放资源；</li>
+<li>通过<a href="https://kubernetes.io/zh-cn/docs/concepts/scheduling-eviction/node-pressure-eviction/">驱逐策略</a>释放集群资源，当集群 memory 资源不足时，为 Pod 划分等级(QoS)，先杀死等级低的 Pod 来释放资源；</li>
 </ul>
 <h2 id="Pod-资源配置参数"><a href="#Pod-资源配置参数" class="headerlink" title="Pod 资源配置参数"></a>Pod 资源配置参数</h2><h3 id="Pod的资源类型"><a href="#Pod的资源类型" class="headerlink" title="Pod的资源类型"></a>Pod的资源类型</h3><ul>
 <li><strong>cpu</strong></li>
@@ -826,7 +700,7 @@
 
 
 
-<p>在 Kubernetes 中资源不足时，根据 QoS 等级杀死 Pod 会有以下特点：</p>
+<p>在 Kubernetes 中 memory 资源不足时，根据 QoS 等级杀死 Pod 会有以下特点：</p>
 <ul>
 <li><strong>BestEffort Pod：</strong> 优先级最低，在 Kubernetes 资源不足时候会将此 Pod 先杀掉。</li>
 <li><strong>Burstable Pod：</strong> 优先级居中，如果整个系统内存资源不足，且已经杀完全部 BestEffort 等级的 Pod 时可能被杀掉。</li>
@@ -1058,6 +932,132 @@
       <tags>
         <tag>kube-scheduler基础知识</tag>
         <tag>kube-scheduler</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>在k8s中，实现应用配置文件热更新</title>
+    <url>/2023/02/10/44/</url>
+    <content><![CDATA[<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>目前，在k8s部署的工作负载使用 <code>ConfigMap</code> 或 <code>Secret</code>时，通过两种方式：</p>
+<ul>
+<li>环境变量 Env 方式挂载</li>
+<li>文件方式挂载</li>
+</ul>
+<p>当更新 <code>ConfigMap </code>或 <code>Secret</code> 时，挂载到Pod中的数据存在两种情况：</p>
+<ul>
+<li>Env 方式挂载的环境变量不会同步更新</li>
+<li>文件方式挂载的数据会同步更新（存在秒级延时）</li>
+</ul>
+<p>大部分场景下，在更新了 <code>ConfigMap</code> 或 <code>Secret</code> 中的信息后，都希望Pod内业务能读取到最新的值。通常都会手动去滚动更新一下Pod，重新读取环境变量或文件内容。当前社区已经有对应的开源工具 <a href="https://github.com/stakater/Reloader">Reloader</a> 实现了 <code>ConfigMap</code>/<code>Secret</code> 更新时自动触发Pod的滚动更新。</p>
+<h1 id="Reloader介绍"><a href="#Reloader介绍" class="headerlink" title="Reloader介绍"></a>Reloader介绍</h1><p>Reloader 通过 watch <code>ConfigMap</code> 和 <code>Secret</code> 中的变化，对 <code>Deployment</code>、 <code>DaemonSet</code> 和 <code>StatefulSet</code> 等负载的 <code>Pod</code> 进行滚动升级。</p>
+<p>官方文档：<a href="https://github.com/stakater/Reloader">Reloader</a></p>
+<h2 id="兼容性"><a href="#兼容性" class="headerlink" title="兼容性"></a>兼容性</h2><p>Reloader 兼容的 K8s 版本为 &gt;=1.9。</p>
+<h2 id="常用配置"><a href="#常用配置" class="headerlink" title="常用配置"></a>常用配置</h2><p>以下使用Deployment举例：</p>
+<ul>
+<li>Deployment 中使用的所有 ConfigMap 和 Secret 变动都会触发 Pod 滚动更新</li>
+</ul>
+<p>在Deployment 的 <code>metadata.annotations</code> 中添加 <code>reloader.stakater.com/auto: &quot;true&quot;</code></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    reloader.stakater.com/<span class="keyword">auto</span>: <span class="string">&quot;true&quot;</span></span><br><span class="line">spec:</span><br><span class="line">  <span class="keyword">template</span>:</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Deployment 中的部分 ConfigMap 和 Secret 变动会触发 Pod 滚动更新</li>
+</ul>
+<p>在 Deployment 的 <code>metadata.annotations</code>中添加<code>reloader.stakater.com/search: &quot;true&quot;</code></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    reloader.stakater.com/search: <span class="string">&quot;true&quot;</span></span><br><span class="line">spec:</span><br><span class="line">  <span class="keyword">template</span>:</span><br></pre></td></tr></table></figure>
+
+<p>同时在需要触发 Pod 更新的 ConfigMap 或 Secret 中的 <code>metadata.annotations</code>中添加 <code>reloader.stakater.com/match: &quot;true&quot;</code></p>
+<figure class="highlight csharp"><table><tr><td class="code"><pre><span class="line">kind: ConfigMap</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    reloader.stakater.com/match: <span class="string">&quot;true&quot;</span></span><br><span class="line">data:</span><br><span class="line">  key: <span class="keyword">value</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Deployment 中指定 ConfigMap 或 Secret 的变动触发 Pod 滚动更新</li>
+</ul>
+<p>在Deployment 的 <code>metadata.annotations</code>中添加 <code>configmap.reloader.stakater.com/reload: &quot;foo-configmap,bar-configmap,baz-configmap&quot;</code>，指定这些 ConfigMap 才会触发 Pod 的更新。多个 ConfigMap 使用逗号分隔</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    configmap.reloader.stakater.com/reload: <span class="string">&quot;foo-configmap,bar-configmap,baz-configmap&quot;</span></span><br><span class="line">spec:</span><br><span class="line">  <span class="keyword">template</span>: </span><br><span class="line">    metadata:</span><br></pre></td></tr></table></figure>
+
+<p>在Deployment 的 <code>metadata.annotations</code> 中添加 <code>secret.reloader.stakater.com/reload: &quot;foo-secret,bar-secret,baz-secret&quot;</code>，指定这些 Secret 才会触发 Pod 的更新。多个 Secret 使用逗号分隔</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    secret.reloader.stakater.com/reload: <span class="string">&quot;foo-secret,bar-secret,baz-secret&quot;</span></span><br><span class="line">spec:</span><br><span class="line">  <span class="keyword">template</span>: </span><br><span class="line">    metadata:</span><br></pre></td></tr></table></figure>
+
+<h2 id="其他配置"><a href="#其他配置" class="headerlink" title="其他配置"></a>其他配置</h2><ul>
+<li>忽略 ConfigMap 或 Secret 变动（<strong>全局</strong>）</li>
+</ul>
+<p>在 Reloader deployment的 <code>spec.template.spec.container.args</code> 中添加参数：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>–resources-to-ignore=configMaps</td>
+<td>忽略 configMaps 变动</td>
+</tr>
+<tr>
+<td>–resources-to-ignore=secrets</td>
+<td>忽略 secrets 变动</td>
+</tr>
+</tbody></table>
+<p><code>--resources-to-ignore</code>参数只支持忽略一种资源，若要同时忽略 configMaps 和 secrets 的变动，则只需要把 Reloader 副本数降为0。</p>
+<ul>
+<li>通过使用 <code>--namespace-selector</code> 参数，Reloader可以配置为只监视带有(一个或多个)标签的命名空间，例如：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">--namespace-selector=reloder:enabled,test:true</span><br></pre></td></tr></table></figure>
+
+<p>只有标记为如下命名空间 YAML 的命名空间才会被监视：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">kind: Namespace</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  ...</span><br><span class="line">  labels:</span><br><span class="line">    reloder: enabled</span><br><span class="line">    test: true</span><br><span class="line">  ...</span><br></pre></td></tr></table></figure>
+
+<p>如果您只想通过标签的键选择命名空间，请使用 <code>&quot;*&quot;</code> 作为值。例如，对于 <code>--namespace-selector=select-this:*</code> 所有标签键为<code>&quot;select-this&quot;</code>的命名空间将被选中，而不管标签的值是多少。</p>
+<h1 id="实战验证"><a href="#实战验证" class="headerlink" title="实战验证"></a>实战验证</h1><h2 id="测试准备"><a href="#测试准备" class="headerlink" title="测试准备"></a>测试准备</h2><ol>
+<li>创建一个测试 namespace</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ kubectl create ns ns1</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>安装 reloader</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ kubectl apply -f https://raw.githubusercontent.com/stakater/Reloader/master/deployments/kubernetes/reloader.yaml</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>创建configmap</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">test-config-file</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">ns1</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line"><span class="comment">#    reloader.stakater.com/match: &quot;true&quot;</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="attr">info.yaml:</span> <span class="string">|</span></span><br><span class="line"><span class="string">    user=lzw</span></span><br><span class="line"><span class="string">    age=30</span></span><br><span class="line"><span class="string"></span><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">test-config-env</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">ns1</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line"><span class="comment">#    reloader.stakater.com/match: &quot;true&quot;</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="attr">COUNTRY:</span> <span class="string">china</span></span><br><span class="line">  <span class="attr">CITY:</span> <span class="string">beijing</span></span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li>创建 deployment</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nginx</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">ns1</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line"><span class="comment">#    configmap.reloader.stakater.com/reload: &quot;test-config-file&quot;</span></span><br><span class="line"><span class="comment">#    reloader.stakater.com/search: &quot;true&quot;</span></span><br><span class="line">     <span class="attr">reloader.stakater.com/auto:</span> <span class="string">&quot;true&quot;</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span> </span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">nginx</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">nginx</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">nginx</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">nginx</span></span><br><span class="line">        <span class="attr">env:</span></span><br><span class="line">          <span class="comment"># Define the environment variable</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">COUNTRY</span></span><br><span class="line">            <span class="attr">valueFrom:</span></span><br><span class="line">              <span class="attr">configMapKeyRef:</span></span><br><span class="line">                <span class="attr">name:</span> <span class="string">test-config-env</span></span><br><span class="line">                <span class="attr">key:</span> <span class="string">COUNTRY</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">CITY</span></span><br><span class="line">            <span class="attr">valueFrom:</span></span><br><span class="line">              <span class="attr">configMapKeyRef:</span></span><br><span class="line">                <span class="attr">name:</span> <span class="string">test-config-env</span></span><br><span class="line">                <span class="attr">key:</span> <span class="string">CITY</span></span><br><span class="line">        <span class="attr">volumeMounts:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">foo</span></span><br><span class="line">          <span class="attr">mountPath:</span> <span class="string">&quot;/etc/foo&quot;</span></span><br><span class="line">          <span class="attr">readOnly:</span> <span class="literal">true</span></span><br><span class="line">      <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">foo</span></span><br><span class="line">        <span class="attr">configMap:</span></span><br><span class="line">          <span class="attr">name:</span> <span class="string">test-config-file</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="Reloader功能验证"><a href="#Reloader功能验证" class="headerlink" title="Reloader功能验证"></a>Reloader功能验证</h2><ol>
+<li>更新 configmap（以文件方式挂载）</li>
+</ol>
+<p>使用命令 <code>kubectl -nns1 edit cm test-config-file</code> 编辑configmap，设置 <code>user</code> 的值为 <code>ted</code>。查看pod已经滚动更新。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">➜ kubectl edit cm -n ns1 test-config-file</span><br><span class="line">configmap/test-config-file edited</span><br><span class="line">➜ kubectl get pods -n ns1</span><br><span class="line">NAME                     READY   STATUS              RESTARTS   AGE</span><br><span class="line">nginx-5dff48f5dd-m528h   0/1     ContainerCreating   0          6s</span><br><span class="line">nginx-6f455f8cd5-9h7pp   1/1     Running             0          34m</span><br></pre></td></tr></table></figure>
+
+<p>查看新启动 pod 中 configmap 所挂载的文件内容，发现 <code>user</code> 的值已经变为 <code>lzw-test</code>。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">➜ kubectl <span class="built_in">exec</span> -it nginx-5dff48f5dd-m528h  -nns1 -- <span class="built_in">cat</span> /etc/foo/info.yaml</span><br><span class="line">user=lzw-test</span><br><span class="line">age=30</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>更新 configmap（以环境变量方式注入）</li>
+</ol>
+<p>使用命令 <code>kubectl -nns1edit cm test-config-env</code> 编辑 configmap，设置 <code>CITY</code> 的值为 <code>shenzhen</code>。查看 pod 已经滚动更新。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">➜ kubectl edit cm -n ns1 test-config-env</span><br><span class="line">configmap/test-config-env edited</span><br><span class="line">➜ kubectl get pods -n ns1</span><br><span class="line">NAME                     READY   STATUS              RESTARTS   AGE</span><br><span class="line">nginx-5b4cb86669-9cv6k   0/1     ContainerCreating   0          6s</span><br><span class="line">nginx-5dff48f5dd-m528h   1/1     Running             0          9m35s</span><br></pre></td></tr></table></figure>
+
+<p>查看新启动 pod 中 configmap 所注入的环境变量，发现 <code>CITY</code> 的值已经变为 <code>shenzhen</code>。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">➜ kubectl <span class="built_in">exec</span> -it nginx-5b4cb86669-9cv6k -nns1 -- <span class="built_in">env</span>|grep CITY</span><br><span class="line">CITY=shenzhen</span><br></pre></td></tr></table></figure>
+
+<h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h2><ul>
+<li><p>Reloader 自动触发滚动更新，可能会导致业务中断。使用该功能时需要评估 pod 滚动更新对业务带来的影响。</p>
+</li>
+<li><p><code>reloader.stakater.com/auto</code>的优先级高于 <code>reloader.stakater.com/search</code>。</p>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>reloader</category>
+      </categories>
+      <tags>
+        <tag>reloader</tag>
+        <tag>configMap</tag>
+        <tag>secret</tag>
       </tags>
   </entry>
   <entry>
@@ -1569,6 +1569,51 @@
       </tags>
   </entry>
   <entry>
+    <title>kubelet-device-manager 源码分析</title>
+    <url>/2023/01/16/19/</url>
+    <content><![CDATA[<h1 id="创建-DeviceManager"><a href="#创建-DeviceManager" class="headerlink" title="创建 DeviceManager"></a>创建 DeviceManager</h1><p>Device Manager 和 cgroup Manager、QoS Container Manager 等一样，都属于 kubelet 管理的众多 Manager 之一。Device Manager在 kubelet 启动时的 NewContainerManager 中创建。</p>
+<p><u><em>kubernetes/pkg/kubelet/cm/container_manager_linux.go#198</em></u></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewContainerManager</span><span class="params">(mountUtil mount.Interface, cadvisorInterface cadvisor.Interface, nodeConfig NodeConfig, failSwapOn <span class="type">bool</span>, devicePluginEnabled <span class="type">bool</span>, recorder record.EventRecorder)</span></span> (ContainerManager, <span class="type">error</span>) &#123;</span><br><span class="line">	...</span><br><span class="line">	cm := &amp;containerManagerImpl&#123;</span><br><span class="line">		cadvisorInterface:   cadvisorInterface,</span><br><span class="line">		mountUtil:           mountUtil,</span><br><span class="line">		NodeConfig:          nodeConfig,</span><br><span class="line">		subsystems:          subsystems,</span><br><span class="line">		cgroupManager:       cgroupManager,</span><br><span class="line">		capacity:            capacity,</span><br><span class="line">		internalCapacity:    internalCapacity,</span><br><span class="line">		cgroupRoot:          cgroupRoot,</span><br><span class="line">		recorder:            recorder,</span><br><span class="line">		qosContainerManager: qosContainerManager,</span><br><span class="line">	&#125;</span><br><span class="line">	... </span><br><span class="line">	klog.InfoS(<span class="string">&quot;Creating device plugin manager&quot;</span>, <span class="string">&quot;devicePluginEnabled&quot;</span>, devicePluginEnabled)</span><br><span class="line">	<span class="keyword">if</span> devicePluginEnabled &#123;</span><br><span class="line">		cm.deviceManager, err = devicemanager.NewManagerImpl(machineInfo.Topology, cm.topologyManager)</span><br><span class="line">		cm.topologyManager.AddHintProvider(cm.deviceManager)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		cm.deviceManager, err = devicemanager.NewManagerStub()</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">  ...</span><br><span class="line">	<span class="keyword">return</span> cm, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="ManagerImpl结构体"><a href="#ManagerImpl结构体" class="headerlink" title="ManagerImpl结构体"></a>ManagerImpl结构体</h2><p>我们有必要先了解 Device Manager 的结构体：</p>
+<p><u><em>kubernetes/pkg/kubelet/cm/devicemanager/manager.go#57</em></u></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> ManagerImpl <span class="keyword">struct</span> &#123;</span><br><span class="line">	checkpointdir <span class="type">string</span></span><br><span class="line"></span><br><span class="line">	endpoints <span class="keyword">map</span>[<span class="type">string</span>]endpointInfo <span class="comment">// Key is ResourceName</span></span><br><span class="line">	mutex     sync.Mutex</span><br><span class="line"></span><br><span class="line">	server plugin.Server</span><br><span class="line"></span><br><span class="line">	<span class="comment">// activePods is a method for listing active pods on the node</span></span><br><span class="line">	<span class="comment">// so the amount of pluginResources requested by existing pods</span></span><br><span class="line">	<span class="comment">// could be counted when updating allocated devices</span></span><br><span class="line">	activePods ActivePodsFunc</span><br><span class="line"></span><br><span class="line">	<span class="comment">// sourcesReady provides the readiness of kubelet configuration sources such as apiserver update readiness.</span></span><br><span class="line">	<span class="comment">// We use it to determine when we can purge inactive pods from checkpointed state.</span></span><br><span class="line">	sourcesReady config.SourcesReady</span><br><span class="line"></span><br><span class="line">	<span class="comment">// allDevices holds all the devices currently registered to the device manager</span></span><br><span class="line">	allDevices ResourceDeviceInstances</span><br><span class="line"></span><br><span class="line">	<span class="comment">// healthyDevices contains all of the registered healthy resourceNames and their exported device IDs.</span></span><br><span class="line">	healthyDevices <span class="keyword">map</span>[<span class="type">string</span>]sets.String</span><br><span class="line"></span><br><span class="line">	<span class="comment">// unhealthyDevices contains all of the unhealthy devices and their exported device IDs.</span></span><br><span class="line">	unhealthyDevices <span class="keyword">map</span>[<span class="type">string</span>]sets.String</span><br><span class="line"></span><br><span class="line">	<span class="comment">// allocatedDevices contains allocated deviceIds, keyed by resourceName.</span></span><br><span class="line">	allocatedDevices <span class="keyword">map</span>[<span class="type">string</span>]sets.String</span><br><span class="line"></span><br><span class="line">	<span class="comment">// podDevices contains pod to allocated device mapping.</span></span><br><span class="line">	podDevices        *podDevices</span><br><span class="line">	checkpointManager checkpointmanager.CheckpointManager</span><br><span class="line"></span><br><span class="line">	<span class="comment">// List of NUMA Nodes available on the underlying machine</span></span><br><span class="line">	numaNodes []<span class="type">int</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// Store of Topology Affinties that the Device Manager can query.</span></span><br><span class="line">	topologyAffinityStore topologymanager.Store</span><br><span class="line"></span><br><span class="line">	<span class="comment">// devicesToReuse contains devices that can be reused as they have been allocated to</span></span><br><span class="line">	<span class="comment">// init containers.</span></span><br><span class="line">	devicesToReuse PodReusableDevices</span><br><span class="line"></span><br><span class="line">	<span class="comment">// pendingAdmissionPod contain the pod during the admission phase</span></span><br><span class="line">	pendingAdmissionPod *v1.Pod</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>下面是核心字段 的说明：</p>
+<ul>
+<li><p><strong>checkpointdir：</strong>kubelet对外暴露的socket文件，/var/lib/kubelet/device-plugins/kubelet.sock</p>
+</li>
+<li><p><strong>endpoints：</strong>map对象，key 为 Resource Name，value 为 endpoint 接口( 包括 getPreferredAllocation、allocate、preStartContainer、setStopTime、isStopped、stopGracePeriodExpired )，每个 endpoint 接口对应一个已注册的 device plugin，负责与 device plugin 的 gRPC 通信及缓存 device plugin 反馈的 device states。</p>
+</li>
+<li><p><strong>server：</strong>暴漏一个 gRPC 服务。</p>
+</li>
+<li><p><strong>activePods：</strong>用来获取该节点上所有 active pods，即 non-Terminated 状态的 Pods。在 kubelet 的initializeRuntimeDependentModules 时会注册 activePods Func 为如下函数</p>
+</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kl *Kubelet)</span></span> GetActivePods() []*v1.Pod &#123;</span><br><span class="line">	allPods := kl.podManager.GetPods()</span><br><span class="line">	activePods := kl.filterOutInactivePods(allPods)</span><br><span class="line">	<span class="keyword">return</span> activePods</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p><strong>allDevices：</strong>保存当前注册到设备管理器的所有设备</p>
+</li>
+<li><p> <strong>healthyDevices:</strong> map对象，key为 Resource Name，value为对应的健康的 device IDs。 </p>
+</li>
+<li><p> **unhealthyDevices: **map对象，key为 Resource Name，value为对应的不健康的 device IDs。</p>
+</li>
+<li><p><strong>allocatedDevices:</strong>  map对象，key为Resource Name，value为已经分配出去的device IDs。</p>
+</li>
+<li><p><strong>podDevices：</strong>记录每一个pod中每个容器的设备分配情况</p>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>kubelet</category>
+      </categories>
+      <tags>
+        <tag>kubelet</tag>
+        <tag>device-manager</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>kubelet 创建 pod 源码分析</title>
     <url>/2023/03/09/08/</url>
     <content><![CDATA[<p>本来基于 kubernetnes : v1.25.4</p>
@@ -1653,51 +1698,6 @@
       <tags>
         <tag>kubelet</tag>
         <tag>创建pod流程</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>kubelet-device-manager 源码分析</title>
-    <url>/2023/01/16/19/</url>
-    <content><![CDATA[<h1 id="创建-DeviceManager"><a href="#创建-DeviceManager" class="headerlink" title="创建 DeviceManager"></a>创建 DeviceManager</h1><p>Device Manager 和 cgroup Manager、QoS Container Manager 等一样，都属于 kubelet 管理的众多 Manager 之一。Device Manager在 kubelet 启动时的 NewContainerManager 中创建。</p>
-<p><u><em>kubernetes/pkg/kubelet/cm/container_manager_linux.go#198</em></u></p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewContainerManager</span><span class="params">(mountUtil mount.Interface, cadvisorInterface cadvisor.Interface, nodeConfig NodeConfig, failSwapOn <span class="type">bool</span>, devicePluginEnabled <span class="type">bool</span>, recorder record.EventRecorder)</span></span> (ContainerManager, <span class="type">error</span>) &#123;</span><br><span class="line">	...</span><br><span class="line">	cm := &amp;containerManagerImpl&#123;</span><br><span class="line">		cadvisorInterface:   cadvisorInterface,</span><br><span class="line">		mountUtil:           mountUtil,</span><br><span class="line">		NodeConfig:          nodeConfig,</span><br><span class="line">		subsystems:          subsystems,</span><br><span class="line">		cgroupManager:       cgroupManager,</span><br><span class="line">		capacity:            capacity,</span><br><span class="line">		internalCapacity:    internalCapacity,</span><br><span class="line">		cgroupRoot:          cgroupRoot,</span><br><span class="line">		recorder:            recorder,</span><br><span class="line">		qosContainerManager: qosContainerManager,</span><br><span class="line">	&#125;</span><br><span class="line">	... </span><br><span class="line">	klog.InfoS(<span class="string">&quot;Creating device plugin manager&quot;</span>, <span class="string">&quot;devicePluginEnabled&quot;</span>, devicePluginEnabled)</span><br><span class="line">	<span class="keyword">if</span> devicePluginEnabled &#123;</span><br><span class="line">		cm.deviceManager, err = devicemanager.NewManagerImpl(machineInfo.Topology, cm.topologyManager)</span><br><span class="line">		cm.topologyManager.AddHintProvider(cm.deviceManager)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		cm.deviceManager, err = devicemanager.NewManagerStub()</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">  ...</span><br><span class="line">	<span class="keyword">return</span> cm, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="ManagerImpl结构体"><a href="#ManagerImpl结构体" class="headerlink" title="ManagerImpl结构体"></a>ManagerImpl结构体</h2><p>我们有必要先了解 Device Manager 的结构体：</p>
-<p><u><em>kubernetes/pkg/kubelet/cm/devicemanager/manager.go#57</em></u></p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> ManagerImpl <span class="keyword">struct</span> &#123;</span><br><span class="line">	checkpointdir <span class="type">string</span></span><br><span class="line"></span><br><span class="line">	endpoints <span class="keyword">map</span>[<span class="type">string</span>]endpointInfo <span class="comment">// Key is ResourceName</span></span><br><span class="line">	mutex     sync.Mutex</span><br><span class="line"></span><br><span class="line">	server plugin.Server</span><br><span class="line"></span><br><span class="line">	<span class="comment">// activePods is a method for listing active pods on the node</span></span><br><span class="line">	<span class="comment">// so the amount of pluginResources requested by existing pods</span></span><br><span class="line">	<span class="comment">// could be counted when updating allocated devices</span></span><br><span class="line">	activePods ActivePodsFunc</span><br><span class="line"></span><br><span class="line">	<span class="comment">// sourcesReady provides the readiness of kubelet configuration sources such as apiserver update readiness.</span></span><br><span class="line">	<span class="comment">// We use it to determine when we can purge inactive pods from checkpointed state.</span></span><br><span class="line">	sourcesReady config.SourcesReady</span><br><span class="line"></span><br><span class="line">	<span class="comment">// allDevices holds all the devices currently registered to the device manager</span></span><br><span class="line">	allDevices ResourceDeviceInstances</span><br><span class="line"></span><br><span class="line">	<span class="comment">// healthyDevices contains all of the registered healthy resourceNames and their exported device IDs.</span></span><br><span class="line">	healthyDevices <span class="keyword">map</span>[<span class="type">string</span>]sets.String</span><br><span class="line"></span><br><span class="line">	<span class="comment">// unhealthyDevices contains all of the unhealthy devices and their exported device IDs.</span></span><br><span class="line">	unhealthyDevices <span class="keyword">map</span>[<span class="type">string</span>]sets.String</span><br><span class="line"></span><br><span class="line">	<span class="comment">// allocatedDevices contains allocated deviceIds, keyed by resourceName.</span></span><br><span class="line">	allocatedDevices <span class="keyword">map</span>[<span class="type">string</span>]sets.String</span><br><span class="line"></span><br><span class="line">	<span class="comment">// podDevices contains pod to allocated device mapping.</span></span><br><span class="line">	podDevices        *podDevices</span><br><span class="line">	checkpointManager checkpointmanager.CheckpointManager</span><br><span class="line"></span><br><span class="line">	<span class="comment">// List of NUMA Nodes available on the underlying machine</span></span><br><span class="line">	numaNodes []<span class="type">int</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// Store of Topology Affinties that the Device Manager can query.</span></span><br><span class="line">	topologyAffinityStore topologymanager.Store</span><br><span class="line"></span><br><span class="line">	<span class="comment">// devicesToReuse contains devices that can be reused as they have been allocated to</span></span><br><span class="line">	<span class="comment">// init containers.</span></span><br><span class="line">	devicesToReuse PodReusableDevices</span><br><span class="line"></span><br><span class="line">	<span class="comment">// pendingAdmissionPod contain the pod during the admission phase</span></span><br><span class="line">	pendingAdmissionPod *v1.Pod</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>下面是核心字段 的说明：</p>
-<ul>
-<li><p><strong>checkpointdir：</strong>kubelet对外暴露的socket文件，/var/lib/kubelet/device-plugins/kubelet.sock</p>
-</li>
-<li><p><strong>endpoints：</strong>map对象，key 为 Resource Name，value 为 endpoint 接口( 包括 getPreferredAllocation、allocate、preStartContainer、setStopTime、isStopped、stopGracePeriodExpired )，每个 endpoint 接口对应一个已注册的 device plugin，负责与 device plugin 的 gRPC 通信及缓存 device plugin 反馈的 device states。</p>
-</li>
-<li><p><strong>server：</strong>暴漏一个 gRPC 服务。</p>
-</li>
-<li><p><strong>activePods：</strong>用来获取该节点上所有 active pods，即 non-Terminated 状态的 Pods。在 kubelet 的initializeRuntimeDependentModules 时会注册 activePods Func 为如下函数</p>
-</li>
-</ul>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kl *Kubelet)</span></span> GetActivePods() []*v1.Pod &#123;</span><br><span class="line">	allPods := kl.podManager.GetPods()</span><br><span class="line">	activePods := kl.filterOutInactivePods(allPods)</span><br><span class="line">	<span class="keyword">return</span> activePods</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><p><strong>allDevices：</strong>保存当前注册到设备管理器的所有设备</p>
-</li>
-<li><p> <strong>healthyDevices:</strong> map对象，key为 Resource Name，value为对应的健康的 device IDs。 </p>
-</li>
-<li><p> **unhealthyDevices: **map对象，key为 Resource Name，value为对应的不健康的 device IDs。</p>
-</li>
-<li><p><strong>allocatedDevices:</strong>  map对象，key为Resource Name，value为已经分配出去的device IDs。</p>
-</li>
-<li><p><strong>podDevices：</strong>记录每一个pod中每个容器的设备分配情况</p>
-</li>
-</ul>
-]]></content>
-      <categories>
-        <category>kubelet</category>
-      </categories>
-      <tags>
-        <tag>kubelet</tag>
-        <tag>device-manager</tag>
       </tags>
   </entry>
   <entry>
@@ -1800,6 +1800,38 @@
       </tags>
   </entry>
   <entry>
+    <title>nexus 使用总结</title>
+    <url>/2023/09/07/32/</url>
+    <content><![CDATA[<h1 id="部署-nexus-服务"><a href="#部署-nexus-服务" class="headerlink" title="部署 nexus 服务"></a>部署 nexus 服务</h1><p>创建docker-compose.yml文件：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&quot;3&quot;</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="comment"># 服务名称</span></span><br><span class="line">  <span class="attr">nexus3:</span></span><br><span class="line">    <span class="comment"># 镜像</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">sonatype/nexus3:3.59.0</span></span><br><span class="line">    <span class="comment"># 容器名称</span></span><br><span class="line">    <span class="attr">container_name:</span> <span class="string">nexus3-lzw-test</span></span><br><span class="line">    <span class="comment"># 重启策略</span></span><br><span class="line">    <span class="attr">restart:</span> <span class="string">on-failure</span></span><br><span class="line">    <span class="comment"># 端口映射</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="comment"># web 服务使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;8081:8081&quot;</span></span><br><span class="line">      <span class="comment"># http 仓库使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;8082:8082&quot;</span></span><br><span class="line">      <span class="comment"># 代理仓库使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5000:5000&quot;</span></span><br><span class="line">    <span class="comment"># 挂载数据卷</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="comment"># 将主机的/opt/neuxus3/data目录挂载映射到容器的/nexus-data目录</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">/opt/nexus3/data:/nexus-data</span></span><br><span class="line">    <span class="comment"># 设置环境变量</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="comment"># 配置nexus3服务的内存，避免小规格机器崩掉</span></span><br><span class="line">      <span class="attr">INSTALL4J_ADD_VM_PARAMS:</span> <span class="string">&quot;-Xms512m -Xmx512m -XX:MaxDirectMemorySize=512m -Djava.util.prefs.userRoot=/nexus-data/javaprefs&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p> 创建启动脚本start.sh</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">仓库数据挂载位置</span></span><br><span class="line">mkdir -p &quot;/opt/nexus3/data&quot;</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">目录权限</span></span><br><span class="line">chmod -R 777 &quot;/opt/nexus3/data&quot;</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">启动</span></span><br><span class="line">if [ &quot;$1&quot; == &quot;backend&quot; ]; then</span><br><span class="line">    docker-compose up -d</span><br><span class="line">else</span><br><span class="line">  docker-compose up</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
+
+<p>启动 nexus3，启动会比较慢，需要一段时间才能启动成功</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">方式一、前台启动，查看启动日志调试用</span></span><br><span class="line">sudo sh ./start.sh</span><br><span class="line"><span class="meta prompt_"> </span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">方式二、后台启动</span></span><br><span class="line">sudo sh ./start.sh backend</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/09/07/32/image-20230911155849960.png" class="" title="image-20230911155849960">
+
+<p>访问 http://<ip>:8081或<a href="http://localhost:8081（本地），查看仓库页面">http://localhost:8081（本地），查看仓库页面</a></p>
+<img src="/2023/09/07/32/image-20230911155929241.png" class="" title="image-20230911155929241">
+
+<p>点击右上角“Sign in”，用户名为“admin”，在映射的主机目录/opt/nexus3/data/admin.password文件中查看登录密码</p>
+<img src="/2023/09/07/32/5711b837e3314244a5928be6f168c8f9.png" class="" title="img">
+
+<img src="/2023/09/07/32/c354c1d40b9c4e939ac0b7e9c1edbe40.png" class="" title="img">
+
+<p>登录后会有引导窗口，跟着知道重新配置密码，开启匿名访问即可。</p>
+]]></content>
+      <categories>
+        <category>nexus</category>
+      </categories>
+      <tags>
+        <tag>nexus</tag>
+        <tag>docker-repositories</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>NVIDIA/kubevirt-gpu-device-plugin源码分析</title>
     <url>/2023/01/10/32/</url>
     <content><![CDATA[<p>NVIDIA K8s Device Plugin为Kubevirt虚拟机分配gpu和vgpu，该篇文章基于NVIDIA/kubevirt-gpu-device-plugin:v1.2.1，<a href="https://github.com/NVIDIA/kubevirt-gpu-device-plugin/tree/v1.2.1">https://github.com/NVIDIA/kubevirt-gpu-device-plugin/tree/v1.2.1</a></p>
@@ -1859,38 +1891,6 @@
         <tag>gpu</tag>
         <tag>device-plugins</tag>
         <tag>kubevirt-gpu-device-plugin</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>nexus 使用总结</title>
-    <url>/2023/09/07/32/</url>
-    <content><![CDATA[<h1 id="部署-nexus-服务"><a href="#部署-nexus-服务" class="headerlink" title="部署 nexus 服务"></a>部署 nexus 服务</h1><p>创建docker-compose.yml文件：</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&quot;3&quot;</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="comment"># 服务名称</span></span><br><span class="line">  <span class="attr">nexus3:</span></span><br><span class="line">    <span class="comment"># 镜像</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">sonatype/nexus3:3.59.0</span></span><br><span class="line">    <span class="comment"># 容器名称</span></span><br><span class="line">    <span class="attr">container_name:</span> <span class="string">nexus3-lzw-test</span></span><br><span class="line">    <span class="comment"># 重启策略</span></span><br><span class="line">    <span class="attr">restart:</span> <span class="string">on-failure</span></span><br><span class="line">    <span class="comment"># 端口映射</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="comment"># web 服务使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;8081:8081&quot;</span></span><br><span class="line">      <span class="comment"># http 仓库使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;8082:8082&quot;</span></span><br><span class="line">      <span class="comment"># 代理仓库使用</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5000:5000&quot;</span></span><br><span class="line">    <span class="comment"># 挂载数据卷</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="comment"># 将主机的/opt/neuxus3/data目录挂载映射到容器的/nexus-data目录</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">/opt/nexus3/data:/nexus-data</span></span><br><span class="line">    <span class="comment"># 设置环境变量</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="comment"># 配置nexus3服务的内存，避免小规格机器崩掉</span></span><br><span class="line">      <span class="attr">INSTALL4J_ADD_VM_PARAMS:</span> <span class="string">&quot;-Xms512m -Xmx512m -XX:MaxDirectMemorySize=512m -Djava.util.prefs.userRoot=/nexus-data/javaprefs&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p> 创建启动脚本start.sh</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">仓库数据挂载位置</span></span><br><span class="line">mkdir -p &quot;/opt/nexus3/data&quot;</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">目录权限</span></span><br><span class="line">chmod -R 777 &quot;/opt/nexus3/data&quot;</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">启动</span></span><br><span class="line">if [ &quot;$1&quot; == &quot;backend&quot; ]; then</span><br><span class="line">    docker-compose up -d</span><br><span class="line">else</span><br><span class="line">  docker-compose up</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
-
-<p>启动 nexus3，启动会比较慢，需要一段时间才能启动成功</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">方式一、前台启动，查看启动日志调试用</span></span><br><span class="line">sudo sh ./start.sh</span><br><span class="line"><span class="meta prompt_"> </span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">方式二、后台启动</span></span><br><span class="line">sudo sh ./start.sh backend</span><br></pre></td></tr></table></figure>
-
-<img src="/2023/09/07/32/image-20230911155849960.png" class="" title="image-20230911155849960">
-
-<p>访问 http://<ip>:8081或<a href="http://localhost:8081（本地），查看仓库页面">http://localhost:8081（本地），查看仓库页面</a></p>
-<img src="/2023/09/07/32/image-20230911155929241.png" class="" title="image-20230911155929241">
-
-<p>点击右上角“Sign in”，用户名为“admin”，在映射的主机目录/opt/nexus3/data/admin.password文件中查看登录密码</p>
-<img src="/2023/09/07/32/5711b837e3314244a5928be6f168c8f9.png" class="" title="img">
-
-<img src="/2023/09/07/32/c354c1d40b9c4e939ac0b7e9c1edbe40.png" class="" title="img">
-
-<p>登录后会有引导窗口，跟着知道重新配置密码，开启匿名访问即可。</p>
-]]></content>
-      <categories>
-        <category>nexus</category>
-      </categories>
-      <tags>
-        <tag>nexus</tag>
-        <tag>docker-repositories</tag>
       </tags>
   </entry>
   <entry>
@@ -1986,6 +1986,65 @@
         <tag>gpu</tag>
         <tag>device-plugins</tag>
         <tag>nvidia</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>从0到1开发一个调度器scheduler-framework</title>
+    <url>/2024/08/27/08/</url>
+    <content><![CDATA[<p>之前文章已经介绍了kube-scheduler四种扩展方式：</p>
+<p>一般来说，我们有 4 种扩展 Kubernetes 调度器的方法。</p>
+<ul>
+<li>default-scheduler recoding: 直接在Kubernetes默认scheduler基础上进行添加，然后重新编译kube-scheduler</li>
+<li>standalone: 实现一个与kube-scheduler平行的custom scheduler，单独或者和默认kube-scheduler一起运行在集群中，使用<code>.spec.scheduler.name</code>来区分使用哪一个调度器。</li>
+<li>scheduler extender: 实现一个”scheduler extender”，kube-scheduler会调用它(http/https)作为默认调度算法(预选&amp;优选&amp;bind)的补充，只支持在 Filter、Prioritize、Preempt 和 Bind 的扩展 </li>
+</ul>
+<ul>
+<li>scheduler framework: 实现scheduler framework plugins，重新编译kube-scheduler，类似于第一种方案，但是更加标准化，插件化</li>
+</ul>
+<p>default-scheduler recoding 以及 standalone方案都属于侵入式的方案，不太优雅；而 scheduler extender 以及 scheduler framework 属于非侵入式的方案，目前，比较推荐使用 scheduler-framework 和 scheduler-extender 两种方式。</p>
+<p>本篇文章主要介绍如何使用 scheduler-framework 框架，自定义开发一个调度器插件，官方建议基于 <a href="https://github.com/kubernetes-sigs/scheduler-plugins">scheduler-plugins</a> 项目基础上做开发。</p>
+<h1 id="项目设计"><a href="#项目设计" class="headerlink" title="项目设计"></a>项目设计</h1><img src="/2024/08/27/08/framework.png" class="" title="framework">
+
+<p>filter阶段：通过 pod 的 annotation 的 nodeNames 字段，表示指定的 node 列表</p>
+<p>score阶段：生成随机数 1-10 给 node 节点打分</p>
+<h1 id="代码分析"><a href="#代码分析" class="headerlink" title="代码分析"></a>代码分析</h1><h2 id="注册插件"><a href="#注册插件" class="headerlink" title="注册插件"></a>注册插件</h2><p>通过调用<code>WithPlugin</code>方法，注册插件</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// Register custom plugins to the scheduler framework.</span></span><br><span class="line">	<span class="comment">// Later they can consist of scheduler profile(s) and hence</span></span><br><span class="line">	<span class="comment">// used by various kinds of workloads.</span></span><br><span class="line">	command := app.NewSchedulerCommand(</span><br><span class="line">		app.WithPlugin(nodenames.Name, nodenames.New),</span><br><span class="line">	)</span><br><span class="line"></span><br><span class="line">	code := cli.Run(command)</span><br><span class="line">	os.Exit(code)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Filter阶段"><a href="#Filter阶段" class="headerlink" title="Filter阶段"></a>Filter阶段</h2><p>在filter阶段，通过 pod 的 annoattion 中 nodeNames 字段，获取node列表，然后对node节点依次进行过滤</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(ns *NodeNames)</span></span> Filter(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeInfo *framework.NodeInfo) *framework.Status &#123;</span><br><span class="line">	<span class="keyword">var</span> wantNodes []<span class="type">string</span></span><br><span class="line">	<span class="comment">// 获取 Pod 的 annotations</span></span><br><span class="line">	<span class="keyword">if</span> nodeNames, exists := pod.Annotations[AnnotationKey]; exists &#123;</span><br><span class="line">		wantNodes = strings.Split(nodeNames, <span class="string">&quot;,&quot;</span>)</span><br><span class="line">		<span class="keyword">if</span> !Contains(wantNodes, nodeInfo.Node().Name) &#123;</span><br><span class="line">			klog.V(<span class="number">0</span>).Infof(<span class="string">&quot;node: %v does not match expected: %v&quot;</span>, nodeInfo.Node().Name, wantNodes)</span><br><span class="line">			<span class="comment">// 如果不匹配，则拒绝该节点</span></span><br><span class="line">			<span class="keyword">return</span> framework.NewStatus(framework.Unschedulable, fmt.Sprintf(<span class="string">&quot;Node: %s does not match expected: %s&quot;</span>, nodeInfo.Node().Name, wantNodes))</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	klog.V(<span class="number">0</span>).Infof(<span class="string">&quot;node: %v is match expected: %v&quot;</span>, nodeInfo.Node().Name, wantNodes)</span><br><span class="line">	<span class="comment">// 如果没有指定 nodename 注解，则允许该节点通过</span></span><br><span class="line">	<span class="keyword">return</span> framework.NewStatus(framework.Success)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Score阶段"><a href="#Score阶段" class="headerlink" title="Score阶段"></a>Score阶段</h2><p>在score阶段，生成随机数1-10，给预选后的node列表，打分</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(ns *NodeNames)</span></span> Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName <span class="type">string</span>) (<span class="type">int64</span>, *framework.Status) &#123;</span><br><span class="line">	score := rand.Int63n(<span class="number">10</span> + <span class="number">1</span>)</span><br><span class="line">	klog.V(<span class="number">0</span>).Infof(<span class="string">&quot;node: %v get score: %v\n&quot;</span>, nodeName, score)</span><br><span class="line">	<span class="keyword">return</span> score, framework.NewStatus(framework.Success)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ScoreExtensions of the Score plugin.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(ns *NodeNames)</span></span> ScoreExtensions() framework.ScoreExtensions &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="项目部署"><a href="#项目部署" class="headerlink" title="项目部署"></a>项目部署</h1><h2 id="构建镜像"><a href="#构建镜像" class="headerlink" title="构建镜像"></a>构建镜像</h2><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">make release-image.amd64</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h2><p>依次 替换所有 master 节点，<code>/etc/kubernetes/manifests</code>目录下的原生 kube-scheduler.yaml</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">creationTimestamp:</span> <span class="literal">null</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">component:</span> <span class="string">kube-scheduler</span></span><br><span class="line">    <span class="attr">tier:</span> <span class="string">control-plane</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">kube-scheduler</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">kube-system</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">command:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">kube-scheduler</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">--authentication-kubeconfig=/etc/kubernetes/scheduler.conf</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">--authorization-kubeconfig=/etc/kubernetes/scheduler.conf</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">--v=0</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">--config=/scheduler/scheduler-config.yaml</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">gcr.io/k8s-staging-scheduler-plugins/kube-scheduler:v20240904--amd64</span></span><br><span class="line">      <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">      <span class="attr">livenessProbe:</span></span><br><span class="line">        <span class="attr">failureThreshold:</span> <span class="number">8</span></span><br><span class="line">        <span class="attr">httpGet:</span></span><br><span class="line">          <span class="attr">path:</span> <span class="string">/healthz</span></span><br><span class="line">          <span class="attr">port:</span> <span class="number">10259</span></span><br><span class="line">          <span class="attr">scheme:</span> <span class="string">HTTPS</span></span><br><span class="line">        <span class="attr">initialDelaySeconds:</span> <span class="number">10</span></span><br><span class="line">        <span class="attr">periodSeconds:</span> <span class="number">10</span></span><br><span class="line">        <span class="attr">timeoutSeconds:</span> <span class="number">15</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">kube-scheduler</span></span><br><span class="line">      <span class="attr">resources:</span></span><br><span class="line">        <span class="attr">requests:</span></span><br><span class="line">          <span class="attr">cpu:</span> <span class="string">100m</span></span><br><span class="line">      <span class="attr">startupProbe:</span></span><br><span class="line">        <span class="attr">failureThreshold:</span> <span class="number">24</span></span><br><span class="line">        <span class="attr">httpGet:</span></span><br><span class="line">          <span class="attr">path:</span> <span class="string">/healthz</span></span><br><span class="line">          <span class="attr">port:</span> <span class="number">10259</span></span><br><span class="line">          <span class="attr">scheme:</span> <span class="string">HTTPS</span></span><br><span class="line">        <span class="attr">initialDelaySeconds:</span> <span class="number">10</span></span><br><span class="line">        <span class="attr">periodSeconds:</span> <span class="number">10</span></span><br><span class="line">        <span class="attr">timeoutSeconds:</span> <span class="number">15</span></span><br><span class="line">      <span class="attr">volumeMounts:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">mountPath:</span> <span class="string">/etc/kubernetes/scheduler.conf</span></span><br><span class="line">          <span class="attr">name:</span> <span class="string">kubeconfig</span></span><br><span class="line">          <span class="attr">readOnly:</span> <span class="literal">true</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">scheduler-config</span></span><br><span class="line">          <span class="attr">mountPath:</span> <span class="string">/scheduler/scheduler-config.yaml</span></span><br><span class="line">  <span class="attr">hostNetwork:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">priority:</span> <span class="number">2000001000</span></span><br><span class="line">  <span class="attr">priorityClassName:</span> <span class="string">system-node-critical</span></span><br><span class="line">  <span class="attr">securityContext:</span></span><br><span class="line">    <span class="attr">seccompProfile:</span></span><br><span class="line">      <span class="attr">type:</span> <span class="string">RuntimeDefault</span></span><br><span class="line">  <span class="attr">volumes:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">hostPath:</span></span><br><span class="line">        <span class="attr">path:</span> <span class="string">/etc/kubernetes/scheduler.conf</span></span><br><span class="line">        <span class="attr">type:</span> <span class="string">FileOrCreate</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">kubeconfig</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">hostPath:</span></span><br><span class="line">        <span class="attr">path:</span> <span class="string">/etc/kubernetes/scheduler-config.yaml</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">scheduler-config</span></span><br><span class="line"><span class="attr">status:</span> &#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>依次将<code>KubeSchedulerConfiguration</code>的配置文件，放在所有 master 节点<code>/etc/kubernetes</code>目录下</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">kubescheduler.config.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">KubeSchedulerConfiguration</span></span><br><span class="line"><span class="attr">leaderElection:</span></span><br><span class="line">  <span class="attr">leaderElect:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">resourceLock:</span> <span class="string">leases</span></span><br><span class="line">  <span class="attr">resourceName:</span> <span class="string">kube-scheduler</span></span><br><span class="line">  <span class="attr">resourceNamespace:</span> <span class="string">kube-system</span></span><br><span class="line"><span class="attr">clientConnection:</span></span><br><span class="line">  <span class="attr">kubeconfig:</span> <span class="string">/etc/kubernetes/scheduler.conf</span></span><br><span class="line"><span class="attr">profiles:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">schedulerName:</span> <span class="string">default-scheduler</span></span><br><span class="line">  <span class="attr">plugins:</span></span><br><span class="line">    <span class="attr">filter:</span></span><br><span class="line">      <span class="attr">enabled:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">NodeNames</span></span><br><span class="line">    <span class="attr">score:</span></span><br><span class="line">      <span class="attr">enabled:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">NodeNames</span></span><br></pre></td></tr></table></figure>
+
+<p>部署后的结果</p>
+<img src="/2024/08/27/08/image-20240904174112160.png" class="" title="image-20240904174112160">
+
+<p>查看kube-scheduler lease资源 查看 leader</p>
+<img src="/2024/08/27/08/image-20240904174241970.png" class="" title="image-20240904174241970">
+
+<p>运行测试pod，指定nodeNames节点列表</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nginx-pod</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line">    <span class="attr">&quot;nodeNames&quot;:</span> <span class="string">&quot;192.168.0.232,192.168.0.186&quot;</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">tolerations:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">effect:</span> <span class="string">NoSchedule</span></span><br><span class="line">    <span class="attr">operator:</span> <span class="string">Exists</span></span><br><span class="line">    <span class="attr">key:</span> <span class="string">node-role.kubernetes.io/control-plane</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">nginx</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">docker.io/library/nginx:1.26.0</span></span><br><span class="line">      <span class="attr">ports:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">80</span></span><br></pre></td></tr></table></figure>
+
+<p>查看 leader 的 pod 日志</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">I0904 08:59:41.036009       1 leaderelection.go:260] successfully acquired lease kube-system/kube-scheduler</span><br><span class="line">I0904 09:01:18.079311       1 nodenames.go:40] node: 192.168.0.12 does not match expected: [192.168.0.232 192.168.0.186]</span><br><span class="line">I0904 09:01:18.079349       1 nodenames.go:45] node: 192.168.0.232 is match expected: [192.168.0.232 192.168.0.186]</span><br><span class="line">I0904 09:01:18.079356       1 nodenames.go:40] node: 192.168.0.253 does not match expected: [192.168.0.232 192.168.0.186]</span><br><span class="line">I0904 09:01:18.079363       1 nodenames.go:45] node: 192.168.0.186 is match expected: [192.168.0.232 192.168.0.186]</span><br><span class="line">I0904 09:01:18.079508       1 nodenames.go:52] node: 192.168.0.232 get score: 10</span><br><span class="line">I0904 09:01:18.079518       1 nodenames.go:52] node: 192.168.0.186 get score: 4</span><br></pre></td></tr></table></figure>
+
+<p>完整的项目代码：<a href="https://github.com/lizhewei91/scheduler-framework-demo">https://github.com/lizhewei91/scheduler-framework-demo</a></p>
+]]></content>
+      <categories>
+        <category>kube-scheduler</category>
+      </categories>
+      <tags>
+        <tag>kube-scheduler</tag>
+        <tag>scheduler-framework</tag>
+        <tag>scheduler-plugins</tag>
       </tags>
   </entry>
   <entry>
@@ -2316,78 +2375,38 @@
       </tags>
   </entry>
   <entry>
-    <title>从0到1开发一个调度器scheduler-framework</title>
-    <url>/2024/08/27/08/</url>
-    <content><![CDATA[<p>之前文章已经介绍了kube-scheduler四种扩展方式：</p>
-<p>一般来说，我们有 4 种扩展 Kubernetes 调度器的方法。</p>
-<ul>
-<li>default-scheduler recoding: 直接在Kubernetes默认scheduler基础上进行添加，然后重新编译kube-scheduler</li>
-<li>standalone: 实现一个与kube-scheduler平行的custom scheduler，单独或者和默认kube-scheduler一起运行在集群中，使用<code>.spec.scheduler.name</code>来区分使用哪一个调度器。</li>
-<li>scheduler extender: 实现一个”scheduler extender”，kube-scheduler会调用它(http/https)作为默认调度算法(预选&amp;优选&amp;bind)的补充，只支持在 Filter、Prioritize、Preempt 和 Bind 的扩展 </li>
-</ul>
-<ul>
-<li>scheduler framework: 实现scheduler framework plugins，重新编译kube-scheduler，类似于第一种方案，但是更加标准化，插件化</li>
-</ul>
-<p>default-scheduler recoding 以及 standalone方案都属于侵入式的方案，不太优雅；而 scheduler extender 以及 scheduler framework 属于非侵入式的方案，目前，比较推荐使用 scheduler-framework 和 scheduler-extender 两种方式。</p>
-<p>本篇文章主要介绍如何使用 scheduler-framework 框架，自定义开发一个调度器插件，官方建议基于 <a href="https://github.com/kubernetes-sigs/scheduler-plugins">scheduler-plugins</a> 项目基础上做开发。</p>
-<h1 id="项目设计"><a href="#项目设计" class="headerlink" title="项目设计"></a>项目设计</h1><img src="/2024/08/27/08/framework.png" class="" title="framework">
+    <title>使用swagger-ui可视化Kubernetes-API文档</title>
+    <url>/2023/08/25/41/</url>
+    <content><![CDATA[<p>在工作中，你可能需要基于 Kubernetes 提供的 API 进行开发，比如开发适合自己的控制台，Kubernetes 官方提供的 API 文档，有两个问题：</p>
+<ol>
+<li>非常的不直观，这个问题其实还好，自己克服一下也不是大问题</li>
+<li>只有 K8S api-server 的接口，这个就难办了，假如有新的 CRD 资源，比如 kubevirt ，又要去找 kubevirt 的 api 文档，关键是找不着</li>
+</ol>
+<h2 id="如何部署-swagger-ui"><a href="#如何部署-swagger-ui" class="headerlink" title="如何部署 swagger-ui"></a>如何部署 swagger-ui</h2><p>打开两个 ssh 连接到你的 K8S 集群中。</p>
+<p>进入第一个窗口，执行如下命令建立一个反向代理</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl proxy --port=8080</span><br></pre></td></tr></table></figure>
 
-<p>filter阶段：通过 pod 的 annotation 的 nodeNames 字段，表示指定的 node 列表</p>
-<p>score阶段：生成随机数 1-10 给 node 节点打分</p>
-<h1 id="代码分析"><a href="#代码分析" class="headerlink" title="代码分析"></a>代码分析</h1><h2 id="注册插件"><a href="#注册插件" class="headerlink" title="注册插件"></a>注册插件</h2><p>通过调用<code>WithPlugin</code>方法，注册插件</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// Register custom plugins to the scheduler framework.</span></span><br><span class="line">	<span class="comment">// Later they can consist of scheduler profile(s) and hence</span></span><br><span class="line">	<span class="comment">// used by various kinds of workloads.</span></span><br><span class="line">	command := app.NewSchedulerCommand(</span><br><span class="line">		app.WithPlugin(nodenames.Name, nodenames.New),</span><br><span class="line">	)</span><br><span class="line"></span><br><span class="line">	code := cli.Run(command)</span><br><span class="line">	os.Exit(code)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>进入第二个窗口，执行如下命令建立获取 k8s的 api 文档信息，输出到一个 <code>k8s-swagger.json</code> 文件中</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl localhost:8080/openapi/v2 &gt; k8s-swagger.json</span><br></pre></td></tr></table></figure>
 
-<h2 id="Filter阶段"><a href="#Filter阶段" class="headerlink" title="Filter阶段"></a>Filter阶段</h2><p>在filter阶段，通过 pod 的 annoattion 中 nodeNames 字段，获取node列表，然后对node节点依次进行过滤</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(ns *NodeNames)</span></span> Filter(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeInfo *framework.NodeInfo) *framework.Status &#123;</span><br><span class="line">	<span class="keyword">var</span> wantNodes []<span class="type">string</span></span><br><span class="line">	<span class="comment">// 获取 Pod 的 annotations</span></span><br><span class="line">	<span class="keyword">if</span> nodeNames, exists := pod.Annotations[AnnotationKey]; exists &#123;</span><br><span class="line">		wantNodes = strings.Split(nodeNames, <span class="string">&quot;,&quot;</span>)</span><br><span class="line">		<span class="keyword">if</span> !Contains(wantNodes, nodeInfo.Node().Name) &#123;</span><br><span class="line">			klog.V(<span class="number">0</span>).Infof(<span class="string">&quot;node: %v does not match expected: %v&quot;</span>, nodeInfo.Node().Name, wantNodes)</span><br><span class="line">			<span class="comment">// 如果不匹配，则拒绝该节点</span></span><br><span class="line">			<span class="keyword">return</span> framework.NewStatus(framework.Unschedulable, fmt.Sprintf(<span class="string">&quot;Node: %s does not match expected: %s&quot;</span>, nodeInfo.Node().Name, wantNodes))</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	klog.V(<span class="number">0</span>).Infof(<span class="string">&quot;node: %v is match expected: %v&quot;</span>, nodeInfo.Node().Name, wantNodes)</span><br><span class="line">	<span class="comment">// 如果没有指定 nodename 注解，则允许该节点通过</span></span><br><span class="line">	<span class="keyword">return</span> framework.NewStatus(framework.Success)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>获取到后，第一个窗口就可以关闭了。</p>
+<p>然后任选一个窗口，执行如下命令运行一个容器</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">docker run \</span><br><span class="line">    --rm \</span><br><span class="line">    -d \</span><br><span class="line">    -p 80:8080 \</span><br><span class="line">    -e SWAGGER_JSON=/k8s-swagger.json \</span><br><span class="line">    -v $(pwd)/k8s-swagger.json:/k8s-swagger.json \</span><br><span class="line">    swaggerapi/swagger-ui</span><br></pre></td></tr></table></figure>
 
-<h2 id="Score阶段"><a href="#Score阶段" class="headerlink" title="Score阶段"></a>Score阶段</h2><p>在score阶段，生成随机数1-10，给预选后的node列表，打分</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(ns *NodeNames)</span></span> Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName <span class="type">string</span>) (<span class="type">int64</span>, *framework.Status) &#123;</span><br><span class="line">	score := rand.Int63n(<span class="number">10</span> + <span class="number">1</span>)</span><br><span class="line">	klog.V(<span class="number">0</span>).Infof(<span class="string">&quot;node: %v get score: %v\n&quot;</span>, nodeName, score)</span><br><span class="line">	<span class="keyword">return</span> score, framework.NewStatus(framework.Success)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ScoreExtensions of the Score plugin.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(ns *NodeNames)</span></span> ScoreExtensions() framework.ScoreExtensions &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="使用-swagger-ui"><a href="#使用-swagger-ui" class="headerlink" title="使用 swagger-ui"></a>使用 swagger-ui</h2><p>此时，你在浏览器上输入 <code>http://ip</code> 就可以看到一个经过可视化的 api 文档界面，其中包括安装在集群上的所有自定义资源的模型和路径！</p>
+<img src="/2023/08/25/41/50a5136b19764f23861be47fcaf4758d~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp" class="" title="img">
 
-<h1 id="项目部署"><a href="#项目部署" class="headerlink" title="项目部署"></a>项目部署</h1><h2 id="构建镜像"><a href="#构建镜像" class="headerlink" title="构建镜像"></a>构建镜像</h2><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">make release-image.amd64</span></span><br></pre></td></tr></table></figure>
+<p>里面的 api 非常多，你用得上的，用不上的，这里都有。 不仅有 api-server 的 API ，其他所有你另外安装的 CRD 资源也都有。</p>
+<p>比如我自己安装的 VirtualMachineInstance 资源，根据关键字，立马就找到 KubeVirt 创建虚拟机的 API</p>
+<img src="/2023/08/25/41/c1ea7c9fa54f4ba785dec6ab083dff1d~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp" class="" title="img">
 
-<h2 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h2><p>依次 替换所有 master 节点，<code>/etc/kubernetes/manifests</code>目录下的原生 kube-scheduler.yaml</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">creationTimestamp:</span> <span class="literal">null</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">component:</span> <span class="string">kube-scheduler</span></span><br><span class="line">    <span class="attr">tier:</span> <span class="string">control-plane</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">kube-scheduler</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">kube-system</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">command:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">kube-scheduler</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">--authentication-kubeconfig=/etc/kubernetes/scheduler.conf</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">--authorization-kubeconfig=/etc/kubernetes/scheduler.conf</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">--v=0</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">--config=/scheduler/scheduler-config.yaml</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">gcr.io/k8s-staging-scheduler-plugins/kube-scheduler:v20240904--amd64</span></span><br><span class="line">      <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">      <span class="attr">livenessProbe:</span></span><br><span class="line">        <span class="attr">failureThreshold:</span> <span class="number">8</span></span><br><span class="line">        <span class="attr">httpGet:</span></span><br><span class="line">          <span class="attr">path:</span> <span class="string">/healthz</span></span><br><span class="line">          <span class="attr">port:</span> <span class="number">10259</span></span><br><span class="line">          <span class="attr">scheme:</span> <span class="string">HTTPS</span></span><br><span class="line">        <span class="attr">initialDelaySeconds:</span> <span class="number">10</span></span><br><span class="line">        <span class="attr">periodSeconds:</span> <span class="number">10</span></span><br><span class="line">        <span class="attr">timeoutSeconds:</span> <span class="number">15</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">kube-scheduler</span></span><br><span class="line">      <span class="attr">resources:</span></span><br><span class="line">        <span class="attr">requests:</span></span><br><span class="line">          <span class="attr">cpu:</span> <span class="string">100m</span></span><br><span class="line">      <span class="attr">startupProbe:</span></span><br><span class="line">        <span class="attr">failureThreshold:</span> <span class="number">24</span></span><br><span class="line">        <span class="attr">httpGet:</span></span><br><span class="line">          <span class="attr">path:</span> <span class="string">/healthz</span></span><br><span class="line">          <span class="attr">port:</span> <span class="number">10259</span></span><br><span class="line">          <span class="attr">scheme:</span> <span class="string">HTTPS</span></span><br><span class="line">        <span class="attr">initialDelaySeconds:</span> <span class="number">10</span></span><br><span class="line">        <span class="attr">periodSeconds:</span> <span class="number">10</span></span><br><span class="line">        <span class="attr">timeoutSeconds:</span> <span class="number">15</span></span><br><span class="line">      <span class="attr">volumeMounts:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">mountPath:</span> <span class="string">/etc/kubernetes/scheduler.conf</span></span><br><span class="line">          <span class="attr">name:</span> <span class="string">kubeconfig</span></span><br><span class="line">          <span class="attr">readOnly:</span> <span class="literal">true</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">scheduler-config</span></span><br><span class="line">          <span class="attr">mountPath:</span> <span class="string">/scheduler/scheduler-config.yaml</span></span><br><span class="line">  <span class="attr">hostNetwork:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">priority:</span> <span class="number">2000001000</span></span><br><span class="line">  <span class="attr">priorityClassName:</span> <span class="string">system-node-critical</span></span><br><span class="line">  <span class="attr">securityContext:</span></span><br><span class="line">    <span class="attr">seccompProfile:</span></span><br><span class="line">      <span class="attr">type:</span> <span class="string">RuntimeDefault</span></span><br><span class="line">  <span class="attr">volumes:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">hostPath:</span></span><br><span class="line">        <span class="attr">path:</span> <span class="string">/etc/kubernetes/scheduler.conf</span></span><br><span class="line">        <span class="attr">type:</span> <span class="string">FileOrCreate</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">kubeconfig</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">hostPath:</span></span><br><span class="line">        <span class="attr">path:</span> <span class="string">/etc/kubernetes/scheduler-config.yaml</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">scheduler-config</span></span><br><span class="line"><span class="attr">status:</span> &#123;&#125;</span><br></pre></td></tr></table></figure>
-
-<p>依次将<code>KubeSchedulerConfiguration</code>的配置文件，放在所有 master 节点<code>/etc/kubernetes</code>目录下</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">kubescheduler.config.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">KubeSchedulerConfiguration</span></span><br><span class="line"><span class="attr">leaderElection:</span></span><br><span class="line">  <span class="attr">leaderElect:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">resourceLock:</span> <span class="string">leases</span></span><br><span class="line">  <span class="attr">resourceName:</span> <span class="string">kube-scheduler</span></span><br><span class="line">  <span class="attr">resourceNamespace:</span> <span class="string">kube-system</span></span><br><span class="line"><span class="attr">clientConnection:</span></span><br><span class="line">  <span class="attr">kubeconfig:</span> <span class="string">/etc/kubernetes/scheduler.conf</span></span><br><span class="line"><span class="attr">profiles:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">schedulerName:</span> <span class="string">default-scheduler</span></span><br><span class="line">  <span class="attr">plugins:</span></span><br><span class="line">    <span class="attr">filter:</span></span><br><span class="line">      <span class="attr">enabled:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">NodeNames</span></span><br><span class="line">    <span class="attr">score:</span></span><br><span class="line">      <span class="attr">enabled:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">NodeNames</span></span><br></pre></td></tr></table></figure>
-
-<p>部署后的结果</p>
-<img src="/2024/08/27/08/image-20240904174112160.png" class="" title="image-20240904174112160">
-
-<p>查看kube-scheduler lease资源 查看 leader</p>
-<img src="/2024/08/27/08/image-20240904174241970.png" class="" title="image-20240904174241970">
-
-<p>运行测试pod，指定nodeNames节点列表</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nginx-pod</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line">    <span class="attr">&quot;nodeNames&quot;:</span> <span class="string">&quot;192.168.0.232,192.168.0.186&quot;</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">tolerations:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">effect:</span> <span class="string">NoSchedule</span></span><br><span class="line">    <span class="attr">operator:</span> <span class="string">Exists</span></span><br><span class="line">    <span class="attr">key:</span> <span class="string">node-role.kubernetes.io/control-plane</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">nginx</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">docker.io/library/nginx:1.26.0</span></span><br><span class="line">      <span class="attr">ports:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">80</span></span><br></pre></td></tr></table></figure>
-
-<p>查看 leader 的 pod 日志</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">I0904 08:59:41.036009       1 leaderelection.go:260] successfully acquired lease kube-system/kube-scheduler</span><br><span class="line">I0904 09:01:18.079311       1 nodenames.go:40] node: 192.168.0.12 does not match expected: [192.168.0.232 192.168.0.186]</span><br><span class="line">I0904 09:01:18.079349       1 nodenames.go:45] node: 192.168.0.232 is match expected: [192.168.0.232 192.168.0.186]</span><br><span class="line">I0904 09:01:18.079356       1 nodenames.go:40] node: 192.168.0.253 does not match expected: [192.168.0.232 192.168.0.186]</span><br><span class="line">I0904 09:01:18.079363       1 nodenames.go:45] node: 192.168.0.186 is match expected: [192.168.0.232 192.168.0.186]</span><br><span class="line">I0904 09:01:18.079508       1 nodenames.go:52] node: 192.168.0.232 get score: 10</span><br><span class="line">I0904 09:01:18.079518       1 nodenames.go:52] node: 192.168.0.186 get score: 4</span><br></pre></td></tr></table></figure>
-
-<p>完整的项目代码：<a href="https://github.com/lizhewei91/scheduler-framework-demo">https://github.com/lizhewei91/scheduler-framework-demo</a></p>
+<p>点击上面的 <code>Try it out</code> 可以修改请求体的参数，请生成一个 curl 命令，方便你进行调试。</p>
 ]]></content>
       <categories>
-        <category>kube-scheduler</category>
+        <category>k8s-swagger-ui</category>
       </categories>
       <tags>
-        <tag>kube-scheduler</tag>
-        <tag>scheduler-framework</tag>
-        <tag>scheduler-plugins</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>浅析NUMA机制</title>
-    <url>/2024/01/02/22/</url>
-    <content><![CDATA[<h1 id="NUMA的由来"><a href="#NUMA的由来" class="headerlink" title="NUMA的由来"></a>NUMA的由来</h1><p>NUMA(Non-Uniform Memory Access)，即非一致性内存访问，是一种关于多个CPU如何访问内存的架构模型，早期，在计算机系统中，CPU是这样访问内存的：</p>
-<img src="/2024/01/02/22/v2-ba8b4591e92b8027568304f21ac9b773_1440w-4179309.webp" class="" title="img">
-
-
-
-]]></content>
-      <categories>
-        <category>NUMA</category>
-      </categories>
-      <tags>
-        <tag>NUMA</tag>
+        <tag>k8s-swagger-ui</tag>
       </tags>
   </entry>
   <entry>
@@ -2585,41 +2604,6 @@
       </tags>
   </entry>
   <entry>
-    <title>使用swagger-ui可视化Kubernetes-API文档</title>
-    <url>/2023/08/25/41/</url>
-    <content><![CDATA[<p>在工作中，你可能需要基于 Kubernetes 提供的 API 进行开发，比如开发适合自己的控制台，Kubernetes 官方提供的 API 文档，有两个问题：</p>
-<ol>
-<li>非常的不直观，这个问题其实还好，自己克服一下也不是大问题</li>
-<li>只有 K8S api-server 的接口，这个就难办了，假如有新的 CRD 资源，比如 kubevirt ，又要去找 kubevirt 的 api 文档，关键是找不着</li>
-</ol>
-<h2 id="如何部署-swagger-ui"><a href="#如何部署-swagger-ui" class="headerlink" title="如何部署 swagger-ui"></a>如何部署 swagger-ui</h2><p>打开两个 ssh 连接到你的 K8S 集群中。</p>
-<p>进入第一个窗口，执行如下命令建立一个反向代理</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl proxy --port=8080</span><br></pre></td></tr></table></figure>
-
-<p>进入第二个窗口，执行如下命令建立获取 k8s的 api 文档信息，输出到一个 <code>k8s-swagger.json</code> 文件中</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl localhost:8080/openapi/v2 &gt; k8s-swagger.json</span><br></pre></td></tr></table></figure>
-
-<p>获取到后，第一个窗口就可以关闭了。</p>
-<p>然后任选一个窗口，执行如下命令运行一个容器</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">docker run \</span><br><span class="line">    --rm \</span><br><span class="line">    -d \</span><br><span class="line">    -p 80:8080 \</span><br><span class="line">    -e SWAGGER_JSON=/k8s-swagger.json \</span><br><span class="line">    -v $(pwd)/k8s-swagger.json:/k8s-swagger.json \</span><br><span class="line">    swaggerapi/swagger-ui</span><br></pre></td></tr></table></figure>
-
-<h2 id="使用-swagger-ui"><a href="#使用-swagger-ui" class="headerlink" title="使用 swagger-ui"></a>使用 swagger-ui</h2><p>此时，你在浏览器上输入 <code>http://ip</code> 就可以看到一个经过可视化的 api 文档界面，其中包括安装在集群上的所有自定义资源的模型和路径！</p>
-<img src="/2023/08/25/41/50a5136b19764f23861be47fcaf4758d~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp" class="" title="img">
-
-<p>里面的 api 非常多，你用得上的，用不上的，这里都有。 不仅有 api-server 的 API ，其他所有你另外安装的 CRD 资源也都有。</p>
-<p>比如我自己安装的 VirtualMachineInstance 资源，根据关键字，立马就找到 KubeVirt 创建虚拟机的 API</p>
-<img src="/2023/08/25/41/c1ea7c9fa54f4ba785dec6ab083dff1d~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp" class="" title="img">
-
-<p>点击上面的 <code>Try it out</code> 可以修改请求体的参数，请生成一个 curl 命令，方便你进行调试。</p>
-]]></content>
-      <categories>
-        <category>k8s-swagger-ui</category>
-      </categories>
-      <tags>
-        <tag>k8s-swagger-ui</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>深入理解 k8s-admission-webhook</title>
     <url>/2023/08/29/15/</url>
     <content><![CDATA[<h1 id="Admission-Webhook"><a href="#Admission-Webhook" class="headerlink" title="Admission Webhook"></a>Admission Webhook</h1><p>Admission Webhook 是一种用于接收准入请求并对其进行处理的 HTTP 回调机制。其实就是通过 Webhook 来实现准入控制，分为两种：验证性质的准入 Webhook （<a href="https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/admission-controllers/#validatingadmissionwebhook">Validating Admission Webhook</a>） 和 修改性质的准入 Webhook （<a href="https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/admission-controllers/#mutatingadmissionwebhook">Mutating Admission Webhook</a>）。</p>
@@ -2653,6 +2637,22 @@
       </categories>
       <tags>
         <tag>webhook</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>浅析NUMA机制</title>
+    <url>/2024/01/02/22/</url>
+    <content><![CDATA[<h1 id="NUMA的由来"><a href="#NUMA的由来" class="headerlink" title="NUMA的由来"></a>NUMA的由来</h1><p>NUMA(Non-Uniform Memory Access)，即非一致性内存访问，是一种关于多个CPU如何访问内存的架构模型，早期，在计算机系统中，CPU是这样访问内存的：</p>
+<img src="/2024/01/02/22/v2-ba8b4591e92b8027568304f21ac9b773_1440w-4179309.webp" class="" title="img">
+
+
+
+]]></content>
+      <categories>
+        <category>NUMA</category>
+      </categories>
+      <tags>
+        <tag>NUMA</tag>
       </tags>
   </entry>
   <entry>
